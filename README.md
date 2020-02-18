@@ -1,7 +1,7 @@
 # MyKotlinScriptCompiler
 This is Kotlin like language compiler that I try to write in Comp430 class.
 
-## Language name
+### Language name
 DWKotlinScript
 
 ## Compiler Implementation Language and Reasoning
@@ -23,7 +23,7 @@ Kotlin is a power object oriented language. But I will make some limitation on m
 * s is statement
 * op is operator
 * T is type variable
-
+```
 Basic type::= Int | String | Boolean | Unit
 
 type :: = Int | Boolean| String | Array<basic type> | MutableList<basic type> | ‘(‘type*’)’ -> type | T
@@ -35,7 +35,7 @@ binop :: = ‘-’ | ‘+’ | ‘/’ | ‘*’ | ‘%’ | ‘||’ | ‘&&’
 unop :: = ‘!’ | ‘++’ | ‘--’
 
 s :: = ‘if’ ‘(’ e ‘)’ ‘{‘ s* ‘}’ ‘else’ ‘{‘ s* ‘}’ | ‘while’ ‘(’ e ‘)’ ‘{’ s* ‘}’ | ‘return’ e | break | continue | ‘for’ ‘(’ var ‘in’ Array<basic type> ‘)’ ‘{’ s* ‘}’ | ‘var’ var = e | ‘val’ var = e | print’(‘var’)’ | println’(‘var’)’
-
+```
 ## Computation Abstraction Non-Trivial Feature
 Higher-order functions, which is the lambda expression in Kotlin, I will support lambda expression in my KotlinScript language.
 
