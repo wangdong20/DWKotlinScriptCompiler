@@ -12,5 +12,6 @@ public enum KeywordToken implements Token {
     TK_VAR,     // var
     TK_VAL,     // val
     TK_PRINT,    // print
-    TK_PRINTLN   // println
+    TK_PRINTLN,   // println
+    TK_FUN        // fun(function in Kotlin)
 }
