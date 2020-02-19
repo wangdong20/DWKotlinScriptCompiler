@@ -1,15 +1,34 @@
 package com.github.wangdong20.kotlinscriptcompiler.token;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class Tokenizer {
     private static char[] input;
     private int inputPos;
+    private Map<String, Token> keywordMap = new HashMap<String, Token>();
 
-    public Tokenizer(final char[] input) {
+    private Tokenizer(final char[] input) {
         this.input = input;
         this.inputPos = 0;
+        keywordMap.put("if", KeywordToken.TK_IF);
+        keywordMap.put("else", KeywordToken.TK_ELSE);
+        keywordMap.put("break", KeywordToken.TK_BREAK);
+        keywordMap.put("continue", KeywordToken.TK_CONTINUE);
+        keywordMap.put("while", KeywordToken.TK_WHILE);
+        keywordMap.put("for", KeywordToken.TK_FOR);
+        keywordMap.put("fun", KeywordToken.TK_FUN);
+        keywordMap.put("var", KeywordToken.TK_VAR);
+        keywordMap.put("val", KeywordToken.TK_VAL);
+        keywordMap.put("in", KeywordToken.TK_IN);
+        keywordMap.put("return", KeywordToken.TK_RETURN);
+        keywordMap.put("print", KeywordToken.TK_PRINT);
+        keywordMap.put("println", KeywordToken.TK_PRINTLN);
     }
 
-    public IntToken tryTokenizeInteger() {
+    private IntToken tryTokenizeInteger() {
         String digits = "";
 
         if(inputPos < input.length && input[inputPos] == '-') {
@@ -26,5 +45,93 @@ public class Tokenizer {
             return new IntToken(Integer.parseInt(digits));
         }
         return null;
+    }
+
+    private KeywordToken tryTokenizeIf() {
+        if(inputPos + 2 < input.length && input[inputPos] == 'i' &&
+            input[inputPos + 1] == 'f') {
+            if (input[inputPos + 2] == '(' || input[inputPos + 2] == ' ') {
+                inputPos += 2;
+                return KeywordToken.TK_IF;
+            } else {
+                return null;
+            }
+        } else if(inputPos + 2 >= input.length) {
+            inputPos += 2;
+            return KeywordToken.TK_IF;
+        } else {
+            return null;
+        }
+    }
+
+    private Token tryTokenizeVariableOrKeyword() {
+        String letters = "";
+
+        if(inputPos < input.length && Character.isLetter(input[inputPos])) {
+            letters += input[inputPos];
+            inputPos++;
+
+            while(inputPos < input.length && Character.isLetterOrDigit(input[inputPos])) {
+                letters += input[inputPos];
+                inputPos++;
+            }
+
+            // Now consider all the keyword case
+            if(keywordMap.containsKey(letters)) {
+                return keywordMap.get(letters);
+            } else {
+                return new VariableToken(letters);
+            }
+        } else {
+            return null;
+        }
+    }
+
+    private void skipWhiteSpace() {
+        while(inputPos < input.length && Character.isWhitespace(input[inputPos])) {
+            inputPos++;
+        }
+    }
+
+    private List<Token> tokenize() throws TokenizerException {
+        List<Token> tokens = new ArrayList<Token>();
+        while(inputPos < input.length) {
+            skipWhiteSpace();
+            tokens.add(tokenizeOne());
+        }
+        return tokens;
+    }
+
+    // assume it's not starting on whitespace
+    private Token tokenizeOne() throws TokenizerException {
+        Token read = tryTokenizeVariableOrKeyword();
+        if(read != null) {
+            return read;
+        } else {
+            read = tryTokenizeInteger();
+            if(read != null) {
+                return read;
+            } else {
+                if(inputPos < input.length) {
+                    if(input[inputPos] == '(') {
+                        return BracketsToken.TK_LPAREN;
+                    } else if(input[inputPos] == ')') {
+                        return BracketsToken.TK_RPAREN;
+                    } else {
+                        throw new TokenizerException("Tokenize failed");
+                    }
+                } else {
+                    return null;
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        // write your code here
+        char initial[] = {'-', '2', '3', '1', 'i', 'f', ' '};
+        Tokenizer tokenizer = new Tokenizer(initial);
+        System.out.println(tokenizer.tryTokenizeInteger().getValue());
+        System.out.println(tokenizer.tryTokenizeIf().toString());
     }
 }
