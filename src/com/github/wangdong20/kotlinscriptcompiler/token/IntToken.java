@@ -10,4 +10,14 @@ public class IntToken implements Token {
     public int getValue() {
         return value;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof IntToken) {
+            if(((IntToken) obj).getValue() == value) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

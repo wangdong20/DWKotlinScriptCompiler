@@ -10,4 +10,14 @@ public class BooleanToken implements Token {
     public boolean getValue() {
         return value;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof  BooleanToken) {
+            if(((BooleanToken) obj).getValue() == value) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

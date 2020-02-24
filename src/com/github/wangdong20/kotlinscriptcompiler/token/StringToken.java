@@ -10,4 +10,14 @@ public class StringToken implements Token {
     public String getValue() {
         return value;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof StringToken) {
+            if(((StringToken) obj).getValue().equals(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

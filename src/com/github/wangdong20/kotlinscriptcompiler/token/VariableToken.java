@@ -10,4 +10,14 @@ public class VariableToken implements Token {
     public String getName() {
         return name;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof  VariableToken) {
+            if(((VariableToken) obj).getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
