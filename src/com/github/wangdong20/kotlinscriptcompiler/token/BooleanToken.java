@@ -20,4 +20,11 @@ public class BooleanToken implements Token {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "BooleanToken{" +
+                "value=" + value +
+                '}';
+    }
 }

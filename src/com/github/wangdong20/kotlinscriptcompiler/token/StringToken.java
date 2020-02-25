@@ -20,4 +20,11 @@ public class StringToken implements Token {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "StringToken{" +
+                "value='" + value + '\'' +
+                '}';
+    }
 }

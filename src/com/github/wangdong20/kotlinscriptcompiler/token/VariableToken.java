@@ -20,4 +20,11 @@ public class VariableToken implements Token {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "VariableToken{" +
+                "name='" + name + '\'' +
+                '}';
+    }
 }

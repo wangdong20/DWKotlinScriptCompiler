@@ -20,4 +20,11 @@ public class IntToken implements Token {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "IntToken{" +
+                "value=" + value +
+                '}';
+    }
 }
