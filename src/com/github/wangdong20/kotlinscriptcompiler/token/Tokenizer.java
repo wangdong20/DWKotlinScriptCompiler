@@ -30,6 +30,8 @@ public class Tokenizer {
         keywordMap.put("return", KeywordToken.TK_RETURN);
         keywordMap.put("print", KeywordToken.TK_PRINT);
         keywordMap.put("println", KeywordToken.TK_PRINTLN);
+        keywordMap.put("true", KeywordToken.TK_TRUE);
+        keywordMap.put("false", KeywordToken.TK_FALSE);
 
         bracketsMap = new HashMap<String, Token>();
         bracketsMap.put("(", BracketsToken.TK_LPAREN);

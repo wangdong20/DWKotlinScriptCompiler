@@ -73,20 +73,20 @@ public class TokenizerTest {
                 new VariableToken("a"), BinopToken.TK_EQUAL, new VariableToken("a"),
                 BinopToken.TK_MOD, new IntToken(2), SymbolToken.TK_SEMICOLON,
                 KeywordToken.TK_IF, BracketsToken.TK_LPAREN, new VariableToken("a"), BinopToken.TK_GREATER_THAN,
-                new IntToken(1), BracketsToken.TK_RPAREN, KeywordToken.TK_RETURN, new VariableToken("true"), SymbolToken.TK_SEMICOLON);
+                new IntToken(1), BracketsToken.TK_RPAREN, KeywordToken.TK_RETURN, KeywordToken.TK_TRUE, SymbolToken.TK_SEMICOLON);
     }
 
     public static void main(String[] args) throws TokenizerException {
         // write your code here
-//        testLeftParen();
-//        testRightParen();
-//        testVariableAlone();
-//        testVariableWithWhitespaceBefore();
-//        testVariableWithWhitespaceAfter();
-//        testVariableContainKeywords();
-//        testIfElseKeywords();
-//        testIntToken();
-//        testForLoopToken();
+        testLeftParen();
+        testRightParen();
+        testVariableAlone();
+        testVariableWithWhitespaceBefore();
+        testVariableWithWhitespaceAfter();
+        testVariableContainKeywords();
+        testIfElseKeywords();
+        testIntToken();
+        testForLoopToken();
         testOperator();
     }
 
