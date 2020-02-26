@@ -25,8 +25,8 @@ public class TokenizerTest {
         for(final Token token : expectedTokens) {
             expected.add(token);
         }
-        System.out.println(expected);
-        System.out.println(receivedTokens);
+        System.out.println("Expected: " + expected);
+        System.out.println("Received: " + receivedTokens);
         assert(receivedTokens.equals(expected));
     }
 
@@ -52,6 +52,42 @@ public class TokenizerTest {
 
     public static void testIntToken() throws TokenizerException {
         testTokenizes("-123", new IntToken(-123));
+    }
+
+    public static void testKeywordToken() throws TokenizerException {
+        testTokenizes("while continue break return for in val var print println fun true false",
+                KeywordToken.TK_WHILE, KeywordToken.TK_CONTINUE, KeywordToken.TK_BREAK, KeywordToken.TK_RETURN,
+                KeywordToken.TK_FOR, KeywordToken.TK_IN, KeywordToken.TK_VAL, KeywordToken.TK_VAR,
+                KeywordToken.TK_PRINT, KeywordToken.TK_PRINTLN, KeywordToken.TK_FUN, KeywordToken.TK_TRUE, KeywordToken.TK_FALSE);
+    }
+
+    public static void testBinopToken() throws TokenizerException {
+        testTokenizes("+ - */ % || && < > <= >= += -= *= /= == = !=",
+                BinopToken.TK_PLUS, BinopToken.TK_MINUS, BinopToken.TK_MULTIPLY, BinopToken.TK_DIVIDE,
+                BinopToken.TK_MOD, BinopToken.TK_OR, BinopToken.TK_AND, BinopToken.TK_LESS_THAN, BinopToken.TK_GREATER_THAN,
+                BinopToken.TK_LESS_OR_EQUAL, BinopToken.TK_GREATER_OR_EQUAL, BinopToken.TK_PLUS_EQUAL, BinopToken.TK_MINUS_EQUAL,
+                BinopToken.TK_MULTIPLY_EQUAL, BinopToken.TK_DIVIDE_EQUAL, BinopToken.TK_EQUAL_EQUAL, BinopToken.TK_EQUAL,
+                BinopToken.TK_NOT_EQUAL);
+    }
+
+    public static void testUnopToken() throws TokenizerException {
+        testTokenizes("!++--", UnopToken.TK_NOT, UnopToken.TK_PLUS_PLUS, UnopToken.TK_MINUS_MINUS);
+    }
+
+    public static void testBracketsToken() throws TokenizerException {
+        testTokenizes("(){ }", BracketsToken.TK_LPAREN, BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, BracketsToken.TK_RCURLY);
+    }
+
+    public static void testSymbolToken() throws TokenizerException {
+        testTokenizes(":;,->. ..", SymbolToken.TK_COLON, SymbolToken.TK_SEMICOLON, SymbolToken.TK_COMMA,
+                SymbolToken.TK_ARROW, SymbolToken.TK_DOT, SymbolToken.TK_DOT_DOT);
+    }
+
+    public static void testTypeToken() throws TokenizerException {
+        testTokenizes(" Int String Boolean Unit Array MutableList ", TypeToken.TK_TYPE_INT,
+                TypeToken.TK_TYPE_STRING, TypeToken.TK_TYPE_BOOLEAN, TypeToken.TK_TYPE_UNIT,
+                TypeToken.TK_ARRAY, TypeToken.TK_MUTABLE_LIST);
     }
 
     public static void testForLoopToken() throws TokenizerException {
@@ -86,6 +122,12 @@ public class TokenizerTest {
         testVariableContainKeywords();
         testIfElseKeywords();
         testIntToken();
+        testKeywordToken();
+        testBinopToken();
+        testUnopToken();
+        testBracketsToken();
+        testTypeToken();
+        testSymbolToken();
         testForLoopToken();
         testOperator();
     }

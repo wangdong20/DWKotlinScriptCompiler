@@ -187,6 +187,8 @@ public class Tokenizer {
                         } else {
                             return null;
                         }
+                    } else {
+                        return null;
                     }
                 case '!':
                 case '=':
@@ -194,6 +196,9 @@ public class Tokenizer {
                 case '<':
                 case '*':
                 case '/':
+                    if(inputPos - 1 >= 0 && input[inputPos - 1] == '-' && input[inputPos] == '>') {
+                        return null;
+                    }
                     if(inputPos + 1 < input.length && input[inputPos + 1] == '=') { // !=, ==, >=, <=, *=, /= case
                         char first = input[inputPos];
                         char second = input[inputPos + 1];
@@ -227,14 +232,17 @@ public class Tokenizer {
                     }
                 default:
                     String key = Character.toString(input[inputPos]);
-                    if(binopMap.containsKey(key)) {
-                        inputPos += 1;
-                        return binopMap.get(key);
-                    } else if(unopMap.containsKey(key)) {
-                        inputPos += 1;
-                        return unopMap.get(key);
-                    }
-                    else {
+                    if(input[inputPos] != '-') {
+                        if (binopMap.containsKey(key)) {
+                            inputPos += 1;
+                            return binopMap.get(key);
+                        } else if (unopMap.containsKey(key)) {
+                            inputPos += 1;
+                            return unopMap.get(key);
+                        } else {
+                            return null;
+                        }
+                    } else {
                         return null;
                     }
             }
