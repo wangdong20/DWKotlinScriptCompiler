@@ -90,6 +90,18 @@ public class TokenizerTest {
                 TypeToken.TK_ARRAY, TypeToken.TK_MUTABLE_LIST);
     }
 
+    public static void testBooleanToken() throws TokenizerException {
+        testTokenizes("var b : Boolean = false; b = true;", KeywordToken.TK_VAR,
+                new VariableToken("b"), SymbolToken.TK_COLON, TypeToken.TK_TYPE_BOOLEAN,
+                BinopToken.TK_EQUAL, KeywordToken.TK_FALSE, SymbolToken.TK_SEMICOLON, new VariableToken("b"),
+                BinopToken.TK_EQUAL, KeywordToken.TK_TRUE, SymbolToken.TK_SEMICOLON);
+    }
+
+    public static void testStringToken() throws TokenizerException {
+        testTokenizes("println(\"This is test!\")", KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new StringToken("This is test!"), BracketsToken.TK_RPAREN);
+    }
+
     public static void testForLoopToken() throws TokenizerException {
         testTokenizes("for(i in a) {print(i)}", KeywordToken.TK_FOR, BracketsToken.TK_LPAREN,
                 new VariableToken("i"), KeywordToken.TK_IN, new VariableToken("a"),
@@ -128,6 +140,8 @@ public class TokenizerTest {
         testBracketsToken();
         testTypeToken();
         testSymbolToken();
+        testBooleanToken();
+        testStringToken();
         testForLoopToken();
         testOperator();
     }

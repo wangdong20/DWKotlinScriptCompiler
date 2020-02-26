@@ -295,15 +295,23 @@ public class Tokenizer {
             // This can be the end of string token or start of string token
             if(input[inputPos] == '"') {
                 inputPos++;
-                while(input[inputPos] != '"') {
-                    if(inputPos < input.length) {
+                boolean isStringToken = false;
+                while(inputPos < input.length) {
+                    if(input[inputPos] != '"') {
                         value += input[inputPos];
                         inputPos++;
                     } else {
-                        return null;
+                        isStringToken = true;
+                        inputPos++;
+                        break;
                     }
                 }
-                return new StringToken(value);
+                if(isStringToken) {
+                    return new StringToken(value);
+                }
+                else {
+                    return null;
+                }
             }
         }
         return null;
