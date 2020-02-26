@@ -102,6 +102,10 @@ public class TokenizerTest {
                 new StringToken("This is test!"), BracketsToken.TK_RPAREN);
     }
 
+    public static void testBreakString() throws TokenizerException {
+        testTokenizes("\"fsdf", new StringToken("fsdf"));
+    }
+
     public static void testForLoopToken() throws TokenizerException {
         testTokenizes("for(i in a) {print(i)}", KeywordToken.TK_FOR, BracketsToken.TK_LPAREN,
                 new VariableToken("i"), KeywordToken.TK_IN, new VariableToken("a"),
@@ -142,6 +146,7 @@ public class TokenizerTest {
         testSymbolToken();
         testBooleanToken();
         testStringToken();
+//        testBreakString();
         testForLoopToken();
         testOperator();
     }

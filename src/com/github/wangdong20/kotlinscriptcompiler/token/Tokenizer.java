@@ -97,7 +97,7 @@ public class Tokenizer {
         this.inputPos = 0;
     }
 
-    public IntToken tryTokenizeInteger() {
+    private IntToken tryTokenizeInteger() {
         String digits = "";
 
         if(inputPos < input.length && input[inputPos] == '-' && inputPos + 1 < input.length &&
@@ -117,7 +117,7 @@ public class Tokenizer {
         return null;
     }
 
-    public Token tryTokenizeVariableOrKeywordOrType() {
+    private Token tryTokenizeVariableOrKeywordOrType() {
         String letters = "";
 
         if(inputPos < input.length && Character.isLetter(input[inputPos])) {
@@ -144,7 +144,7 @@ public class Tokenizer {
         }
     }
 
-    public Token tryTokenizeBracket() {
+    private Token tryTokenizeBracket() {
         if(inputPos < input.length) {
             String key = Character.toString(input[inputPos]);
             if(bracketsMap.containsKey(key)) {
@@ -156,7 +156,7 @@ public class Tokenizer {
     }
 
     // now combine binop and unop together to figure out which token is
-    public Token tryTokenizeOp() {
+    private Token tryTokenizeOp() {
         if(inputPos < input.length) {
             switch (input[inputPos]) {
                 case '+':
@@ -251,7 +251,7 @@ public class Tokenizer {
         }
     }
 
-    public Token tryTokenizeSymbol() {
+    private Token tryTokenizeSymbol() {
         if(inputPos < input.length) {
             switch (input[inputPos]) {
                 case '\n':
@@ -287,7 +287,7 @@ public class Tokenizer {
         }
     }
 
-    public Token tryTokenizeString() {
+    private Token tryTokenizeString() {
         if(inputPos < input.length) {
 
             String value = "";
@@ -317,7 +317,7 @@ public class Tokenizer {
         return null;
     }
 
-    public void skipWhiteSpace() {
+    private void skipWhiteSpace() {
         while(inputPos < input.length && Character.isWhitespace(input[inputPos])) {
             inputPos++;
         }
@@ -335,7 +335,7 @@ public class Tokenizer {
     }
 
     // assume it's not starting on whitespace
-    public Token tokenizeOne() throws TokenizerException {
+    private Token tokenizeOne() throws TokenizerException {
         Token read = tryTokenizeString();
         if(read != null) {
             return read;
