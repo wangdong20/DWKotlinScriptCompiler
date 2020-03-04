@@ -28,7 +28,7 @@ Basic type::= Int | String | Boolean | Unit
 
 type :: = Int | Boolean| String | Array<basic type> | MutableList<basic type> | ‘(‘type*’)’ -> type | T
 
-e :: = ‘(‘ e ’)’ | condition binop trueBranch | unop e |  fn’(‘e’)’ | var | arrayOf(var*) | arrayOf(condition(Int), trueBranch((Int) -> basic type)) | mutableListOf<var>’(‘var*’)’ | var = e | var += e | var -= e | var *= e | var /= e |‘{‘ var : type* -> e(return basic type) ‘}’
+e :: = ‘(‘ e ’)’ | e1 binop e2 | unop e |  fn’(‘e’)’ | var | arrayOf(var*) | arrayOf(e1(Int), e2((Int) -> basic type)) | mutableListOf<var>’(‘var*’)’ | var = e | var += e | var -= e | var *= e | var /= e |‘{‘ var : type* -> e(return basic type) ‘}’
 
 binop :: = ‘-’ | ‘+’ | ‘/’ | ‘*’ | ‘%’ | ‘||’ | ‘&&’ | ‘<’ | ‘>’ | ‘<=’ | ‘>=’ | ‘==’ | ‘!=’ | ‘+=’ | ‘-=’ | '*=' | '/=' | '='
 
