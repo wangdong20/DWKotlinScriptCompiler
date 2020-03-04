@@ -28,13 +28,13 @@ Basic type::= Int | String | Boolean | Unit
 
 type :: = Int | Boolean| String | Array<basic type> | MutableList<basic type> | ‘(‘type*’)’ -> type | T
 
-e :: = ‘(‘ e ’)’ | e1 binop e2 | unop e |  fn’(‘e’)’ | var | arrayOf(var*) | arrayOf(e1(Int), e2((Int) -> basic type)) | mutableListOf<var>’(‘var*’)’ | var = e |‘{‘ var : type* -> e(return basic type) ‘}’
+e :: = ‘(‘ e ’)’ | condition binop trueBranch | unop e |  fn’(‘e’)’ | var | arrayOf(var*) | arrayOf(condition(Int), trueBranch((Int) -> basic type)) | mutableListOf<var>’(‘var*’)’ | var = e | var += e | var -= e | var *= e | var /= e |‘{‘ var : type* -> e(return basic type) ‘}’
 
 binop :: = ‘-’ | ‘+’ | ‘/’ | ‘*’ | ‘%’ | ‘||’ | ‘&&’ | ‘<’ | ‘>’ | ‘<=’ | ‘>=’ | ‘==’ | ‘!=’ | ‘+=’ | ‘-=’ | '*=' | '/=' | '='
 
 unop :: = ‘!’ | ‘++’ | ‘--’
 
-s :: = ‘if’ ‘(’ e ‘)’ ‘{‘ s* ‘}’ ‘else’ ‘{‘ s* ‘}’ | ‘while’ ‘(’ e ‘)’ ‘{’ s* ‘}’ | ‘return’ e | break | continue | ‘for’ ‘(’ var ‘in’ Array<basic type> ‘)’ ‘{’ s* ‘}’ |‘for’ ‘(’ var ‘in’ var(Int)'..'var(Int) ‘)’ ‘{’ s* ‘}’ | ‘var’ var = e | ‘val’ var = e | print’(‘var’)’ | println’(‘var’)’
+s :: = ‘if’ ‘(’ e ‘)’ ‘{‘ s* ‘}’ ‘else’ ‘{‘ s* ‘}’ | ‘if’ ‘(’e’)’ ’{’ s* ‘}’ | ‘while’ ‘(’ e ‘)’ ‘{’ s* ‘}’ | ‘return’ e | break | continue | ‘for’ ‘(’ var ‘in’ Array<basic type> ‘)’ ‘{’ s* ‘}’ |‘for’ ‘(’ var ‘in’ var(Int)'..'var(Int) ‘)’ ‘{’ s* ‘}’ | ‘var’ var = e | ‘val’ var = e | print’(‘var’)’ | println’(‘var’)’
 ```
 ### Computation Abstraction Non-Trivial Feature
 Higher-order functions, which is the lambda expression in Kotlin, I will support lambda expression in my KotlinScript language.
