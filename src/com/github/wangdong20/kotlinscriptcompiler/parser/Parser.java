@@ -31,7 +31,7 @@ public class Parser {
     private Token checkTokenIsOr(final int position, final Token... token) throws ParseException {
         for(Token t : token) {
             final Token tokenHere = readToken(position);
-            if (!tokenHere.equals(t)) {
+            if (tokenHere.equals(t)) {
                return t;
             }
         }
