@@ -23,6 +23,7 @@ Kotlin is a power object oriented language. But I will make some limitation on m
 * s is statement
 * op is operator
 * T is type variable
+* P is Program
 ```
 Basic type::= Int | String | Boolean | Unit
 
@@ -35,9 +36,11 @@ binop :: = ‘-’ | ‘+’ | ‘/’ | ‘*’ | ‘%’ | ‘||’ | ‘&&’
 unop :: = ‘!’ | ‘++’ | ‘--’
 
 s :: = ‘if’ ‘(’ e ‘)’ ‘{‘ s* ‘}’ ‘else’ ‘{‘ s* ‘}’ | ‘if’ ‘(’e’)’ ’{’ s* ‘}’ | ‘while’ ‘(’ e ‘)’ ‘{’ s* ‘}’ | ‘return’ e | break | continue | ‘for’ ‘(’ var ‘in’ Array<basic type> ‘)’ ‘{’ s* ‘}’ |‘for’ ‘(’ var ‘in’ var(Int)'..'var(Int) ‘)’ ‘{’ s* ‘}’ | ‘var’ var = e | ‘val’ var = e | print’(‘var’)’ | println’(‘var’)’
+
+P :: = s*
 ```
 
-###Entry point: 
+### Program Entry point: 
 Statements.
 
 ### Computation Abstraction Non-Trivial Feature
