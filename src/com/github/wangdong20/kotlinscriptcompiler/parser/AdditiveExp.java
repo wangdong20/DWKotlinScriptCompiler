@@ -1,11 +1,13 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser;
 
-public class PlusExp implements Exp {
+public class AdditiveExp implements Exp {
     private final Exp left;
     private final Exp right;
+    private final AdditiveOp op;
 
-    public PlusExp(Exp left, Exp right) {
+    public AdditiveExp(Exp left, Exp right, AdditiveOp op) {
         this.left = left;
         this.right = right;
+        this.op = op;
     }
 }

@@ -36,6 +36,10 @@ unop :: = ‘!’ | ‘++’ | ‘--’
 
 s :: = ‘if’ ‘(’ e ‘)’ ‘{‘ s* ‘}’ ‘else’ ‘{‘ s* ‘}’ | ‘if’ ‘(’e’)’ ’{’ s* ‘}’ | ‘while’ ‘(’ e ‘)’ ‘{’ s* ‘}’ | ‘return’ e | break | continue | ‘for’ ‘(’ var ‘in’ Array<basic type> ‘)’ ‘{’ s* ‘}’ |‘for’ ‘(’ var ‘in’ var(Int)'..'var(Int) ‘)’ ‘{’ s* ‘}’ | ‘var’ var = e | ‘val’ var = e | print’(‘var’)’ | println’(‘var’)’
 ```
+
+###Entry point: 
+Statements.
+
 ### Computation Abstraction Non-Trivial Feature
 Higher-order functions, which is the lambda expression in Kotlin, I will support lambda expression in my KotlinScript language.
 
