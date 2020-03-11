@@ -107,7 +107,7 @@ public class Parser {
             final ParseResult<Exp> condition = parseExp(startPos + 2);
             checkTokenIs(condition.nextPos, BracketsToken.TK_RPAREN);
             final ParseResult<Exp> ifTrue = parseExp(condition.nextPos + 1);
-            if(tokens[ifTrue.nextPos] == KeywordToken.TK_ELSE) {
+            if(tokens.length > ifTrue.nextPos &&tokens[ifTrue.nextPos] == KeywordToken.TK_ELSE) {
                 final ParseResult<Exp> ifFalse = parseExp(ifTrue.nextPos + 1);
                 return new ParseResult<Exp>(new IfExp(condition.result, ifTrue.result, ifFalse.result),
                         ifFalse.nextPos);

@@ -33,9 +33,11 @@ public class IfExp implements Exp {
     public boolean equals(Object obj) {
         if(obj instanceof IfExp) {
             if(((IfExp) obj).getCondition().equals(condition) &&
-                    ((IfExp) obj).getTrueBranch().equals(trueBranch) &&
-                    ((IfExp) obj).getFalseBranch().equals(falseBranch)) {
-                return true;
+                    ((IfExp) obj).getTrueBranch().equals(trueBranch)) {
+                if((((IfExp) obj).getFalseBranch() == null && falseBranch == null) ||
+                        ((IfExp) obj).getFalseBranch().equals(falseBranch)) {
+                    return true;
+                }
             }
         }
         return false;

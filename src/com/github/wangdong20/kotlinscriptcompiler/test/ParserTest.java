@@ -19,7 +19,7 @@ class ParserTest {
     }
 
     @Test
-    public void emptyDoesNotParse() throws ParseException {
+    public void emptyDoesNotParse() {
         assertExpectedException(null);
     }
 
@@ -42,7 +42,7 @@ class ParserTest {
     }
 
     @Test
-    public void ifParses() throws ParseException {
+    public void ifElseParses() throws ParseException {
         assertParses(new IfExp(new IntExp(1),
                         new IntExp(2),
                         new IntExp(3)),
@@ -53,6 +53,18 @@ class ParserTest {
                 new IntToken(2),
                 KeywordToken.TK_ELSE,
                 new IntToken(3));
+    }
+
+    @Test
+    public void ifParses() throws ParseException {
+        assertParses(new IfExp(new IntExp(1),
+                        new IntExp(2),
+                        null),
+                KeywordToken.TK_IF,
+                BracketsToken.TK_LPAREN,
+                new IntToken(1),
+                BracketsToken.TK_RPAREN,
+                new IntToken(2));
     }
 
     @Test
@@ -76,7 +88,7 @@ class ParserTest {
     }
 
     @Test
-    public void missingIntegerGivesParseError() throws ParseException {
+    public void missingIntegerGivesParseError() {
         assertExpectedException(null,
                 new IntToken(1),
                 BinopToken.TK_PLUS);
