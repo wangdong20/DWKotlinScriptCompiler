@@ -55,11 +55,11 @@ public class TokenizerTest {
     }
 
     public static void testKeywordToken() throws TokenizerException {
-        testTokenizes("while continue break return for in val var print println fun true false main",
+        testTokenizes("while continue break return for in val var print println fun true false main arrayOf mutableListOf",
                 KeywordToken.TK_WHILE, KeywordToken.TK_CONTINUE, KeywordToken.TK_BREAK, KeywordToken.TK_RETURN,
                 KeywordToken.TK_FOR, KeywordToken.TK_IN, KeywordToken.TK_VAL, KeywordToken.TK_VAR,
                 KeywordToken.TK_PRINT, KeywordToken.TK_PRINTLN, KeywordToken.TK_FUN, KeywordToken.TK_TRUE, KeywordToken.TK_FALSE,
-                KeywordToken.TK_MAIN);
+                KeywordToken.TK_MAIN, KeywordToken.TK_ARRAY_OF, KeywordToken.TK_MUTABLELIST_OF);
     }
 
     public static void testBinopToken() throws TokenizerException {
