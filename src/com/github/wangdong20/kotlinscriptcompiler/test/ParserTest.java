@@ -82,10 +82,10 @@ class ParserTest {
     public void stringParses() throws ParseException {
         HashMap<Integer, Exp> map = new HashMap();
         map.put(5, new AdditiveExp(new VariableExp("a"), new VariableExp("b"), AdditiveOp.EXP_PLUS));
-        map.put(12, new VariableExp("b"));
-        map.put(32, new AdditiveExp(new VariableExp("a"), new VariableExp("b"), AdditiveOp.EXP_PLUS));
+        map.put(12, new VariableExp("beer"));
+        map.put(32, new AdditiveExp(new VariableExp("a"), new VariableExp("beer"), AdditiveOp.EXP_PLUS));
         assertParses(new StringExp("a is , b is , c is $ c, sum is ", map),
-                new StringToken("a is ${a + b}, b is $b, c is $ c, sum is ${a + b}"));
+                new StringToken("a is ${a + b}, b is $beer, c is $ c, sum is ${a + beer}"));
     }
 
     @Test
