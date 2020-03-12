@@ -34,7 +34,7 @@ public class Tokenizer {
         keywordMap.put("false", KeywordToken.TK_FALSE);
         keywordMap.put("main", KeywordToken.TK_MAIN);
         keywordMap.put("arrayOf", KeywordToken.TK_ARRAY_OF);
-        keywordMap.put("mutableListOf", KeywordToken.TK_MUTABLELIST_OF);
+        keywordMap.put("mutableListOf", KeywordToken.TK_MUTABLE_LIST_OF);
 
         bracketsMap = new HashMap<String, Token>();
         bracketsMap.put("(", BracketsToken.TK_LPAREN);
@@ -74,10 +74,12 @@ public class Tokenizer {
         symbolMap = new HashMap<String, Token>();
         symbolMap.put(":", SymbolToken.TK_COLON);
         symbolMap.put(";", SymbolToken.TK_SEMICOLON);
+        symbolMap.put("\n", SymbolToken.TK_LINE_BREAK);
         symbolMap.put("->", SymbolToken.TK_ARROW);
         symbolMap.put(",", SymbolToken.TK_COMMA);
         symbolMap.put(".", SymbolToken.TK_DOT);
         symbolMap.put("..", SymbolToken.TK_DOT_DOT);
+        symbolMap.put("$", SymbolToken.TK_DOLLAR_MARK);
 
 
         typeMap = new HashMap<String, Token>();
@@ -258,6 +260,8 @@ public class Tokenizer {
         if(inputPos < input.length) {
             switch (input[inputPos]) {
                 case '\n':
+                    inputPos++;
+                    return symbolMap.get("\n");
                 case ';':
                     inputPos++;
                     return symbolMap.get(";");
@@ -282,6 +286,9 @@ public class Tokenizer {
                         inputPos += 1;
                         return symbolMap.get(".");
                     }
+                case '$':
+                    inputPos++;
+                    return symbolMap.get("$");
                 default:
                     return null;
             }
@@ -321,7 +328,7 @@ public class Tokenizer {
     }
 
     private void skipWhiteSpace() {
-        while(inputPos < input.length && Character.isWhitespace(input[inputPos])) {
+        while(inputPos < input.length && Character.isWhitespace(input[inputPos]) && input[inputPos] != '\n') {
             inputPos++;
         }
     }

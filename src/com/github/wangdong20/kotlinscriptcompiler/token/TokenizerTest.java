@@ -59,7 +59,7 @@ public class TokenizerTest {
                 KeywordToken.TK_WHILE, KeywordToken.TK_CONTINUE, KeywordToken.TK_BREAK, KeywordToken.TK_RETURN,
                 KeywordToken.TK_FOR, KeywordToken.TK_IN, KeywordToken.TK_VAL, KeywordToken.TK_VAR,
                 KeywordToken.TK_PRINT, KeywordToken.TK_PRINTLN, KeywordToken.TK_FUN, KeywordToken.TK_TRUE, KeywordToken.TK_FALSE,
-                KeywordToken.TK_MAIN, KeywordToken.TK_ARRAY_OF, KeywordToken.TK_MUTABLELIST_OF);
+                KeywordToken.TK_MAIN, KeywordToken.TK_ARRAY_OF, KeywordToken.TK_MUTABLE_LIST_OF);
     }
 
     public static void testBinopToken() throws TokenizerException {
@@ -81,8 +81,8 @@ public class TokenizerTest {
     }
 
     public static void testSymbolToken() throws TokenizerException {
-        testTokenizes(":;,->. ..", SymbolToken.TK_COLON, SymbolToken.TK_SEMICOLON, SymbolToken.TK_COMMA,
-                SymbolToken.TK_ARROW, SymbolToken.TK_DOT, SymbolToken.TK_DOT_DOT);
+        testTokenizes(":;,->. ..$\n", SymbolToken.TK_COLON, SymbolToken.TK_SEMICOLON, SymbolToken.TK_COMMA,
+                SymbolToken.TK_ARROW, SymbolToken.TK_DOT, SymbolToken.TK_DOT_DOT, SymbolToken.TK_DOLLAR_MARK, SymbolToken.TK_LINE_BREAK);
     }
 
     public static void testTypeToken() throws TokenizerException {
@@ -116,8 +116,8 @@ public class TokenizerTest {
     }
 
     public static void testOperator() throws TokenizerException {
-        testTokenizes("var a = 1; a += 2; a++; a--; a*=2; a /= 2; a = a % 2; if(a > 1) return true;",
-            KeywordToken.TK_VAR, new VariableToken("a"), BinopToken.TK_EQUAL, new IntToken(1), SymbolToken.TK_SEMICOLON,
+        testTokenizes("var a = 1\n a += 2; a++; a--; a*=2; a /= 2; a = a % 2; if(a > 1) return true;",
+            KeywordToken.TK_VAR, new VariableToken("a"), BinopToken.TK_EQUAL, new IntToken(1), SymbolToken.TK_LINE_BREAK,
                 new VariableToken("a"), BinopToken.TK_PLUS_EQUAL, new IntToken(2), SymbolToken.TK_SEMICOLON,
                 new VariableToken("a"), UnopToken.TK_PLUS_PLUS, SymbolToken.TK_SEMICOLON,
                 new VariableToken("a"), UnopToken.TK_MINUS_MINUS, SymbolToken.TK_SEMICOLON,

@@ -2,6 +2,8 @@ package com.github.wangdong20.kotlinscriptcompiler.parser;
 
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
+import java.util.HashMap;
+
 public class Parser {
 
     private final Token[] tokens;
@@ -83,7 +85,11 @@ public class Parser {
         } else if(tokenHere instanceof IntToken) {
             final IntToken asInt = (IntToken) tokenHere;
             return new ParseResult<Exp>(new IntExp(asInt.getValue()), startPos + 1);
-        } else {
+        } else if(tokenHere instanceof StringToken) {
+            final StringToken asString = (StringToken) tokenHere;
+            return parseString(tokenHere, startPos);
+        }
+        else {
             checkTokenIs(startPos, BracketsToken.TK_LPAREN);
             final ParseResult<Exp> inner = parseExp(startPos + 1);
             checkTokenIs(inner.nextPos, BracketsToken.TK_RPAREN);
@@ -92,14 +98,69 @@ public class Parser {
         }
     }
 
-//    public ParseResult<E> parseE(final int startPos) throws ParseException {
-//        try {
-            //final ParseResult<E> alpha = parseAlpha(startPos);
-            // return alpha;
-//        } catch (ParseException e) {
-//            parseBeta(startPos);
-//        }
-//    }
+    public ParseResult<Exp> parseString(final Token token, final int startPos) throws ParseException {
+        String value = ((StringToken)token).getValue();
+        String temp = value;
+        int index = 0;
+        int location = 0;
+        HashMap<Integer, Exp> map = new HashMap<>();
+        int length = value.length();
+        String interpolation = "";
+        boolean isBlockInterpolation = false;
+
+        while(index < value.length()) {
+            if(value.charAt(index) == '$') {
+                if(index + 1 < length && value.charAt(index + 1) == '{') {
+                    index += 2;
+                    for(int i = index; i < length; i++) {
+                        if(value.charAt(i) == '}') {
+                            isBlockInterpolation = true;
+                            break;
+                        }
+                    }
+                    if(isBlockInterpolation) {
+                        while (index < value.length() && value.charAt(index) != '}') {
+                            interpolation += value.charAt(index);
+                            index++;
+                        }
+                        index++;
+//                        location++;
+                    } else {
+                        throw new ParseException("Invalid string interpolation! Expect }");
+                    }
+                } else if(index + 1 < length && Character.isLetter(value.charAt(index + 1))) {
+                    index++;
+                    interpolation += value.charAt(index);
+                    index++;
+                    while(index < length && Character.isLetterOrDigit(value.charAt(index))) {
+                        interpolation += value.charAt(index);
+                        index++;
+                    }
+                } else if(index + 1 < length && Character.isWhitespace(value.charAt(index + 1))){
+                    index++;
+                    location += 2;   // Now $ count
+                }
+                if(interpolation.length() > 0) {
+                    try {
+                        Tokenizer tokenizer = new Tokenizer(interpolation);
+                        Token[] tokens = tokenizer.tokenize().stream().toArray(Token[]::new);
+                        Parser parser = new Parser(tokens);
+                        ParseResult<Exp> result = parser.parseExp(0);
+                        map.put(location, result.result);
+                        temp = temp.replace(isBlockInterpolation ? "${" + interpolation + "}" : "$" + interpolation, "");
+                        isBlockInterpolation = false;
+                        interpolation = "";
+                    } catch (TokenizerException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } else {
+                index++;
+                location++;
+            }
+        }
+        return new ParseResult<Exp>(map.size() > 0 ? new StringExp(temp, map) : new StringExp(temp, null), startPos + 1);
+    }
 
     public  ParseResult<Exp> parseExp(final int startPos) throws ParseException {
         if(readToken(startPos) == KeywordToken.TK_IF) {
@@ -107,7 +168,7 @@ public class Parser {
             final ParseResult<Exp> condition = parseExp(startPos + 2);
             checkTokenIs(condition.nextPos, BracketsToken.TK_RPAREN);
             final ParseResult<Exp> ifTrue = parseExp(condition.nextPos + 1);
-            if(tokens.length > ifTrue.nextPos &&tokens[ifTrue.nextPos] == KeywordToken.TK_ELSE) {
+            if(tokens.length > ifTrue.nextPos && tokens[ifTrue.nextPos] == KeywordToken.TK_ELSE) {
                 final ParseResult<Exp> ifFalse = parseExp(ifTrue.nextPos + 1);
                 return new ParseResult<Exp>(new IfExp(condition.result, ifTrue.result, ifFalse.result),
                         ifFalse.nextPos);

@@ -18,5 +18,5 @@ public enum KeywordToken implements Token {
     TK_FALSE,        // false
     TK_MAIN,         // main
     TK_ARRAY_OF,     // arrayOf
-    TK_MUTABLELIST_OF      // listOf
+    TK_MUTABLE_LIST_OF,      // listOf
 }

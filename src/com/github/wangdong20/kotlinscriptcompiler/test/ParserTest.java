@@ -2,6 +2,9 @@ import com.github.wangdong20.kotlinscriptcompiler.parser.*;
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import org.junit.jupiter.api.Test;
+
+import java.util.HashMap;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class ParserTest {
@@ -73,6 +76,16 @@ class ParserTest {
                 new IntToken(1),
                 BinopToken.TK_PLUS,
                 new IntToken(2));
+    }
+
+    @Test
+    public void stringParses() throws ParseException {
+        HashMap<Integer, Exp> map = new HashMap();
+        map.put(5, new AdditiveExp(new VariableExp("a"), new VariableExp("b"), AdditiveOp.EXP_PLUS));
+        map.put(12, new VariableExp("b"));
+        map.put(32, new AdditiveExp(new VariableExp("a"), new VariableExp("b"), AdditiveOp.EXP_PLUS));
+        assertParses(new StringExp("a is , b is , c is $ c, sum is ", map),
+                new StringToken("a is ${a + b}, b is $b, c is $ c, sum is ${a + b}"));
     }
 
     @Test
