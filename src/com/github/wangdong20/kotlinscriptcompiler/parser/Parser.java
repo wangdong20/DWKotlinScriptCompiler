@@ -3,6 +3,7 @@ package com.github.wangdong20.kotlinscriptcompiler.parser;
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class Parser {
 
@@ -103,7 +104,7 @@ public class Parser {
         String temp = value;
         int index = 0;
         int location = 0;
-        HashMap<Integer, Exp> map = new HashMap<>();
+        LinkedHashMap<Integer, Exp> map = new LinkedHashMap<>();
         int length = value.length();
         String interpolation = "";
         boolean isBlockInterpolation = false;

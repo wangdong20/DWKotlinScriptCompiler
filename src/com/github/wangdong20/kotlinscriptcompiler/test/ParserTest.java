@@ -4,6 +4,7 @@ import com.github.wangdong20.kotlinscriptcompiler.token.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -80,7 +81,7 @@ class ParserTest {
 
     @Test
     public void stringParses() throws ParseException {
-        HashMap<Integer, Exp> map = new HashMap();
+        LinkedHashMap<Integer, Exp> map = new LinkedHashMap();
         map.put(5, new AdditiveExp(new VariableExp("a"), new VariableExp("b"), AdditiveOp.EXP_PLUS));
         map.put(12, new VariableExp("beer"));
         map.put(32, new AdditiveExp(new VariableExp("a"), new VariableExp("beer"), AdditiveOp.EXP_PLUS));

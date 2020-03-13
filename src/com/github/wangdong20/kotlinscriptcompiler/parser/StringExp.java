@@ -1,12 +1,13 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class StringExp implements Exp {
     private String strWithoutInterpolation;
-    private HashMap<Integer, Exp> interpolationExp;     // Integer is the interpolation expression position in String
+    private LinkedHashMap<Integer, Exp> interpolationExp;     // Integer is the interpolation expression position in String
 
-    public StringExp(String strWithoutInterpolation, HashMap<Integer, Exp> interpolationExp) {
+    public StringExp(String strWithoutInterpolation, LinkedHashMap<Integer, Exp> interpolationExp) {
         this.strWithoutInterpolation = strWithoutInterpolation;
         this.interpolationExp = interpolationExp;
     }
