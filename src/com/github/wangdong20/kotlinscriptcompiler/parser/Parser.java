@@ -2,7 +2,6 @@ package com.github.wangdong20.kotlinscriptcompiler.parser;
 
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class Parser {

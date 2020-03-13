@@ -1,6 +1,5 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class StringExp implements Exp {
@@ -16,7 +15,7 @@ public class StringExp implements Exp {
         return strWithoutInterpolation;
     }
 
-    public HashMap<Integer, Exp> getInterpolationExp() {
+    public LinkedHashMap<Integer, Exp> getInterpolationExp() {
         return interpolationExp;
     }
 
