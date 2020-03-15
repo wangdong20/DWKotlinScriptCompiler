@@ -81,8 +81,28 @@ class ParserTest {
 
     @Test
     public void additiveAndMultiplicativeParses() throws ParseException {
-        assertParses(new AdditiveExp(new AdditiveExp(new IntExp(1), new MultiplicativeExp(new IntExp(2),
-                new IntExp(3), MultiplicativeOp.OP_MULTIPLY), AdditiveOp.EXP_PLUS), new IntExp(4), AdditiveOp.EXP_PLUS),
+        assertParses(new AdditiveExp(new MultiplicativeExp(new MultiplicativeExp(new IntExp(1), new IntExp(2), MultiplicativeOp.OP_MULTIPLY),
+                new IntExp(3), MultiplicativeOp.OP_MULTIPLY), new MultiplicativeExp(new IntExp(4),
+                new IntExp(5), MultiplicativeOp.OP_DIVIDE), AdditiveOp.EXP_MINUS),
+                new IntToken(1),
+                BinopToken.TK_MULTIPLY,
+                new IntToken(2),
+                BinopToken.TK_MULTIPLY,
+                new IntToken(3),
+                BinopToken.TK_MINUS,
+                new IntToken(4),
+                BinopToken.TK_DIVIDE,
+                new IntToken(5));
+    }
+
+    @Test
+    public void variableCompareParses() throws ParseException {
+        assertParses(new ComparableExp(new VariableExp("index"), new AdditiveExp(new AdditiveExp(
+                new IntExp(1),
+                new MultiplicativeExp(new IntExp(2), new IntExp(3), MultiplicativeOp.OP_MULTIPLY),
+                AdditiveOp.EXP_PLUS), new IntExp(4), AdditiveOp.EXP_PLUS), ComparableOp.OP_GREATER_THAN),
+                new VariableToken("index"),
+                BinopToken.TK_GREATER_THAN,
                 new IntToken(1),
                 BinopToken.TK_PLUS,
                 new IntToken(2),

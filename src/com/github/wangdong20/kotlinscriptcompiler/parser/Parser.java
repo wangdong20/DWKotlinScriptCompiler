@@ -98,6 +98,56 @@ public class Parser {
         return parseMultiplicativeExpHelper(starting.nextPos, resultExp);
     }
 
+    public ParseResult<Exp> parseComparableExp(final int startPos, Exp leftExp) throws ParseException{
+        int curPos = startPos;
+        ParseResult<Exp> result = null;
+        ComparableOp op = null;
+
+        while(curPos < tokens.length) {
+            try {
+                Token t = checkTokenIsOr(curPos, BinopToken.TK_GREATER_THAN, BinopToken.TK_LESS_THAN,
+                        BinopToken.TK_GREATER_OR_EQUAL, BinopToken.TK_LESS_OR_EQUAL, BinopToken.TK_EQUAL_EQUAL,
+                        BinopToken.TK_NOT_EQUAL);
+
+                switch ((BinopToken)t) {
+                    case TK_GREATER_THAN:
+                        op = ComparableOp.OP_GREATER_THAN;
+                        break;
+                    case TK_LESS_THAN:
+                        op = ComparableOp.OP_LESS_THAN;
+                        break;
+                    case TK_GREATER_OR_EQUAL:
+                        op = ComparableOp.OP_GREATER_EQUAL;
+                        break;
+                    case TK_LESS_OR_EQUAL:
+                        op = ComparableOp.OP_LESS_EQUAL;
+                        break;
+                    case TK_EQUAL_EQUAL:
+                        op = ComparableOp.OP_EQUAL_EQUAL;
+                        break;
+                    case TK_NOT_EQUAL:
+                        op = ComparableOp.OP_NOT_EQUAL;
+                        break;
+                }
+                result =  parseMultiplicative(curPos + 1);
+                if(result.nextPos - startPos >= 1) {    // at least parse primary
+                    result = parseAdditiveExp(result.nextPos, result.result);
+                }
+                curPos = result.nextPos;
+            } catch (ParseException e) {
+                if(op != null) {
+                    throw new ParseException("Unable to parse right value in comparable expression!");
+                }
+                break;
+            }
+        }
+        if(result == null || result.nextPos - startPos < 1) {    // at least parse primary
+            return new ParseResult<>(leftExp, startPos);
+        } else {
+            return new ParseResult<>(new ComparableExp(leftExp, result.result, op), result.nextPos);
+        }
+    }
+
     public ParseResult<Exp> parsePrimary(final int startPos) throws ParseException {
         final Token tokenHere = readToken(startPos);
         if (tokenHere instanceof VariableToken) {
@@ -204,8 +254,9 @@ public class Parser {
 
         } else{
             ParseResult<Exp> result =  parseMultiplicative(startPos);
-            if(result.nextPos - startPos == 1) {    // Only parse primary
+            if(result.nextPos - startPos >= 1) {    // at least parse primary
                 result = parseAdditiveExp(result.nextPos, result.result);
+                result = parseComparableExp(result.nextPos, result.result);
                 return result;
             } else {
                 return result;

@@ -6,4 +6,5 @@ public enum ComparableOp {
     OP_GREATER_EQUAL,
     OP_LESS_EQUAL,
     OP_EQUAL_EQUAL,
+    OP_NOT_EQUAL
 }
