@@ -1,4 +1,4 @@
-package com.github.wangdong20.kotlinscriptcompiler.parser;
+package com.github.wangdong20.kotlinscriptcompiler.parser.expressions;
 
 import java.util.LinkedHashMap;
 

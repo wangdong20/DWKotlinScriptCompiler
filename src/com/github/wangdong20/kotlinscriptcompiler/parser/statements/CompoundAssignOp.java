@@ -1,4 +1,4 @@
-package com.github.wangdong20.kotlinscriptcompiler.parser;
+package com.github.wangdong20.kotlinscriptcompiler.parser.statements;
 
 public enum CompoundAssignOp {
     EXP_PLUS_EQUAL,         // +=

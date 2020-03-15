@@ -1,4 +1,4 @@
-package com.github.wangdong20.kotlinscriptcompiler.parser;
+package com.github.wangdong20.kotlinscriptcompiler.parser.expressions;
 
 public enum ComparableOp {
     OP_GREATER_THAN,

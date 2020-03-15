@@ -1,4 +1,5 @@
 import com.github.wangdong20.kotlinscriptcompiler.parser.*;
+import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import org.junit.jupiter.api.Test;

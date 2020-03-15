@@ -1,4 +1,7 @@
-package com.github.wangdong20.kotlinscriptcompiler.parser;
+package com.github.wangdong20.kotlinscriptcompiler.parser.statements;
+
+import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.Exp;
+import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.VariableExp;
 
 public class AssignStmt implements Stmt {
     private final Exp expression;

@@ -1,11 +1,11 @@
-package com.github.wangdong20.kotlinscriptcompiler.parser;
+package com.github.wangdong20.kotlinscriptcompiler.parser.expressions;
 
-public class ComparableExp implements Exp {
+public class MultiplicativeExp implements Exp {
     private final Exp left;
     private final Exp right;
-    private final ComparableOp op;
+    private final MultiplicativeOp op;
 
-    public ComparableExp(Exp left, Exp right, ComparableOp op) {
+    public MultiplicativeExp(Exp left, Exp right, MultiplicativeOp op) {
         this.left = left;
         this.right = right;
         this.op = op;
@@ -19,15 +19,15 @@ public class ComparableExp implements Exp {
         return right;
     }
 
-    public ComparableOp getOp() {
+    public MultiplicativeOp getOp() {
         return op;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof ComparableExp) {
-            if(((ComparableExp) obj).getLeft().equals(left) && ((ComparableExp) obj).getOp().equals(op)
-                && ((ComparableExp) obj).getRight().equals(right)) {
+        if(obj instanceof MultiplicativeExp) {
+            if(((MultiplicativeExp) obj).getLeft().equals(left) && ((MultiplicativeExp) obj).getOp().equals(op)
+                && ((MultiplicativeExp) obj).getRight().equals(right)) {
                 return true;
             }
         }
@@ -36,7 +36,7 @@ public class ComparableExp implements Exp {
 
     @Override
     public String toString() {
-        return "ComparableExp{" +
+        return "MultiplicativeExp{" +
                 "left=" + left +
                 ", right=" + right +
                 ", op=" + op +
