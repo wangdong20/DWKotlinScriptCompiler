@@ -80,6 +80,19 @@ class ParserTest {
     }
 
     @Test
+    public void additiveAndMultiplicativeParses() throws ParseException {
+        assertParses(new AdditiveExp(new AdditiveExp(new IntExp(1), new MultiplicativeExp(new IntExp(2),
+                new IntExp(3), MultiplicativeOp.OP_MULTIPLY), AdditiveOp.EXP_PLUS), new IntExp(4), AdditiveOp.EXP_PLUS),
+                new IntToken(1),
+                BinopToken.TK_PLUS,
+                new IntToken(2),
+                BinopToken.TK_MULTIPLY,
+                new IntToken(3),
+                BinopToken.TK_PLUS,
+                new IntToken(4));
+    }
+
+    @Test
     public void stringParses() throws ParseException {
         LinkedHashMap<Integer, Exp> map = new LinkedHashMap();
         map.put(5, new AdditiveExp(new VariableExp("a"), new VariableExp("b"), AdditiveOp.EXP_PLUS));

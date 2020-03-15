@@ -28,7 +28,7 @@ public class Parser {
         final Token tokenHere = readToken(position);
         if (!tokenHere.equals(token)) {
             throw new ParseException("Expected: " + token.toString() +
-                    "Received: " + tokens[position].toString());
+                    "\nReceived: " + tokens[position].toString());
         }
     }
 
@@ -58,7 +58,7 @@ public class Parser {
         while(curPos < tokens.length) {
             try {
                 Token t = checkTokenIsOr(curPos, BinopToken.TK_PLUS, BinopToken.TK_MINUS);
-                final ParseResult<Exp> curPrimary = parsePrimary(curPos + 1);
+                final ParseResult<Exp> curPrimary = parseMultiplicative(curPos + 1);
                 curPos = curPrimary.nextPos;
                 resultExp = new AdditiveExp(resultExp, curPrimary.result, (t == BinopToken.TK_PLUS) ? AdditiveOp.EXP_PLUS :
                         AdditiveOp.EXP_MINUS);
@@ -69,14 +69,33 @@ public class Parser {
         return new ParseResult<Exp>(resultExp, curPos);
     }
 
-    public ParseResult<Exp> parseAdditiveExp(final int startPos) throws ParseException {
-        final ParseResult<Exp> starting = parsePrimary(startPos);
-        Exp resultExp = starting.result;
-        return parseAdditiveExpHelper(starting.nextPos, resultExp);
+    public ParseResult<Exp> parseMultiplicativeExpHelper(final int startPos, final Exp leftExp) {
+        int curPos = startPos;
+        Exp resultExp = leftExp;
+
+        while(curPos < tokens.length) {
+            try {
+                Token t = checkTokenIsOr(curPos, BinopToken.TK_MULTIPLY, BinopToken.TK_DIVIDE);
+                final ParseResult<Exp> curPrimary = parsePrimary(curPos + 1);
+                curPos = curPrimary.nextPos;
+                resultExp = new MultiplicativeExp(resultExp, curPrimary.result, (t == BinopToken.TK_MULTIPLY) ? MultiplicativeOp.OP_MULTIPLY :
+                        MultiplicativeOp.OP_DIVIDE);
+            } catch (ParseException e) {
+                break;
+            }
+        }
+
+        return new ParseResult<Exp>(resultExp, curPos);
+    }
+
+    public ParseResult<Exp> parseAdditiveExp(final int startPos, Exp resultExp) {
+        return parseAdditiveExpHelper(startPos, resultExp);
     }
 
     public ParseResult<Exp> parseMultiplicative(final int startPos) throws ParseException {
-        return null;
+        final ParseResult<Exp> starting = parsePrimary(startPos);
+        Exp resultExp = starting.result;
+        return parseMultiplicativeExpHelper(starting.nextPos, resultExp);
     }
 
     public ParseResult<Exp> parsePrimary(final int startPos) throws ParseException {
@@ -88,10 +107,14 @@ public class Parser {
             final IntToken asInt = (IntToken) tokenHere;
             return new ParseResult<Exp>(new IntExp(asInt.getValue()), startPos + 1);
         } else if(tokenHere instanceof StringToken) {
-            final StringToken asString = (StringToken) tokenHere;
             return parseString(tokenHere, startPos);
-        }
-        else {
+        } else if(tokenHere == KeywordToken.TK_TRUE || tokenHere == KeywordToken.TK_FALSE) {
+            if(tokenHere == KeywordToken.TK_TRUE) {
+                return new ParseResult<>(new BooleanExp(true),startPos + 1);
+            } else {
+                return new ParseResult<>(new BooleanExp(false), startPos + 1);
+            }
+        } else {
             checkTokenIs(startPos, BracketsToken.TK_LPAREN);
             final ParseResult<Exp> inner = parseExp(startPos + 1);
             checkTokenIs(inner.nextPos, BracketsToken.TK_RPAREN);
@@ -179,8 +202,14 @@ public class Parser {
                         ifTrue.nextPos);
             }
 
-        } else {
-            return parseAdditiveExp(startPos);
+        } else{
+            ParseResult<Exp> result =  parseMultiplicative(startPos);
+            if(result.nextPos - startPos == 1) {    // Only parse primary
+                result = parseAdditiveExp(result.nextPos, result.result);
+                return result;
+            } else {
+                return result;
+            }
         }
     }
 
