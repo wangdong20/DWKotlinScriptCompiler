@@ -16,4 +16,22 @@ public class AssignStmt implements Stmt {
         this.expression = expression;
         this.variable = variable;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof AssignStmt) {
+            if(((AssignStmt) obj).getVariable().equals(variable) && ((AssignStmt) obj).getExpression().equals(expression)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return "AssignStmt{" +
+                "expression=" + expression +
+                ", variable=" + variable +
+                '}';
+    }
 }

@@ -30,4 +30,27 @@ public class IfStmt implements Stmt {
     public List<Stmt> getFalseBranch() {
         return falseBranch;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof IfStmt) {
+            if(((IfStmt) obj).getCondition().equals(condition) &&
+                    ((IfStmt) obj).getTrueBranch().equals(trueBranch)) {
+                if((((IfStmt) obj).getFalseBranch() == null && falseBranch == null) ||
+                        ((IfStmt) obj).getFalseBranch().equals(falseBranch)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return "IfStmt{" +
+                "condition=" + condition +
+                ", trueBranch=" + trueBranch +
+                ", falseBranch=" + falseBranch +
+                '}';
+    }
 }

@@ -1,20 +1,20 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser;
 
-public class BooleanExp implements Exp {
-    private final boolean value;
+public class NotExp implements Exp {
+    private final Exp value;
 
-    public BooleanExp(boolean value) {
+    public NotExp(Exp value) {
         this.value = value;
     }
 
-    public boolean getValue() {
+    public Exp getValue() {
         return value;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof BooleanExp) {
-            if(((BooleanExp) obj).getValue() == value) {
+        if(obj instanceof NotExp) {
+            if(((NotExp) obj).getValue().equals(value)) {
                 return true;
             }
         }
@@ -23,7 +23,7 @@ public class BooleanExp implements Exp {
 
     @Override
     public String toString() {
-        return "BooleanExp{" +
+        return "NotExp{" +
                 "value=" + value +
                 '}';
     }
