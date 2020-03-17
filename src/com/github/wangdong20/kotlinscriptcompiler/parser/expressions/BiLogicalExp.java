@@ -17,7 +17,7 @@ public class BiLogicalExp implements Exp {
         return right;
     }
 
-    public BiLogicalExp(BooleanExp left, BooleanExp right, BiLogicalOp op) {
+    public BiLogicalExp(Exp left, Exp right, BiLogicalOp op) {
         this.left = left;
         this.right = right;
         this.op = op;

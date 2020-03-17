@@ -103,7 +103,7 @@ public class Parser {
         ParseResult<Exp> result = null;
         ComparableOp op = null;
 
-        while(curPos < tokens.length) {
+        if(curPos < tokens.length) {
             try {
                 Token t = checkTokenIsOr(curPos, BinopToken.TK_GREATER_THAN, BinopToken.TK_LESS_THAN,
                         BinopToken.TK_GREATER_OR_EQUAL, BinopToken.TK_LESS_OR_EQUAL, BinopToken.TK_EQUAL_EQUAL,
@@ -133,12 +133,11 @@ public class Parser {
                 if(result.nextPos - startPos >= 1) {    // at least parse primary
                     result = parseAdditiveExp(result.nextPos, result.result);
                 }
-                curPos = result.nextPos;
+
             } catch (ParseException e) {
                 if(op != null) {
                     throw new ParseException("Unable to parse right value in comparable expression!");
                 }
-                break;
             }
         }
         if(result == null || result.nextPos - startPos < 1) {    // at least parse primary
@@ -148,14 +147,48 @@ public class Parser {
         }
     }
 
+    public ParseResult<Exp> parseBilogicalExp(final int startPos, Exp leftExp) throws ParseException{
+        int curPos = startPos;
+        ParseResult<Exp> result = null;
+        BiLogicalOp op = null;
+
+        while(curPos < tokens.length) {
+            try {
+                Token t = checkTokenIsOr(curPos, BinopToken.TK_AND, BinopToken.TK_OR);
+
+                switch ((BinopToken)t) {
+                    case TK_AND:
+                        op = BiLogicalOp.OP_AND;
+                        break;
+                    case TK_OR:
+                        op = BiLogicalOp.OP_OR;
+                        break;
+                }
+                result =  parseMultiplicative(curPos + 1);
+                if(result.nextPos - startPos >= 1) {    // at least parse primary
+                    result = parseAdditiveExp(result.nextPos, result.result);
+                    result = parseComparableExp(result.nextPos, result.result);
+                }
+                curPos = result.nextPos;
+            } catch (ParseException e) {
+                break;
+            }
+        }
+        if(result == null || result.nextPos - startPos < 1) {    // at least parse primary
+            return new ParseResult<>(leftExp, startPos);
+        } else {
+            return new ParseResult<>(new BiLogicalExp(leftExp, result.result, op), result.nextPos);
+        }
+    }
+
     public ParseResult<Exp> parsePrimary(final int startPos) throws ParseException {
         final Token tokenHere = readToken(startPos);
         if (tokenHere instanceof VariableToken) {
             final VariableToken asVar = (VariableToken)tokenHere;
-            return new ParseResult<Exp>(new VariableExp(asVar.getName()), startPos + 1);
+            return new ParseResult<>(new VariableExp(asVar.getName()), startPos + 1);
         } else if(tokenHere instanceof IntToken) {
             final IntToken asInt = (IntToken) tokenHere;
-            return new ParseResult<Exp>(new IntExp(asInt.getValue()), startPos + 1);
+            return new ParseResult<>(new IntExp(asInt.getValue()), startPos + 1);
         } else if(tokenHere instanceof StringToken) {
             return parseString(tokenHere, startPos);
         } else if(tokenHere == KeywordToken.TK_TRUE || tokenHere == KeywordToken.TK_FALSE) {
@@ -168,7 +201,7 @@ public class Parser {
             checkTokenIs(startPos, BracketsToken.TK_LPAREN);
             final ParseResult<Exp> inner = parseExp(startPos + 1);
             checkTokenIs(inner.nextPos, BracketsToken.TK_RPAREN);
-            return new ParseResult<Exp>(inner.result,
+            return new ParseResult<>(inner.result,
                     inner.nextPos + 1);
         }
     }
@@ -257,6 +290,7 @@ public class Parser {
             if(result.nextPos - startPos >= 1) {    // at least parse primary
                 result = parseAdditiveExp(result.nextPos, result.result);
                 result = parseComparableExp(result.nextPos, result.result);
+                result = parseBilogicalExp(result.nextPos, result.result);
                 return result;
             } else {
                 return result;
