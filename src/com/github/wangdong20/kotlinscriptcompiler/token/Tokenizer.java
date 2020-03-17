@@ -333,9 +333,35 @@ public class Tokenizer {
         }
     }
 
+    private void skipComment() {
+        if(inputPos < input.length) {
+            // "//" comment case
+            if(input[inputPos] == '/' && inputPos + 1 < input.length && input[inputPos + 1] == '/') {
+                inputPos += 2;
+                while(inputPos < input.length && input[inputPos] != '\n') {
+                    inputPos++;
+                }
+            }
+            // "/*  */" comment case
+            else if(input[inputPos] == '/' && inputPos + 1 < input.length && input[inputPos + 1] == '*') {
+                inputPos += 2;
+                while(inputPos < input.length) {
+                    if(input[inputPos] == '*' && inputPos + 1 < input.length && input[inputPos + 1] == '/') {
+                        inputPos += 2;
+                        break;
+                    } else {
+                        inputPos++;
+                    }
+                }
+            }
+        }
+    }
+
     public List<Token> tokenize() throws TokenizerException {
         List<Token> tokens = new ArrayList<Token>();
         while(inputPos < input.length) {
+            skipWhiteSpace();
+            skipComment();
             skipWhiteSpace();
             if(inputPos < input.length) {
                 tokens.add(tokenizeOne());

@@ -115,8 +115,24 @@ public class TokenizerTest {
                 BracketsToken.TK_RCURLY);
     }
 
+    public static void testSingleLineComment() throws TokenizerException {
+        testTokenizes("// For loop \nfor(i in a) {print(i)}", SymbolToken.TK_LINE_BREAK, KeywordToken.TK_FOR, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), KeywordToken.TK_IN, new VariableToken("a"),
+                BracketsToken.TK_RPAREN, BracketsToken.TK_LCURLY, KeywordToken.TK_PRINT,
+                BracketsToken.TK_LPAREN, new VariableToken("i"), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_RCURLY);
+    }
+
+    public static void testMultipleLineComment() throws TokenizerException {
+        testTokenizes("/** For loop \n Mutiple line comment\n*/\nfor(i in a) {print(i)}", SymbolToken.TK_LINE_BREAK, KeywordToken.TK_FOR, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), KeywordToken.TK_IN, new VariableToken("a"),
+                BracketsToken.TK_RPAREN, BracketsToken.TK_LCURLY, KeywordToken.TK_PRINT,
+                BracketsToken.TK_LPAREN, new VariableToken("i"), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_RCURLY);
+    }
+
     public static void testOperator() throws TokenizerException {
-        testTokenizes("var a = 1\n a += 2; a++; a--; a*=2; a /= 2; a = a % 2; if(a > 1) return true;",
+        testTokenizes("var a = 1// define a\n a += 2; a++; a--; a*=2; a /= 2; a = a % 2; if(a > 1) return true;",
             KeywordToken.TK_VAR, new VariableToken("a"), BinopToken.TK_EQUAL, new IntToken(1), SymbolToken.TK_LINE_BREAK,
                 new VariableToken("a"), BinopToken.TK_PLUS_EQUAL, new IntToken(2), SymbolToken.TK_SEMICOLON,
                 new VariableToken("a"), UnopToken.TK_PLUS_PLUS, SymbolToken.TK_SEMICOLON,
@@ -149,6 +165,8 @@ public class TokenizerTest {
         testStringToken();
 //        testBreakString();
         testForLoopToken();
+        testSingleLineComment();
+        testMultipleLineComment();
         testOperator();
     }
 
