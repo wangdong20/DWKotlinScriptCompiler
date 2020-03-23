@@ -98,6 +98,17 @@ public class Parser {
         return parseMultiplicativeExpHelper(starting.nextPos, resultExp);
     }
 
+    public ParseResult<Exp> parseNotExp(final int startPos) throws ParseException {
+        Token t = readToken(startPos);
+        if(t == UnopToken.TK_NOT) {
+            ParseResult<Exp> result = parseMultiplicative(startPos + 1);
+            Exp resultExp = new NotExp(result.result);
+            return new ParseResult<>(resultExp, result.nextPos);
+        } else {
+            return parseMultiplicative(startPos + 1);
+        }
+    }
+
     public ParseResult<Exp> parseComparableExp(final int startPos, Exp leftExp) throws ParseException{
         int curPos = startPos;
         ParseResult<Exp> result = null;
