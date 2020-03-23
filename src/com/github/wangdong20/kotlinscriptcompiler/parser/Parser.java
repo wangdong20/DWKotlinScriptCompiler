@@ -58,7 +58,7 @@ public class Parser {
         while(curPos < tokens.length) {
             try {
                 Token t = checkTokenIsOr(curPos, BinopToken.TK_PLUS, BinopToken.TK_MINUS);
-                final ParseResult<Exp> curPrimary = parseMultiplicative(curPos + 1);
+                final ParseResult<Exp> curPrimary = parseNotExp(curPos + 1);
                 curPos = curPrimary.nextPos;
                 resultExp = new AdditiveExp(resultExp, curPrimary.result, (t == BinopToken.TK_PLUS) ? AdditiveOp.EXP_PLUS :
                         AdditiveOp.EXP_MINUS);
@@ -105,7 +105,7 @@ public class Parser {
             Exp resultExp = new NotExp(result.result);
             return new ParseResult<>(resultExp, result.nextPos);
         } else {
-            return parseMultiplicative(startPos + 1);
+            return parseMultiplicative(startPos);
         }
     }
 
@@ -140,7 +140,7 @@ public class Parser {
                         op = ComparableOp.OP_NOT_EQUAL;
                         break;
                 }
-                result =  parseMultiplicative(curPos + 1);
+                result =  parseNotExp(curPos + 1);
                 if(result.nextPos - startPos >= 1) {    // at least parse primary
                     result = parseAdditiveExp(result.nextPos, result.result);
                 }
@@ -175,7 +175,7 @@ public class Parser {
                         op = BiLogicalOp.OP_OR;
                         break;
                 }
-                result =  parseMultiplicative(curPos + 1);
+                result =  parseNotExp(curPos + 1);
                 if(result.nextPos - startPos >= 1) {    // at least parse primary
                     result = parseAdditiveExp(result.nextPos, result.result);
                     result = parseComparableExp(result.nextPos, result.result);
@@ -297,7 +297,7 @@ public class Parser {
             }
 
         } else{
-            ParseResult<Exp> result =  parseMultiplicative(startPos);
+            ParseResult<Exp> result =  parseNotExp(startPos);
             if(result.nextPos - startPos >= 1) {    // at least parse primary
                 result = parseAdditiveExp(result.nextPos, result.result);
                 result = parseComparableExp(result.nextPos, result.result);
