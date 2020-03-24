@@ -72,14 +72,25 @@ public class Parser {
     public ParseResult<Exp> parseMultiplicativeExpHelper(final int startPos, final Exp leftExp) {
         int curPos = startPos;
         Exp resultExp = leftExp;
+        MultiplicativeOp op = null;
 
         while(curPos < tokens.length) {
             try {
-                Token t = checkTokenIsOr(curPos, BinopToken.TK_MULTIPLY, BinopToken.TK_DIVIDE);
+                Token t = checkTokenIsOr(curPos, BinopToken.TK_MULTIPLY, BinopToken.TK_DIVIDE, BinopToken.TK_MOD);
                 final ParseResult<Exp> curPrimary = parsePrimary(curPos + 1);
                 curPos = curPrimary.nextPos;
-                resultExp = new MultiplicativeExp(resultExp, curPrimary.result, (t == BinopToken.TK_MULTIPLY) ? MultiplicativeOp.OP_MULTIPLY :
-                        MultiplicativeOp.OP_DIVIDE);
+                switch ((BinopToken)t) {
+                    case TK_MULTIPLY:
+                        op = MultiplicativeOp.OP_MULTIPLY;
+                        break;
+                    case TK_DIVIDE:
+                        op = MultiplicativeOp.OP_DIVIDE;
+                        break;
+                    case TK_MOD:
+                        op = MultiplicativeOp.OP_MOD;
+                        break;
+                }
+                resultExp = new MultiplicativeExp(resultExp, curPrimary.result, op);
             } catch (ParseException e) {
                 break;
             }

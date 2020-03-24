@@ -121,12 +121,12 @@ class ParserTest {
     @Test
     public void additiveAndMultiplicativeParses() throws ParseException {
         assertParses(new AdditiveExp(new MultiplicativeExp(new MultiplicativeExp(new IntExp(1), new IntExp(2), MultiplicativeOp.OP_MULTIPLY),
-                new IntExp(3), MultiplicativeOp.OP_MULTIPLY), new MultiplicativeExp(new IntExp(4),
+                new IntExp(3), MultiplicativeOp.OP_MOD), new MultiplicativeExp(new IntExp(4),
                 new IntExp(5), MultiplicativeOp.OP_DIVIDE), AdditiveOp.EXP_MINUS),
                 new IntToken(1),
                 BinopToken.TK_MULTIPLY,
                 new IntToken(2),
-                BinopToken.TK_MULTIPLY,
+                BinopToken.TK_MOD,
                 new IntToken(3),
                 BinopToken.TK_MINUS,
                 new IntToken(4),
