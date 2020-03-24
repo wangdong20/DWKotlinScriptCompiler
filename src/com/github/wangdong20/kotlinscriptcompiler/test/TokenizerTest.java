@@ -1,4 +1,4 @@
-package com.github.wangdong20.kotlinscriptcompiler.token;
+import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import java.util.ArrayList;
 import java.util.List;
