@@ -4,7 +4,9 @@ import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.Stmt;
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 public class Parser {
 
@@ -293,7 +295,8 @@ public class Parser {
     }
 
     public  ParseResult<Exp> parseExp(final int startPos) throws ParseException {
-        if(readToken(startPos) == KeywordToken.TK_IF) {
+        final Token tokenHere = readToken(startPos);
+        if(tokenHere == KeywordToken.TK_IF) {
             checkTokenIs(startPos + 1, BracketsToken.TK_LPAREN);
             final ParseResult<Exp> condition = parseExp(startPos + 2);
             checkTokenIs(condition.nextPos, BracketsToken.TK_RPAREN);
@@ -307,7 +310,29 @@ public class Parser {
                         ifTrue.nextPos);
             }
 
-        } else{
+        } else if(tokenHere == KeywordToken.TK_ARRAY_OF || tokenHere == KeywordToken.TK_MUTABLE_LIST_OF) {
+            checkTokenIs(startPos + 1, BracketsToken.TK_LPAREN);
+            int pos = startPos + 2;
+            List<Exp> expList = new ArrayList<>();
+            ParseResult<Exp> temp;
+            while(readToken(pos) != BracketsToken.TK_RPAREN) {
+                temp = parsePrimary(pos);
+                expList.add(temp.result);
+                if(readToken(temp.nextPos) == SymbolToken.TK_COMMA) {
+                    pos = temp.nextPos + 1;
+                } else {
+                    break;
+                }
+            }
+            checkTokenIs(pos, BracketsToken.TK_RPAREN);
+            if(expList.size() <= 0) {
+                throw new ParseException("At least one element in arrayOf!");
+            }
+            return new ParseResult<>(tokenHere == KeywordToken.TK_ARRAY_OF ? new ArrayOfExp(expList) : new MutableListOfExp(expList), pos + 1);
+        } else if(tokenHere == TypeToken.TK_ARRAY) {
+            return null;
+        }
+        else {
             ParseResult<Exp> result =  parseNotExp(startPos);
             if(result.nextPos - startPos >= 1) {    // at least parse primary
                 result = parseAdditiveExp(result.nextPos, result.result);
