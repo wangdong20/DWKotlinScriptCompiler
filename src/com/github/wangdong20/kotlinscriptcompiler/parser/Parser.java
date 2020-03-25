@@ -321,12 +321,13 @@ public class Parser {
                 if(readToken(temp.nextPos) == SymbolToken.TK_COMMA) {
                     pos = temp.nextPos + 1;
                 } else {
+                    pos = temp.nextPos;
                     break;
                 }
             }
             checkTokenIs(pos, BracketsToken.TK_RPAREN);
             if(expList.size() <= 0) {
-                throw new ParseException("At least one element in arrayOf!");
+                throw new ParseException("At least one element in " + (tokenHere == KeywordToken.TK_ARRAY_OF ? "arrayOf!" : "listOf!"));
             }
             return new ParseResult<>(tokenHere == KeywordToken.TK_ARRAY_OF ? new ArrayOfExp(expList) : new MutableListOfExp(expList), pos + 1);
         } else if(tokenHere == TypeToken.TK_ARRAY) {

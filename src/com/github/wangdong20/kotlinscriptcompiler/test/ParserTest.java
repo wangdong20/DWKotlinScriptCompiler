@@ -4,7 +4,9 @@ import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -69,6 +71,34 @@ class ParserTest {
                 new IntToken(1),
                 BracketsToken.TK_RPAREN,
                 new IntToken(2));
+    }
+
+    @Test
+    public void arrayOfParses() throws ParseException {
+        List<Exp> expList = new ArrayList<>();
+        expList.add(new IntExp(1));
+        expList.add(new IntExp(2));
+        expList.add(new IntExp(3));
+        expList.add(new StringExp("abc", null));
+        expList.add(new IntExp(5));
+        assertParses(new ArrayOfExp(expList),
+                KeywordToken.TK_ARRAY_OF, BracketsToken.TK_LPAREN, new IntToken(1), SymbolToken.TK_COMMA,
+                new IntToken(2), SymbolToken.TK_COMMA, new IntToken(3), SymbolToken.TK_COMMA,
+                new StringToken("abc"), SymbolToken.TK_COMMA, new IntToken(5), BracketsToken.TK_RPAREN);
+    }
+
+    @Test
+    public void mutableListOfParses() throws ParseException {
+        List<Exp> expList = new ArrayList<>();
+        expList.add(new IntExp(1));
+        expList.add(new IntExp(2));
+        expList.add(new IntExp(3));
+        expList.add(new StringExp("abc", null));
+        expList.add(new IntExp(5));
+        assertParses(new MutableListOfExp(expList),
+                KeywordToken.TK_MUTABLE_LIST_OF, BracketsToken.TK_LPAREN, new IntToken(1), SymbolToken.TK_COMMA,
+                new IntToken(2), SymbolToken.TK_COMMA, new IntToken(3), SymbolToken.TK_COMMA,
+                new StringToken("abc"), SymbolToken.TK_COMMA, new IntToken(5), BracketsToken.TK_RPAREN);
     }
 
     @Test
