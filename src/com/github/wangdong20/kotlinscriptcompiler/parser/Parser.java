@@ -2,6 +2,9 @@ package com.github.wangdong20.kotlinscriptcompiler.parser;
 
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.Stmt;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.BasicType;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.TypeArray;
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import java.util.ArrayList;
@@ -294,6 +297,48 @@ public class Parser {
         return new ParseResult<Exp>(map.size() > 0 ? new StringExp(temp, map) : new StringExp(temp, null), startPos + 1);
     }
 
+    public ParseResult<Exp> parseLambdaExp(final int startPos) throws ParseException {
+        checkTokenIs(startPos, BracketsToken.TK_LCURLY);
+        Token tokenHere;
+        VariableExp variableExp = null;
+        Type type = null;
+        int pos = startPos + 1;
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
+        while((tokenHere = readToken(pos)) != SymbolToken.TK_ARROW) {
+            if (tokenHere instanceof VariableToken) {
+                variableExp = new VariableExp(((VariableToken)tokenHere).getName());
+                pos++;
+                tokenHere = readToken(pos);
+                if(tokenHere == SymbolToken.TK_COLON) {
+                    pos++;
+                    tokenHere = readToken(pos);
+                    switch ((TypeToken)tokenHere) {
+                        case TK_TYPE_INT:
+                            type = BasicType.TYPE_INT;
+                            break;
+                        case TK_TYPE_STRING:
+                            type = BasicType.TYPE_STRING;
+                            break;
+                        case TK_TYPE_BOOLEAN:
+                            type = BasicType.TYPE_BOOLEAN;
+                            break;
+                    }
+                    parameterList.put(variableExp, type);
+                    pos++;
+                    if(readToken(pos) != SymbolToken.TK_COMMA) {
+                        break;
+                    } else {
+                        pos++;
+                    }
+                }
+            }
+        }
+        checkTokenIs(pos, SymbolToken.TK_ARROW);
+        ParseResult<Exp> returnExp = parseExp(pos + 1);
+        checkTokenIs(returnExp.nextPos, BracketsToken.TK_RCURLY);
+        return new ParseResult<>(new LambdaExp(parameterList, returnExp.result), returnExp.nextPos + 1);
+    }
+
     public  ParseResult<Exp> parseExp(final int startPos) throws ParseException {
         final Token tokenHere = readToken(startPos);
         if(tokenHere == KeywordToken.TK_IF) {
@@ -332,6 +377,8 @@ public class Parser {
             return new ParseResult<>(tokenHere == KeywordToken.TK_ARRAY_OF ? new ArrayOfExp(expList) : new MutableListOfExp(expList), pos + 1);
         } else if(tokenHere == TypeToken.TK_ARRAY) {
             return null;
+        } else if(tokenHere == BracketsToken.TK_LCURLY) {
+            return parseLambdaExp(startPos);    // Include TK_LCURLY
         }
         else {
             ParseResult<Exp> result =  parseNotExp(startPos);

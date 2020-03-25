@@ -1,5 +1,7 @@
 import com.github.wangdong20.kotlinscriptcompiler.parser.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.BasicType;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import org.junit.jupiter.api.Test;
@@ -99,6 +101,19 @@ class ParserTest {
                 KeywordToken.TK_MUTABLE_LIST_OF, BracketsToken.TK_LPAREN, new IntToken(1), SymbolToken.TK_COMMA,
                 new IntToken(2), SymbolToken.TK_COMMA, new IntToken(3), SymbolToken.TK_COMMA,
                 new StringToken("abc"), SymbolToken.TK_COMMA, new IntToken(5), BracketsToken.TK_RPAREN);
+    }
+
+    @Test
+    public void lambdaExpParses() throws ParseException {
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
+        parameterList.put(new VariableExp("b"), BasicType.TYPE_INT);
+        assertParses(new LambdaExp(parameterList, new AdditiveExp(new VariableExp("a"),
+                new VariableExp("b"), AdditiveOp.EXP_PLUS)),
+                BracketsToken.TK_LCURLY, new VariableToken("a"), SymbolToken.TK_COLON,
+                TypeToken.TK_TYPE_INT, SymbolToken.TK_COMMA, new VariableToken("b"), SymbolToken.TK_COLON,
+                TypeToken.TK_TYPE_INT, SymbolToken.TK_ARROW, new VariableToken("a"), BinopToken.TK_PLUS,
+                new VariableToken("b"), BracketsToken.TK_RCURLY);
     }
 
     @Test

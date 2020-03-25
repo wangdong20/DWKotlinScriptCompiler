@@ -23,6 +23,11 @@ public class VariableExp implements Exp {
     }
 
     @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
     public String toString() {
         return "VariableExp{" +
                 "name='" + name + '\'' +
