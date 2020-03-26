@@ -89,6 +89,7 @@ public class Tokenizer {
         typeMap.put("Unit", TypeToken.TK_TYPE_UNIT);
         typeMap.put("Array", TypeToken.TK_ARRAY);
         typeMap.put("MutableList", TypeToken.TK_MUTABLE_LIST);
+        typeMap.put("Any", TypeToken.TK_ANY);
         // I think high order function token will be a class not a enum case, so will not add this token
     }
 

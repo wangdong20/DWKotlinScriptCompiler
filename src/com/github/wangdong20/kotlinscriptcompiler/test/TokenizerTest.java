@@ -86,9 +86,9 @@ public class TokenizerTest {
     }
 
     public static void testTypeToken() throws TokenizerException {
-        testTokenizes(" Int String Boolean Unit Array MutableList ", TypeToken.TK_TYPE_INT,
+        testTokenizes(" Int String Boolean Unit Array MutableList Any", TypeToken.TK_TYPE_INT,
                 TypeToken.TK_TYPE_STRING, TypeToken.TK_TYPE_BOOLEAN, TypeToken.TK_TYPE_UNIT,
-                TypeToken.TK_ARRAY, TypeToken.TK_MUTABLE_LIST);
+                TypeToken.TK_ARRAY, TypeToken.TK_MUTABLE_LIST, TypeToken.TK_ANY);
     }
 
     public static void testBooleanToken() throws TokenizerException {

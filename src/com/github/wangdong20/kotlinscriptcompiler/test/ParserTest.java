@@ -14,12 +14,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ParserTest {
 
-    public static void assertParses(final Exp expected,
+    private static void assertParses(final Exp expected,
                                     final Token... tokens) throws ParseException {
         assertEquals(expected, (new Parser(tokens)).parseToplevelExp());
     } // assertParses
 
-    public static void assertExpectedException(final Exp expected, final Token... tokens) {
+    private static void assertExpectedException(final Exp expected, final Token... tokens) {
         assertThrows(ParseException.class,
                 ()->{
                     assertEquals(expected, (new Parser(tokens)).parseToplevelExp());

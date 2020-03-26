@@ -4,7 +4,6 @@ import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.Stmt;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.BasicType;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
-import com.github.wangdong20.kotlinscriptcompiler.parser.type.TypeArray;
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import java.util.ArrayList;
@@ -332,6 +331,8 @@ public class Parser {
                     pos++;
                 }
             }
+            type = null;
+            variableExp = null;
         }
         checkTokenIs(pos, SymbolToken.TK_ARROW);
         ParseResult<Exp> returnExp = parseExp(pos + 1);

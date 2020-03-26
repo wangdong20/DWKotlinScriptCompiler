@@ -7,5 +7,6 @@ public enum TypeToken implements Token {
     TK_TYPE_UNIT,
     TK_ARRAY,
     TK_MUTABLE_LIST,
+    TK_ANY,
     TK_HIGH_ORDER_FUNCTION
 }
