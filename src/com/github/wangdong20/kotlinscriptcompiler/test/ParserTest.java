@@ -76,6 +76,7 @@ class ParserTest {
     }
 
     @Test
+    // arrayOf(1,2,3,"abc",5)
     public void arrayOfParses() throws ParseException {
         List<Exp> expList = new ArrayList<>();
         expList.add(new IntExp(1));
@@ -90,6 +91,7 @@ class ParserTest {
     }
 
     @Test
+    // mutableListOf(1,2,3,"abc",5)
     public void mutableListOfParses() throws ParseException {
         List<Exp> expList = new ArrayList<>();
         expList.add(new IntExp(1));
@@ -104,6 +106,7 @@ class ParserTest {
     }
 
     @Test
+    // {a: Int, b: Int -> a + b}
     public void lambdaExpParses() throws ParseException {
         LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
         parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
@@ -117,6 +120,22 @@ class ParserTest {
     }
 
     @Test
+    // Array(10, {i -> "s" + i * 2})
+    public void arrayExpParses() throws ParseException {
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        parameterList.put(new VariableExp("i"), null);
+        assertParses(new ArrayExp(new IntExp(10), new LambdaExp(parameterList,
+                new AdditiveExp(new StringExp("s", null),
+                        new MultiplicativeExp(new VariableExp("i"), new IntExp(2),
+                                MultiplicativeOp.OP_MULTIPLY), AdditiveOp.EXP_PLUS))),
+                TypeToken.TK_ARRAY, BracketsToken.TK_LPAREN, new IntToken(10),
+                SymbolToken.TK_COMMA, BracketsToken.TK_LCURLY, new VariableToken("i"),
+                SymbolToken.TK_ARROW, new StringToken("s"), BinopToken.TK_PLUS,
+                new VariableToken("i"), BinopToken.TK_MULTIPLY, new IntToken(2),
+                BracketsToken.TK_RCURLY, BracketsToken.TK_RPAREN);
+    }
+
+    @Test
     public void plusParses() throws ParseException {
         assertParses(new AdditiveExp(new IntExp(1), new IntExp(2), AdditiveOp.EXP_PLUS),
                 new IntToken(1),
@@ -125,11 +144,13 @@ class ParserTest {
     }
 
     @Test
+    // !flag
     public void notVariableParses() throws ParseException {
         assertParses(new NotExp(new VariableExp("flag")), UnopToken.TK_NOT, new VariableToken("flag"));
     }
 
     @Test
+    // !(a > 3 + 2 * 4 && false)
     public void notBilogicalParses() throws ParseException {
         assertParses(new NotExp(new BiLogicalExp(new ComparableExp(new VariableExp("a"), new AdditiveExp(new IntExp(3),
                         new MultiplicativeExp(new IntExp(2), new IntExp(4), MultiplicativeOp.OP_MULTIPLY),
@@ -139,6 +160,7 @@ class ParserTest {
     }
 
     @Test
+    // 2 + !1 > 3
     public void notPrimaryParses() throws ParseException {
         assertParses(new ComparableExp(new AdditiveExp(new IntExp(2), new NotExp(new IntExp(1)), AdditiveOp.EXP_PLUS),
                 new IntExp(3), ComparableOp.OP_GREATER_THAN),
@@ -147,6 +169,7 @@ class ParserTest {
     }
 
     @Test
+    // flag || 1 + !false
     public void bilogicalNotParses() throws ParseException {
         assertParses(new BiLogicalExp(new VariableExp("flag"), new AdditiveExp(new IntExp(1),
                 new NotExp(new BooleanExp(false)), AdditiveOp.EXP_PLUS), BiLogicalOp.OP_OR),
@@ -155,6 +178,7 @@ class ParserTest {
     }
 
     @Test
+    // a > 3 + 2 * 4 && false
     public void bilogicalParses() throws ParseException {
         assertParses(new BiLogicalExp(new ComparableExp(new VariableExp("a"), new AdditiveExp(new IntExp(3),
                 new MultiplicativeExp(new IntExp(2), new IntExp(4), MultiplicativeOp.OP_MULTIPLY),
@@ -164,6 +188,7 @@ class ParserTest {
     }
 
     @Test
+    // 1 * 2 %3 - 4 / 5
     public void additiveAndMultiplicativeParses() throws ParseException {
         assertParses(new AdditiveExp(new MultiplicativeExp(new MultiplicativeExp(new IntExp(1), new IntExp(2), MultiplicativeOp.OP_MULTIPLY),
                 new IntExp(3), MultiplicativeOp.OP_MOD), new MultiplicativeExp(new IntExp(4),
@@ -180,6 +205,7 @@ class ParserTest {
     }
 
     @Test
+    // index > 1 + 2 * 3 + 4
     public void variableCompareParses() throws ParseException {
         assertParses(new ComparableExp(new VariableExp("index"), new AdditiveExp(new AdditiveExp(
                 new IntExp(1),

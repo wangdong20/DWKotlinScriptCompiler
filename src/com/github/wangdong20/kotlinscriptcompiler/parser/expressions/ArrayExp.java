@@ -1,5 +1,8 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser.expressions;
 
+/**
+ * ArrayExp initial an array with ArrayExp, for instance var b = Array(10, {i -> "s" + i * 2})
+ */
 public class ArrayExp implements Exp {
     private final IntExp size;
     private final LambdaExp lambdaExp;
