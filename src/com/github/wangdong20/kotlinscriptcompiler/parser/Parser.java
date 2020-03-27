@@ -209,8 +209,41 @@ public class Parser {
 
     public ParseResult<Exp> parsePrimary(final int startPos) throws ParseException {
         final Token tokenHere = readToken(startPos);
+        // We will consider variable or function variable instance as primary
         if (tokenHere instanceof VariableToken) {
             final VariableToken asVar = (VariableToken)tokenHere;
+            if(startPos + 1 < tokens.length) {  // we dont want throw exception now.
+                Token next = readToken(startPos + 1);
+                Token temp = null;
+                List<Exp> parameterList = new ArrayList<>();
+                VariableExp funcName = new VariableExp(asVar.getName());
+                int pos = startPos + 2;
+                if(next == BracketsToken.TK_LPAREN) {
+                    while((temp = readToken(pos)) != BracketsToken.TK_RPAREN) {
+                        if(temp instanceof VariableToken) {
+                            parameterList.add(new VariableExp(((VariableToken) temp).getName()));
+                        } else if(temp instanceof IntToken) {
+                            parameterList.add(new IntExp(((IntToken) temp).getValue()));
+                        } else if(temp instanceof StringToken) {
+                            parameterList.add(parseString(temp, pos).result);
+                        } else if(temp == KeywordToken.TK_TRUE || temp == KeywordToken.TK_FALSE) {
+                            parameterList.add(new BooleanExp(temp == KeywordToken.TK_TRUE ? true : false));
+                        } else {
+                            throw new ParseException("Unsupport function parameter!");
+                        }
+                        pos++;
+                        if(readToken(pos) == SymbolToken.TK_COMMA) {
+                            pos++;
+                        } else {
+                            break;
+                        }
+                    }
+                    checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                    return new ParseResult<>(new FunctionInstanceExp(funcName, parameterList), pos + 1);
+                } else {
+                    return new ParseResult<>(new VariableExp(asVar.getName()), startPos + 1);
+                }
+            }
             return new ParseResult<>(new VariableExp(asVar.getName()), startPos + 1);
         } else if(tokenHere instanceof IntToken) {
             final IntToken asInt = (IntToken) tokenHere;
@@ -421,6 +454,10 @@ public class Parser {
     }
 
     public ParseResult<Stmt> parseStmt(final int startPos) throws ParseException {
+        return null;
+    }
+
+    public Stmt parseToplevelStmt() throws ParseException {
         return null;
     }
 

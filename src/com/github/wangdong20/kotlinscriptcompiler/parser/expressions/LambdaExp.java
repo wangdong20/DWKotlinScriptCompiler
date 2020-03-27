@@ -30,9 +30,11 @@ public class LambdaExp implements Exp {
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof LambdaExp) {
-            if(((LambdaExp)obj).getReturnExp().equals(returnExp)
-                && ((LambdaExp)obj).getParameterList().equals(parameterList)) {
-                return true;
+            if(((LambdaExp)obj).getReturnExp().equals(returnExp)) {
+                if ((((LambdaExp)obj).getParameterList() == null && parameterList == null)
+                        || ((LambdaExp)obj).getParameterList().equals(parameterList)){
+                    return true;
+                }
             }
         }
         return false;

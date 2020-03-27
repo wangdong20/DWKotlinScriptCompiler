@@ -76,6 +76,36 @@ class ParserTest {
     }
 
     @Test
+    // search(x)
+    public void funcInstanceWithSingleParameterParses() throws ParseException {
+        List<Exp> parameterList = new ArrayList<>();
+        parameterList.add(new VariableExp("x"));
+        assertParses(new FunctionInstanceExp(new VariableExp("search"), parameterList),
+                new VariableToken("search"), BracketsToken.TK_LPAREN, new VariableToken("x"),
+                BracketsToken.TK_RPAREN);
+    }
+
+    @Test
+    // search()
+    public void funcInstanceWithNoParameterParses() throws ParseException {
+        List<Exp> parameterList = new ArrayList<>();
+        assertParses(new FunctionInstanceExp(new VariableExp("search"), parameterList),
+                new VariableToken("search"), BracketsToken.TK_LPAREN,
+                BracketsToken.TK_RPAREN);
+    }
+
+    @Test
+    // search(array, 3)
+    public void funcInstanceWithTwoParameterParses() throws ParseException {
+        List<Exp> parameterList = new ArrayList<>();
+        parameterList.add(new VariableExp("array"));
+        parameterList.add(new IntExp(3));
+        assertParses(new FunctionInstanceExp(new VariableExp("search"), parameterList),
+                new VariableToken("search"), BracketsToken.TK_LPAREN, new VariableToken("array"),
+                SymbolToken.TK_COMMA, new IntToken(3), BracketsToken.TK_RPAREN);
+    }
+
+    @Test
     // arrayOf(1,2,3,"abc",5)
     public void arrayOfParses() throws ParseException {
         List<Exp> expList = new ArrayList<>();
@@ -112,10 +142,32 @@ class ParserTest {
         parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
         parameterList.put(new VariableExp("b"), BasicType.TYPE_INT);
         assertParses(new LambdaExp(parameterList, new AdditiveExp(new VariableExp("a"),
-                new VariableExp("b"), AdditiveOp.EXP_PLUS)),
+                        new VariableExp("b"), AdditiveOp.EXP_PLUS)),
                 BracketsToken.TK_LCURLY, new VariableToken("a"), SymbolToken.TK_COLON,
                 TypeToken.TK_TYPE_INT, SymbolToken.TK_COMMA, new VariableToken("b"), SymbolToken.TK_COLON,
                 TypeToken.TK_TYPE_INT, SymbolToken.TK_ARROW, new VariableToken("a"), BinopToken.TK_PLUS,
+                new VariableToken("b"), BracketsToken.TK_RCURLY);
+    }
+
+    @Test
+    // var b = 3; {a: Int -> a + b}
+    public void lambdaExpWithSingleParameterParses() throws ParseException {
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
+        assertParses(new LambdaExp(parameterList, new AdditiveExp(new VariableExp("a"),
+                        new VariableExp("b"), AdditiveOp.EXP_PLUS)),
+                BracketsToken.TK_LCURLY, new VariableToken("a"), SymbolToken.TK_COLON,
+                TypeToken.TK_TYPE_INT, SymbolToken.TK_ARROW, new VariableToken("a"), BinopToken.TK_PLUS,
+                new VariableToken("b"), BracketsToken.TK_RCURLY);
+    }
+
+    @Test
+    // val a = 2; var b = 3; { -> a + b}
+    public void lambdaExpWithNoParameterParses() throws ParseException {
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        assertParses(new LambdaExp(parameterList, new AdditiveExp(new VariableExp("a"),
+                        new VariableExp("b"), AdditiveOp.EXP_PLUS)),
+                BracketsToken.TK_LCURLY,  SymbolToken.TK_ARROW, new VariableToken("a"), BinopToken.TK_PLUS,
                 new VariableToken("b"), BracketsToken.TK_RCURLY);
     }
 
