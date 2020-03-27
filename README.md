@@ -52,5 +52,9 @@ Type inference. var, val can define variable without assigning any supported typ
 ### Non-Trivial Feature #3
 Semicolon inference. Kotlin support any sentence without semicolon. It means the compiler will figure out where the semicolon is.
 
+### Non-Trivial Feature #4
+String interpolation. When print a string, I can put an expression in a string, the string will figure it out what the expression is and print it out. 
+For instance, print("$a + $b is ${a + b}"). The string inside print sentence will figure out what a, b and {a + b} are.
+
 ### Work Planned for Custom Component
 I plan to use low-level language JVM bytecode as target language so far.
