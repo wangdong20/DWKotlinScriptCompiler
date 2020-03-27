@@ -429,7 +429,7 @@ public class Parser {
                 throw new ParseException("At least one element in " + (tokenHere == KeywordToken.TK_ARRAY_OF ? "arrayOf!" : "listOf!"));
             }
             return new ParseResult<>(tokenHere == KeywordToken.TK_ARRAY_OF ? new ArrayOfExp(expList) : new MutableListOfExp(expList), pos + 1);
-        } else if(tokenHere == TypeToken.TK_ARRAY) {
+        } else if(tokenHere == TypeToken.TK_ARRAY || tokenHere == TypeToken.TK_MUTABLE_LIST) {
             checkTokenIs(startPos + 1, BracketsToken.TK_LPAREN);
             int pos = startPos + 2;
             IntExp intExp  = null;
@@ -443,7 +443,8 @@ public class Parser {
                 ParseResult<Exp> resultParse = parseLambdaExp(pos);
                 lambdaExp = (LambdaExp) resultParse.result;
                 checkTokenIs(resultParse.nextPos, BracketsToken.TK_RPAREN);
-                return new ParseResult<>(new ArrayExp(intExp, lambdaExp), resultParse.nextPos + 1);
+                return new ParseResult<>(tokenHere == TypeToken.TK_ARRAY ? new ArrayExp(intExp, lambdaExp) :
+                        new MutableListExp(intExp, lambdaExp), resultParse.nextPos + 1);
             } else {
                 throw new ParseException("Integer of size expected in Array initialize operation.");
             }

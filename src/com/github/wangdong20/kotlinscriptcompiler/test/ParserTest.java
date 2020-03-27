@@ -225,6 +225,22 @@ class ParserTest {
     }
 
     @Test
+    // MutableList(10, {i -> "s" + i * 2})
+    public void mutableListExpParses() throws ParseException {
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        parameterList.put(new VariableExp("i"), null);
+        assertParses(new MutableListExp(new IntExp(10), new LambdaExp(parameterList,
+                        new AdditiveExp(new StringExp("s", null),
+                                new MultiplicativeExp(new VariableExp("i"), new IntExp(2),
+                                        MultiplicativeOp.OP_MULTIPLY), AdditiveOp.EXP_PLUS))),
+                TypeToken.TK_MUTABLE_LIST, BracketsToken.TK_LPAREN, new IntToken(10),
+                SymbolToken.TK_COMMA, BracketsToken.TK_LCURLY, new VariableToken("i"),
+                SymbolToken.TK_ARROW, new StringToken("s"), BinopToken.TK_PLUS,
+                new VariableToken("i"), BinopToken.TK_MULTIPLY, new IntToken(2),
+                BracketsToken.TK_RCURLY, BracketsToken.TK_RPAREN);
+    }
+
+    @Test
     public void plusParses() throws ParseException {
         assertParses(new AdditiveExp(new IntExp(1), new IntExp(2), AdditiveOp.EXP_PLUS),
                 new IntToken(1),
