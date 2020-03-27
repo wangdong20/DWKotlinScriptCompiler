@@ -214,11 +214,12 @@ public class Parser {
             final VariableToken asVar = (VariableToken)tokenHere;
             if(startPos + 1 < tokens.length) {  // we dont want throw exception now.
                 Token next = readToken(startPos + 1);
-                Token temp = null;
-                List<Exp> parameterList = new ArrayList<>();
-                VariableExp funcName = new VariableExp(asVar.getName());
-                int pos = startPos + 2;
+                VariableExp name = new VariableExp(asVar.getName());
+
                 if(next == BracketsToken.TK_LPAREN) {
+                    Token temp = null;
+                    int pos = startPos + 2;
+                    List<Exp> parameterList = new ArrayList<>();
                     while((temp = readToken(pos)) != BracketsToken.TK_RPAREN) {
                         if(temp instanceof VariableToken) {
                             parameterList.add(new VariableExp(((VariableToken) temp).getName()));
@@ -239,8 +240,13 @@ public class Parser {
                         }
                     }
                     checkTokenIs(pos, BracketsToken.TK_RPAREN);
-                    return new ParseResult<>(new FunctionInstanceExp(funcName, parameterList), pos + 1);
-                } else {
+                    return new ParseResult<>(new FunctionInstanceExp(name, parameterList), pos + 1);
+                } else if(next == UnopToken.TK_PLUS_PLUS || next == UnopToken.TK_MINUS_MINUS) {
+                    return new ParseResult<>(new SelfOperationExp(name,
+                            next == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE,
+                            false), startPos + 2);
+                }
+                else {
                     return new ParseResult<>(new VariableExp(asVar.getName()), startPos + 1);
                 }
             }
@@ -256,7 +262,21 @@ public class Parser {
             } else {
                 return new ParseResult<>(new BooleanExp(false), startPos + 1);
             }
-        } else {
+        } else if(tokenHere == UnopToken.TK_PLUS_PLUS || tokenHere == UnopToken.TK_MINUS_MINUS) {
+            if(startPos + 1 < tokens.length) {
+                Token next = readToken(startPos + 1);
+                if(next instanceof VariableToken) {
+                    return new ParseResult<>(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
+                            tokenHere == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE,
+                            true), startPos + 2);
+                } else {
+                    throw new ParseException("VariableToken expected after self increase or decrease operator!");
+                }
+            } else {
+                throw new ParseException("VariableToken expected after self increase or decrease operator!");
+            }
+        }
+        else {
             checkTokenIs(startPos, BracketsToken.TK_LPAREN);
             final ParseResult<Exp> inner = parseExp(startPos + 1);
             checkTokenIs(inner.nextPos, BracketsToken.TK_RPAREN);

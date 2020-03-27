@@ -76,6 +76,43 @@ class ParserTest {
     }
 
     @Test
+    // ++i
+    public void selfIncreasePreorderParses() throws ParseException {
+        assertParses(new SelfOperationExp(new VariableExp("i"), SelfOp.OP_SELF_INCREASE, true),
+                UnopToken.TK_PLUS_PLUS, new VariableToken("i"));
+    }
+
+    @Test
+    // --i
+    public void selfDecreasePreorderParses() throws ParseException {
+        assertParses(new SelfOperationExp(new VariableExp("i"), SelfOp.OP_SELF_DECREASE, true),
+                UnopToken.TK_MINUS_MINUS, new VariableToken("i"));
+    }
+
+    @Test
+    // i++
+    public void selfIncreaseNoPreorderParses() throws ParseException {
+        assertParses(new SelfOperationExp(new VariableExp("i"), SelfOp.OP_SELF_INCREASE, false),
+                new VariableToken("i"), UnopToken.TK_PLUS_PLUS);
+    }
+
+    @Test
+    // i++ + 2
+    public void selfDecreaseInAdditiveParses() throws ParseException {
+        assertParses(new AdditiveExp(new SelfOperationExp(new VariableExp("i"), SelfOp.OP_SELF_INCREASE, false),
+                new IntExp(2), AdditiveOp.EXP_PLUS),
+                new VariableToken("i"), UnopToken.TK_PLUS_PLUS, BinopToken.TK_PLUS, new IntToken(2));
+    }
+
+    @Test
+    // 2 + ++i
+    public void selfDecreaseInAdditiveRightParses() throws ParseException {
+        assertParses( new AdditiveExp(new IntExp(2), new SelfOperationExp(new VariableExp("i"), SelfOp.OP_SELF_INCREASE, true),
+                        AdditiveOp.EXP_PLUS),
+                new IntToken(2), BinopToken.TK_PLUS, UnopToken.TK_PLUS_PLUS,  new VariableToken("i"));
+    }
+
+    @Test
     // search(x)
     public void funcInstanceWithSingleParameterParses() throws ParseException {
         List<Exp> parameterList = new ArrayList<>();
