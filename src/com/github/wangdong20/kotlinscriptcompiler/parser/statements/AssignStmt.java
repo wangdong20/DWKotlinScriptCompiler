@@ -8,6 +8,7 @@ public class AssignStmt implements Stmt {
     private final Exp expression;
     private final VariableExp variable;
     private final Type type;
+    private boolean readOnly = false;
 
     public Exp getExpression() {
         return expression;
@@ -21,22 +22,29 @@ public class AssignStmt implements Stmt {
         return type;
     }
 
-    public AssignStmt(Exp expression, VariableExp variable, Type type) {
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public AssignStmt(Exp expression, VariableExp variable, Type type, boolean readOnly) {
         this.expression = expression;
         this.variable = variable;
         this.type = type;
+        this.readOnly = readOnly;
     }
 
-    public AssignStmt(Exp expression, VariableExp variable) {
+    public AssignStmt(Exp expression, VariableExp variable, boolean readOnly) {
         this.expression = expression;
         this.variable = variable;
         this.type = null;
+        this.readOnly = readOnly;
     }
 
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof AssignStmt) {
-            if(((AssignStmt) obj).getVariable().equals(variable) && ((AssignStmt) obj).getExpression().equals(expression)) {
+            if(((AssignStmt) obj).getVariable().equals(variable) && ((AssignStmt) obj).getExpression().equals(expression) &&
+                    ((AssignStmt) obj).isReadOnly() == readOnly) {
                 if((((AssignStmt) obj).getType() == null && type == null) || ((AssignStmt) obj).getType().equals(type)) {
                     return true;
                 }
@@ -51,6 +59,7 @@ public class AssignStmt implements Stmt {
                 "expression=" + expression +
                 ", variable=" + variable +
                 ", type=" + type +
+                ", readOnly=" + readOnly +
                 '}';
     }
 }

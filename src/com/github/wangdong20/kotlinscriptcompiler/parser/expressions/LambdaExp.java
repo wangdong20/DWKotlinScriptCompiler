@@ -32,7 +32,9 @@ public class LambdaExp implements Exp {
         if(obj instanceof LambdaExp) {
             if(((LambdaExp)obj).getReturnExp().equals(returnExp)) {
                 if ((((LambdaExp)obj).getParameterList() == null && parameterList == null)
-                        || ((LambdaExp)obj).getParameterList().equals(parameterList)){
+                        || ((LambdaExp)obj).getParameterList().equals(parameterList)
+                    || (((LambdaExp)obj).getParameterList().size() == 0 && parameterList == null)
+                    || (((LambdaExp)obj).getParameterList() == null && parameterList.size() == 0)){
                     return true;
                 }
             }

@@ -1,7 +1,10 @@
 import com.github.wangdong20.kotlinscriptcompiler.parser.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
+import com.github.wangdong20.kotlinscriptcompiler.parser.statements.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.BasicType;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.TypeArray;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.TypeHighOrderFunction;
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import org.junit.jupiter.api.Test;
@@ -24,6 +27,95 @@ class ParserTest {
                 ()->{
                     assertEquals(expected, (new Parser(tokens)).parseToplevelExp());
                 });
+    }
+
+    private static void assertParseStmts(final Stmt expected,
+                                     final Token... tokens) throws ParseException {
+        assertEquals(expected, (new Parser(tokens)).parseToplevelStmt());
+    } // assertParses
+
+    private static void assertParseStmtsExpectException(final Stmt expected, final Token... tokens) {
+        assertThrows(ParseException.class,
+                ()->{
+                    assertEquals(expected, (new Parser(tokens)).parseToplevelStmt());
+                });
+    }
+
+    @Test
+    // var a = 1
+    public void varStmtNoType() throws ParseException {
+        assertParseStmts(new AssignStmt(new IntExp(1), new VariableExp("a"), false),
+                KeywordToken.TK_VAR, new VariableToken("a"), BinopToken.TK_EQUAL, new IntToken(1));
+    }
+
+    @Test
+    // var a += 1 Exception expected
+    public void varStmtWithCoumpoundAssignment() throws ParseException {
+        assertParseStmtsExpectException(new CompoundAssignStmt(new IntExp(1), new VariableExp("a"), CompoundAssignOp.EXP_PLUS_EQUAL),
+                KeywordToken.TK_VAR, new VariableToken("a"), BinopToken.TK_PLUS_EQUAL, new IntToken(1));
+    }
+
+    @Test
+    // a /= 1
+    public void coumpoundAssignmentParse() throws ParseException {
+        assertParseStmts(new CompoundAssignStmt(new IntExp(1), new VariableExp("a"), CompoundAssignOp.EXP_DIVIDE_EQUAL),
+                new VariableToken("a"), BinopToken.TK_DIVIDE_EQUAL, new IntToken(1));
+    }
+
+    @Test
+    // val a : String = "abc"
+    public void valStmtWithBasicType() throws ParseException {
+        assertParseStmts(new AssignStmt(new StringExp("abc", null), new VariableExp("a"), BasicType.TYPE_STRING, true),
+                KeywordToken.TK_VAL, new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_TYPE_STRING,
+                        BinopToken.TK_EQUAL, new StringToken("abc"));
+    }
+
+    @Test
+    // val a : Array<Int> = Array(10, { -> 0})
+    public void valStmtWithArrayType() throws ParseException {
+        assertParseStmts(new AssignStmt(new ArrayExp(new IntExp(10), new LambdaExp(null, new IntExp(0))), new VariableExp("a"), new TypeArray(BasicType.TYPE_INT), true),
+                KeywordToken.TK_VAL, new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_ARRAY, BracketsToken.TK_LANGLE,
+                TypeToken.TK_TYPE_INT, BracketsToken.TK_RANGLE, BinopToken.TK_EQUAL, TypeToken.TK_ARRAY,
+                BracketsToken.TK_LPAREN, new IntToken(10), SymbolToken.TK_COMMA, BracketsToken.TK_LCURLY,
+                SymbolToken.TK_ARROW, new IntToken(0), BracketsToken.TK_RCURLY, BracketsToken.TK_RPAREN);
+    }
+
+    @Test
+    // var a : (Int, Int)->Int = {a : Int, b: Int -> a + b}
+    public void varStmtWithHighOrderFunctionType() throws ParseException {
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
+        parameterList.put(new VariableExp("b"), BasicType.TYPE_INT);
+        List<Type> types = new ArrayList<>();
+        types.add(BasicType.TYPE_INT);
+        types.add(BasicType.TYPE_INT);
+        assertParseStmts(new AssignStmt(new LambdaExp(parameterList, new AdditiveExp(new VariableExp("a"),
+                        new VariableExp("b"), AdditiveOp.EXP_PLUS)), new VariableExp("a"),
+                        new TypeHighOrderFunction(types, BasicType.TYPE_INT), false),
+                KeywordToken.TK_VAR, new VariableToken("a"), SymbolToken.TK_COLON, BracketsToken.TK_LPAREN,
+                TypeToken.TK_TYPE_INT, SymbolToken.TK_COMMA, TypeToken.TK_TYPE_INT, BracketsToken.TK_RPAREN,
+                SymbolToken.TK_ARROW, TypeToken.TK_TYPE_INT, BinopToken.TK_EQUAL,
+                BracketsToken.TK_LCURLY, new VariableToken("a"), SymbolToken.TK_COLON,
+                TypeToken.TK_TYPE_INT, SymbolToken.TK_COMMA, new VariableToken("b"), SymbolToken.TK_COLON,
+                TypeToken.TK_TYPE_INT, SymbolToken.TK_ARROW, new VariableToken("a"), BinopToken.TK_PLUS,
+                new VariableToken("b"), BracketsToken.TK_RCURLY);
+    }
+
+    @Test
+    // print("test!")
+    public void printStmtWithStringParse() throws ParseException {
+        assertParseStmts(new PrintStmt(new StringExp("test!", null)),
+                KeywordToken.TK_PRINT, BracketsToken.TK_LPAREN, new StringToken("test!"),
+                BracketsToken.TK_RPAREN);
+    }
+
+    @Test
+    // println("test!" + "plus" + 1)
+    public void printlnStmtWithStringPlusParse() throws ParseException {
+        assertParseStmts(new PrintlnStmt(new AdditiveExp(new AdditiveExp(new StringExp("test!", null),
+                new StringExp("plus", null), AdditiveOp.EXP_PLUS), new IntExp(1), AdditiveOp.EXP_PLUS)),
+                KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN, new StringToken("test!"), BinopToken.TK_PLUS,
+                new StringToken("plus"), BinopToken.TK_PLUS, new IntToken(1), BracketsToken.TK_RPAREN);
     }
 
     @Test

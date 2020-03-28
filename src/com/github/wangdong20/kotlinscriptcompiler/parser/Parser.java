@@ -1,9 +1,8 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser;
 
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
-import com.github.wangdong20.kotlinscriptcompiler.parser.statements.Stmt;
-import com.github.wangdong20.kotlinscriptcompiler.parser.type.BasicType;
-import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
+import com.github.wangdong20.kotlinscriptcompiler.parser.statements.*;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.*;
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import java.util.ArrayList;
@@ -474,12 +473,218 @@ public class Parser {
         }
     }
 
+    /**
+     * generic type only support basic type
+     */
+    public ParseResult<BasicType> parseGenericType(final int startPos) throws ParseException {
+        checkTokenIs(startPos, BracketsToken.TK_LANGLE);
+        final Token tokenHere = readToken(startPos + 1);
+        BasicType genericType = null;
+        switch ((TypeToken)tokenHere) {
+            case TK_TYPE_INT:
+                genericType = BasicType.TYPE_INT;
+                break;
+            case TK_TYPE_STRING:
+                genericType = BasicType.TYPE_STRING;
+                break;
+            case TK_TYPE_BOOLEAN:
+                genericType = BasicType.TYPE_BOOLEAN;
+                break;
+            case TK_TYPE_UNIT:
+                genericType = BasicType.TYPE_UNIT;
+                break;
+            case TK_ANY:
+                genericType = BasicType.TYPE_ANY;
+                break;
+        }
+        checkTokenIs(startPos + 2, BracketsToken.TK_RANGLE);
+        return new ParseResult<>(genericType, startPos + 3);
+    }
+
+    public ParseResult<TypeHighOrderFunction> parseTypeHighOrderFunction(final int startPos) throws ParseException {
+        checkTokenIs(startPos, BracketsToken.TK_LPAREN);
+        ParseResult<Type> typeResult = null;
+        List<Type> parameterTypes = new ArrayList<>();
+        int pos = startPos + 1;
+        Token temp = null;
+        while((temp = readToken(pos)) != BracketsToken.TK_RPAREN) {
+            switch ((TypeToken)temp) {
+                case TK_TYPE_INT:
+                    parameterTypes.add(BasicType.TYPE_INT);
+                    pos++;
+                    break;
+                case TK_TYPE_STRING:
+                    parameterTypes.add(BasicType.TYPE_STRING);
+                    pos++;
+                    break;
+                case TK_TYPE_BOOLEAN:
+                    parameterTypes.add(BasicType.TYPE_BOOLEAN);
+                    pos++;
+                    break;
+                case TK_TYPE_UNIT:
+                    parameterTypes.add(BasicType.TYPE_UNIT);
+                    pos++;
+                    break;
+                case TK_ANY:
+                    parameterTypes.add(BasicType.TYPE_ANY);
+                    pos++;
+                    break;
+                case TK_ARRAY: case TK_MUTABLE_LIST:
+                    pos++;
+                    ParseResult<BasicType> genericType = parseGenericType(pos);
+                    parameterTypes.add(temp == TypeToken.TK_ARRAY ? new TypeArray(genericType.result) :
+                            new TypeMutableList(genericType.result));
+                    pos = genericType.nextPos;
+                    break;
+            }
+            if((temp = readToken(pos)) == SymbolToken.TK_COMMA) {
+                pos++;
+            }
+        }
+        pos++;
+        checkTokenIs(pos, SymbolToken.TK_ARROW);
+        Type retureType = null;
+        pos++;
+        temp = readToken(pos);
+        switch ((TypeToken)temp) {
+            case TK_TYPE_INT:
+                retureType = BasicType.TYPE_INT;
+                pos++;
+                break;
+            case TK_TYPE_STRING:
+                retureType = BasicType.TYPE_STRING;
+                pos++;
+                break;
+            case TK_TYPE_BOOLEAN:
+                retureType = BasicType.TYPE_BOOLEAN;
+                pos++;
+                break;
+            case TK_TYPE_UNIT:
+                retureType = BasicType.TYPE_UNIT;
+                pos++;
+                break;
+            case TK_ANY:
+                retureType = BasicType.TYPE_ANY;
+                pos++;
+                break;
+            case TK_ARRAY: case TK_MUTABLE_LIST:
+                pos++;
+                ParseResult<BasicType> genericType = parseGenericType(pos);
+                retureType = temp == TypeToken.TK_ARRAY ? new TypeArray(genericType.result) :
+                        new TypeMutableList(genericType.result);
+                pos = genericType.nextPos;
+                break;
+        }
+        return new ParseResult<>(new TypeHighOrderFunction(parameterTypes, retureType), pos);
+    }
+
+    public ParseResult<Stmt> parsePrimaryStmt(final int startPos) throws ParseException {
+        final Token tokenHere = readToken(startPos);
+        ParseResult<Stmt> stmtResult = null;
+        if(tokenHere instanceof VariableToken) {
+            final VariableToken asVar = (VariableToken)tokenHere;
+            if(startPos + 1 < tokens.length) {
+                Token next = readToken(startPos + 1);
+                if(next == BinopToken.TK_EQUAL) {
+                    ParseResult<Exp> expParseResult = parseExp(startPos + 2);
+                    stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new VariableExp(asVar.getName()), false), expParseResult.nextPos);
+                } else if(next == BinopToken.TK_PLUS_EQUAL || next == BinopToken.TK_MULTIPLY_EQUAL
+                    || next == BinopToken.TK_MINUS_EQUAL || next == BinopToken.TK_DIVIDE_EQUAL) {
+                    ParseResult<Exp> expParseResult = parseExp(startPos + 2);
+                    CompoundAssignOp op = null;
+                    switch ((BinopToken)next) {
+                        case TK_PLUS_EQUAL:
+                            op = CompoundAssignOp.EXP_PLUS_EQUAL;
+                            break;
+                        case TK_MINUS_EQUAL:
+                            op = CompoundAssignOp.EXP_MINUS_EQUAL;
+                            break;
+                        case TK_MULTIPLY_EQUAL:
+                            op = CompoundAssignOp.EXP_MULTIPLY_EQUAL;
+                            break;
+                        case TK_DIVIDE_EQUAL:
+                            op = CompoundAssignOp.EXP_DIVIDE_EQUAL;
+                    }
+                    stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
+                            new VariableExp(asVar.getName()), op), expParseResult.nextPos);
+                }
+            } else {
+                throw new ParseException("Assignment operator expected!");
+            }
+        } else if(tokenHere == KeywordToken.TK_VAR || tokenHere == KeywordToken.TK_VAL) {
+            Token next = readToken(startPos + 1);
+            Type type = null;
+            if(next instanceof VariableToken) {
+                final VariableToken asVar = (VariableToken)next;
+                int pos = startPos + 2;
+                if((next = readToken(pos)) == SymbolToken.TK_COLON) {
+                    pos++;
+                    next = readToken(pos);
+                    if(next == BracketsToken.TK_LPAREN) {
+                        ParseResult<TypeHighOrderFunction> result = parseTypeHighOrderFunction(pos);
+                        type = result.result;
+                        pos = result.nextPos;
+                    } else {
+                        switch ((TypeToken)next) {
+                            case TK_TYPE_INT:
+                                type = BasicType.TYPE_INT;
+                                pos++;
+                                break;
+                            case TK_TYPE_STRING:
+                                type = BasicType.TYPE_STRING;
+                                pos++;
+                                break;
+                            case TK_TYPE_BOOLEAN:
+                                type = BasicType.TYPE_BOOLEAN;
+                                pos++;
+                                break;
+                            case TK_TYPE_UNIT:
+                                type = BasicType.TYPE_UNIT;
+                                pos++;
+                                break;
+                            case TK_ANY:
+                                type = BasicType.TYPE_ANY;
+                                pos++;
+                                break;
+                            case TK_ARRAY: case TK_MUTABLE_LIST:
+                                pos++;
+                                ParseResult<BasicType> genericType = parseGenericType(pos);
+                                type = next == TypeToken.TK_ARRAY ? new TypeArray(genericType.result) :
+                                        new TypeMutableList(genericType.result);
+                                pos = genericType.nextPos;
+                                break;
+                        }
+                    }
+                }
+                checkTokenIs(pos, BinopToken.TK_EQUAL);
+                ParseResult<Exp> resultExp = parseExp(pos + 1);
+                stmtResult = new ParseResult<>(new AssignStmt(resultExp.result, new VariableExp(asVar.getName()),
+                        type, tokenHere == KeywordToken.TK_VAL ? true : false), resultExp.nextPos);
+            } else {
+                throw new ParseException("Variable expected in var, val statement!");
+            }
+        } else if(tokenHere == KeywordToken.TK_PRINT || tokenHere == KeywordToken.TK_PRINTLN) {
+            checkTokenIs(startPos + 1, BracketsToken.TK_LPAREN);
+            ParseResult<Exp> resultExp = parseExp(startPos + 2);
+            checkTokenIs(resultExp.nextPos, BracketsToken.TK_RPAREN);
+            stmtResult = new ParseResult<>(tokenHere == KeywordToken.TK_PRINT ?
+                    new PrintStmt(resultExp.result) : new PrintlnStmt(resultExp.result), resultExp.nextPos + 1);
+        }
+        return stmtResult;
+    }
+
     public ParseResult<Stmt> parseStmt(final int startPos) throws ParseException {
-        return null;
+        return parsePrimaryStmt(startPos);
     }
 
     public Stmt parseToplevelStmt() throws ParseException {
-        return null;
+        final ParseResult<Stmt> result = parseStmt(0);
+
+        if(result.nextPos == tokens.length) {
+            return result.result;
+        } else {
+            throw new ParseException("Extra tokens at end");
+        }
     }
 
     public ParseResult<Program> parseProgram(final int startPos) throws ParseException {
