@@ -9,6 +9,7 @@ public class AssignStmt implements Stmt {
     private final VariableExp variable;
     private final Type type;
     private boolean readOnly = false;
+    private boolean isNew = false;
 
     public Exp getExpression() {
         return expression;
@@ -26,25 +27,31 @@ public class AssignStmt implements Stmt {
         return readOnly;
     }
 
-    public AssignStmt(Exp expression, VariableExp variable, Type type, boolean readOnly) {
+    public boolean isNew() {
+        return isNew;
+    }
+
+    public AssignStmt(Exp expression, VariableExp variable, Type type, boolean readOnly, boolean isNew) {
         this.expression = expression;
         this.variable = variable;
         this.type = type;
         this.readOnly = readOnly;
+        this.isNew = isNew;
     }
 
-    public AssignStmt(Exp expression, VariableExp variable, boolean readOnly) {
+    public AssignStmt(Exp expression, VariableExp variable, boolean readOnly, boolean isNew) {
         this.expression = expression;
         this.variable = variable;
         this.type = null;
         this.readOnly = readOnly;
+        this.isNew = isNew;
     }
 
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof AssignStmt) {
             if(((AssignStmt) obj).getVariable().equals(variable) && ((AssignStmt) obj).getExpression().equals(expression) &&
-                    ((AssignStmt) obj).isReadOnly() == readOnly) {
+                    ((AssignStmt) obj).isReadOnly() == readOnly && ((AssignStmt) obj).isNew() == isNew) {
                 if((((AssignStmt) obj).getType() == null && type == null) || ((AssignStmt) obj).getType().equals(type)) {
                     return true;
                 }
@@ -60,6 +67,7 @@ public class AssignStmt implements Stmt {
                 ", variable=" + variable +
                 ", type=" + type +
                 ", readOnly=" + readOnly +
+                ", isNew=" + isNew +
                 '}';
     }
 }

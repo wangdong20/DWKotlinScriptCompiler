@@ -176,7 +176,7 @@ class ParserTest {
         stmtListInFor.add(new IfStmt(new ComparableExp(new VariableExp("i"), new VariableExp("index"), ComparableOp.OP_EQUAL_EQUAL),
                 new BlockStmt(stmtListInIf)));
         List<Stmt> stmtListInFun = new ArrayList<>();
-        stmtListInFun.add(new AssignStmt(new IntExp(0), new VariableExp("index"), false));
+        stmtListInFun.add(new AssignStmt(new IntExp(0), new VariableExp("index"), false, true));
         stmtListInFun.add(new ForStmt(new VariableExp("index"), new VariableExp("a"),
                 new BlockStmt(stmtListInFor)));
         stmtListInFun.add(new ReturnStmt(new BooleanExp(false)));
@@ -201,10 +201,10 @@ class ParserTest {
     }
 
     @Test
-    // var a = 1
-    public void varStmtNoType() throws ParseException {
-        assertParseStmts(new AssignStmt(new IntExp(1), new VariableExp("a"), false),
-                KeywordToken.TK_VAR, new VariableToken("a"), BinopToken.TK_EQUAL, new IntToken(1));
+    // a = 1
+    public void assignNoVarStmtNoType() throws ParseException {
+        assertParseStmts(new AssignStmt(new IntExp(1), new VariableExp("a"), false, false),
+                new VariableToken("a"), BinopToken.TK_EQUAL, new IntToken(1));
     }
 
     @Test
@@ -224,7 +224,7 @@ class ParserTest {
     @Test
     // val a : String = "abc"
     public void valStmtWithBasicType() throws ParseException {
-        assertParseStmts(new AssignStmt(new StringExp("abc", null), new VariableExp("a"), BasicType.TYPE_STRING, true),
+        assertParseStmts(new AssignStmt(new StringExp("abc", null), new VariableExp("a"), BasicType.TYPE_STRING, true, true),
                 KeywordToken.TK_VAL, new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_TYPE_STRING,
                         BinopToken.TK_EQUAL, new StringToken("abc"));
     }
@@ -232,7 +232,7 @@ class ParserTest {
     @Test
     // val a : Array<Int> = Array(10, { -> 0})
     public void valStmtWithArrayType() throws ParseException {
-        assertParseStmts(new AssignStmt(new ArrayExp(new IntExp(10), new LambdaExp(null, new IntExp(0))), new VariableExp("a"), new TypeArray(BasicType.TYPE_INT), true),
+        assertParseStmts(new AssignStmt(new ArrayExp(new IntExp(10), new LambdaExp(null, new IntExp(0))), new VariableExp("a"), new TypeArray(BasicType.TYPE_INT), true, true),
                 KeywordToken.TK_VAL, new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_ARRAY, BracketsToken.TK_LANGLE,
                 TypeToken.TK_TYPE_INT, BracketsToken.TK_RANGLE, BinopToken.TK_EQUAL, TypeToken.TK_ARRAY,
                 BracketsToken.TK_LPAREN, new IntToken(10), SymbolToken.TK_COMMA, BracketsToken.TK_LCURLY,
@@ -250,7 +250,7 @@ class ParserTest {
         types.add(BasicType.TYPE_INT);
         assertParseStmts(new AssignStmt(new LambdaExp(parameterList, new AdditiveExp(new VariableExp("a"),
                         new VariableExp("b"), AdditiveOp.EXP_PLUS)), new VariableExp("a"),
-                        new TypeHighOrderFunction(types, BasicType.TYPE_INT), false),
+                        new TypeHighOrderFunction(types, BasicType.TYPE_INT), false, true),
                 KeywordToken.TK_VAR, new VariableToken("a"), SymbolToken.TK_COLON, BracketsToken.TK_LPAREN,
                 TypeToken.TK_TYPE_INT, SymbolToken.TK_COMMA, TypeToken.TK_TYPE_INT, BracketsToken.TK_RPAREN,
                 SymbolToken.TK_ARROW, TypeToken.TK_TYPE_INT, BinopToken.TK_EQUAL,

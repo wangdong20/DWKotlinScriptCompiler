@@ -604,7 +604,7 @@ public class Parser {
                 Token next = readToken(startPos + 1);
                 if(next == BinopToken.TK_EQUAL) {
                     ParseResult<Exp> expParseResult = parseExp(startPos + 2);
-                    stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new VariableExp(asVar.getName()), false), expParseResult.nextPos);
+                    stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new VariableExp(asVar.getName()), false, false), expParseResult.nextPos);
                 } else if(next == BinopToken.TK_PLUS_EQUAL || next == BinopToken.TK_MULTIPLY_EQUAL
                     || next == BinopToken.TK_MINUS_EQUAL || next == BinopToken.TK_DIVIDE_EQUAL) {
                     ParseResult<Exp> expParseResult = parseExp(startPos + 2);
@@ -739,11 +739,11 @@ public class Parser {
                 ParseResult<Exp> resultExp = parseExp(pos + 1);
                 if(resultExp.nextPos == tokens.length) {
                     stmtResult = new ParseResult<>(new AssignStmt(resultExp.result, new VariableExp(asVar.getName()),
-                            type, tokenHere == KeywordToken.TK_VAL ? true : false), resultExp.nextPos);
+                            type, tokenHere == KeywordToken.TK_VAL ? true : false, true), resultExp.nextPos);
                 } else {
                     checkTokenIsOr(resultExp.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
                     stmtResult = new ParseResult<>(new AssignStmt(resultExp.result, new VariableExp(asVar.getName()),
-                            type, tokenHere == KeywordToken.TK_VAL ? true : false), resultExp.nextPos + 1);
+                            type, tokenHere == KeywordToken.TK_VAL ? true : false, true), resultExp.nextPos + 1);
                 }
             } else {
                 throw new ParseException("Variable expected in var, val statement!");
