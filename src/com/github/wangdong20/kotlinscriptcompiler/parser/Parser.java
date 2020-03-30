@@ -639,6 +639,36 @@ public class Parser {
                         stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(asVar.getName()),
                                 next == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, false)), startPos + 3);
                     }
+                } else if(next == BracketsToken.TK_LPAREN) {
+                    Token temp = null;
+                    int pos = startPos + 2;
+                    List<Exp> parameterList = new ArrayList<>();
+                    while((temp = readToken(pos)) != BracketsToken.TK_RPAREN) {
+                        if(temp instanceof VariableToken) {
+                            parameterList.add(new VariableExp(((VariableToken) temp).getName()));
+                        } else if(temp instanceof IntToken) {
+                            parameterList.add(new IntExp(((IntToken) temp).getValue()));
+                        } else if(temp instanceof StringToken) {
+                            parameterList.add(parseString(temp, pos).result);
+                        } else if(temp == KeywordToken.TK_TRUE || temp == KeywordToken.TK_FALSE) {
+                            parameterList.add(new BooleanExp(temp == KeywordToken.TK_TRUE ? true : false));
+                        } else {
+                            throw new ParseException("Unsupport function parameter!");
+                        }
+                        pos++;
+                        if(readToken(pos) == SymbolToken.TK_COMMA) {
+                            pos++;
+                        } else {
+                            break;
+                        }
+                    }
+                    checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                    if(pos + 1 == tokens.length) {
+                        stmtResult = new ParseResult<>(new FunctionInstanceStmt(new FunctionInstanceExp(new VariableExp(asVar.getName()), parameterList)), pos + 1);
+                    } else {
+                        checkTokenIsOr(pos + 1, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                        stmtResult = new ParseResult<>(new FunctionInstanceStmt(new FunctionInstanceExp(new VariableExp(asVar.getName()), parameterList)), pos + 2);
+                    }
                 }
             } else {
                 throw new ParseException("Assignment operator expected!");

@@ -365,6 +365,16 @@ class ParserTest {
 
     @Test
     // search(x)
+    public void funcInstanceWithSingleParameterStmt() throws ParseException {
+        List<Exp> parameterList = new ArrayList<>();
+        parameterList.add(new VariableExp("x"));
+        assertParseStmts(new FunctionInstanceStmt(new FunctionInstanceExp(new VariableExp("search"), parameterList)),
+                new VariableToken("search"), BracketsToken.TK_LPAREN, new VariableToken("x"),
+                BracketsToken.TK_RPAREN, SymbolToken.TK_SEMICOLON);
+    }
+
+    @Test
+    // search(x)
     public void funcInstanceWithSingleParameterParses() throws ParseException {
         List<Exp> parameterList = new ArrayList<>();
         parameterList.add(new VariableExp("x"));
