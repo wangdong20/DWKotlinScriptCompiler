@@ -3,8 +3,6 @@ package com.github.wangdong20.kotlinscriptcompiler.parser.statements;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.RangeExp;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.VariableExp;
 
-import java.util.List;
-
 /**
  * This is for loop statement in Kotlin, suppport for(var in var: Array<T>) {S*} or
  * for(var in var(Int)..var(Int)) {s*}
@@ -13,19 +11,19 @@ public class ForStmt implements Stmt {
     private final VariableExp iteratorExp;
     private final VariableExp arrayExp;
     private final RangeExp rangeExp;
-    private final List<Stmt> stmtList;
+    private final BlockStmt blockStmt;
 
-    public ForStmt(VariableExp iteratorExp, VariableExp arrayExp, List<Stmt> stmtList) {
+    public ForStmt(VariableExp iteratorExp, VariableExp arrayExp, BlockStmt blockStmt) {
         this.iteratorExp = iteratorExp;
         this.arrayExp = arrayExp;
-        this.stmtList = stmtList;
+        this.blockStmt = blockStmt;
         this.rangeExp = null;
     }
 
-    public ForStmt(VariableExp iteratorExp, RangeExp rangeExp, List<Stmt> stmtList) {
+    public ForStmt(VariableExp iteratorExp, RangeExp rangeExp, BlockStmt blockStmt) {
         this.iteratorExp = iteratorExp;
         this.rangeExp = rangeExp;
-        this.stmtList = stmtList;
+        this.blockStmt = blockStmt;
         this.arrayExp = null;
     }
 
@@ -37,8 +35,8 @@ public class ForStmt implements Stmt {
         return arrayExp;
     }
 
-    public List<Stmt> getStmtList() {
-        return stmtList;
+    public BlockStmt getBlockStmt() {
+        return blockStmt;
     }
 
     public RangeExp getRangeExp() {
@@ -48,7 +46,7 @@ public class ForStmt implements Stmt {
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof ForStmt) {
-            if(((ForStmt)obj).getIteratorExp().equals(iteratorExp) && ((ForStmt)obj).getStmtList().equals(stmtList)) {
+            if(((ForStmt)obj).getIteratorExp().equals(iteratorExp) && ((ForStmt)obj).getBlockStmt().equals(blockStmt)) {
                 if(((ForStmt)obj).getArrayExp() != null && arrayExp != null && ((ForStmt)obj).getArrayExp().equals(arrayExp)) {
                     return true;
                 } else if(((ForStmt)obj).getRangeExp() != null && rangeExp != null && ((ForStmt)obj).getRangeExp().equals(rangeExp)) {
@@ -65,7 +63,7 @@ public class ForStmt implements Stmt {
                 "iteratorExp=" + iteratorExp +
                 ", arrayExp=" + arrayExp +
                 ", rangeExp=" + rangeExp +
-                ", stmtList=" + stmtList +
+                ", blockStmt=" + blockStmt +
                 '}';
     }
 }

@@ -11,13 +11,13 @@ public class FunctionDeclareStmt implements Stmt {
     private final VariableExp funcName;
     private final Type returnType;
     private final LinkedHashMap<Exp, Type> parameterList;
-    private final List<Stmt> stmtList;
+    private final BlockStmt blockStmt;
 
-    public FunctionDeclareStmt(VariableExp funcName, Type returnType, LinkedHashMap<Exp, Type> parameterList, List<Stmt> stmtList) {
+    public FunctionDeclareStmt(VariableExp funcName, Type returnType, LinkedHashMap<Exp, Type> parameterList, BlockStmt blockStmt) {
         this.funcName = funcName;
         this.returnType = returnType;
         this.parameterList = parameterList;
-        this.stmtList = stmtList;
+        this.blockStmt = blockStmt;
     }
 
     public VariableExp getFuncName() {
@@ -32,8 +32,8 @@ public class FunctionDeclareStmt implements Stmt {
         return parameterList;
     }
 
-    public List<Stmt> getStmtList() {
-        return stmtList;
+    public BlockStmt getBlockStmt() {
+        return blockStmt;
     }
 
     @Override
@@ -43,8 +43,8 @@ public class FunctionDeclareStmt implements Stmt {
                 && ((FunctionDeclareStmt)obj).getFuncName().equals(funcName)) {
                 if ((((FunctionDeclareStmt)obj).getParameterList() == null && parameterList == null)
                         || ((FunctionDeclareStmt)obj).getParameterList().equals(parameterList)){
-                    if((((FunctionDeclareStmt)obj).getStmtList() == null && stmtList == null)
-                            || ((FunctionDeclareStmt)obj).getStmtList().equals(stmtList)) {
+                    if((((FunctionDeclareStmt)obj).getBlockStmt() == null && blockStmt == null)
+                            || ((FunctionDeclareStmt)obj).getBlockStmt().equals(blockStmt)) {
                         return true;
                     }
                 }
@@ -59,7 +59,7 @@ public class FunctionDeclareStmt implements Stmt {
                 "funcName=" + funcName +
                 ", returnType=" + returnType +
                 ", parameterList=" + parameterList +
-                ", stmtList=" + stmtList +
+                ", blockStmt=" + blockStmt +
                 '}';
     }
 }

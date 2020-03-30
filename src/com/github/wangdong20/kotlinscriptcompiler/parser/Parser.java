@@ -366,15 +366,32 @@ public class Parser {
                     switch ((TypeToken)tokenHere) {
                         case TK_TYPE_INT:
                             type = BasicType.TYPE_INT;
+                            pos++;
                             break;
                         case TK_TYPE_STRING:
                             type = BasicType.TYPE_STRING;
+                            pos++;
                             break;
                         case TK_TYPE_BOOLEAN:
                             type = BasicType.TYPE_BOOLEAN;
+                            pos++;
+                            break;
+                        case TK_TYPE_UNIT:
+                            type = BasicType.TYPE_UNIT;
+                            pos++;
+                            break;
+                        case TK_ANY:
+                            type = BasicType.TYPE_ANY;
+                            pos++;
+                            break;
+                        case TK_ARRAY: case TK_MUTABLE_LIST:
+                            pos++;
+                            ParseResult<BasicType> genericType = parseGenericType(pos);
+                            type = tokenHere == TypeToken.TK_ARRAY ? new TypeArray(genericType.result) :
+                                    new TypeMutableList(genericType.result);
+                            pos = genericType.nextPos;
                             break;
                     }
-                    pos++;
                 }
                 parameterList.put(variableExp, type);
                 if(readToken(pos) != SymbolToken.TK_COMMA) {
@@ -605,13 +622,45 @@ public class Parser {
                         case TK_DIVIDE_EQUAL:
                             op = CompoundAssignOp.EXP_DIVIDE_EQUAL;
                     }
-                    stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
-                            new VariableExp(asVar.getName()), op), expParseResult.nextPos);
+                    if(expParseResult.nextPos == tokens.length) {
+                        stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
+                                new VariableExp(asVar.getName()), op), expParseResult.nextPos);
+                    } else {
+                        checkTokenIsOr(expParseResult.nextPos + 1, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                        stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
+                                new VariableExp(asVar.getName()), op), expParseResult.nextPos + 1);
+                    }
+                } else if(next == UnopToken.TK_PLUS_PLUS || next == UnopToken.TK_MINUS_MINUS) {
+                    if(startPos + 2 == tokens.length) {
+                        stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(asVar.getName()),
+                                next == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, false)), startPos + 2);
+                    } else {
+                        checkTokenIsOr(startPos + 2, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                        stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(asVar.getName()),
+                                next == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, false)), startPos + 3);
+                    }
                 }
             } else {
                 throw new ParseException("Assignment operator expected!");
             }
-        } else if(tokenHere == KeywordToken.TK_VAR || tokenHere == KeywordToken.TK_VAL) {
+        } else if(tokenHere == UnopToken.TK_PLUS_PLUS || tokenHere == UnopToken.TK_MINUS_MINUS) {
+            if(startPos + 1 < tokens.length) {
+                Token next = readToken(startPos + 1);
+                if(next instanceof VariableToken) {
+                    if(startPos + 2 == tokens.length) {
+                        stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
+                                tokenHere == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, true)), startPos + 2);
+                    } else {
+                        checkTokenIsOr(startPos + 2, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                        stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
+                                next == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, false)), startPos + 3);
+                    }
+                }
+            } else {
+                throw new ParseException("Variable expected after ++, --");
+            }
+        }
+        else if(tokenHere == KeywordToken.TK_VAR || tokenHere == KeywordToken.TK_VAL) {
             Token next = readToken(startPos + 1);
             Type type = null;
             if(next instanceof VariableToken) {
@@ -658,8 +707,14 @@ public class Parser {
                 }
                 checkTokenIs(pos, BinopToken.TK_EQUAL);
                 ParseResult<Exp> resultExp = parseExp(pos + 1);
-                stmtResult = new ParseResult<>(new AssignStmt(resultExp.result, new VariableExp(asVar.getName()),
-                        type, tokenHere == KeywordToken.TK_VAL ? true : false), resultExp.nextPos);
+                if(resultExp.nextPos == tokens.length) {
+                    stmtResult = new ParseResult<>(new AssignStmt(resultExp.result, new VariableExp(asVar.getName()),
+                            type, tokenHere == KeywordToken.TK_VAL ? true : false), resultExp.nextPos);
+                } else {
+                    checkTokenIsOr(resultExp.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                    stmtResult = new ParseResult<>(new AssignStmt(resultExp.result, new VariableExp(asVar.getName()),
+                            type, tokenHere == KeywordToken.TK_VAL ? true : false), resultExp.nextPos + 1);
+                }
             } else {
                 throw new ParseException("Variable expected in var, val statement!");
             }
@@ -667,14 +722,360 @@ public class Parser {
             checkTokenIs(startPos + 1, BracketsToken.TK_LPAREN);
             ParseResult<Exp> resultExp = parseExp(startPos + 2);
             checkTokenIs(resultExp.nextPos, BracketsToken.TK_RPAREN);
-            stmtResult = new ParseResult<>(tokenHere == KeywordToken.TK_PRINT ?
-                    new PrintStmt(resultExp.result) : new PrintlnStmt(resultExp.result), resultExp.nextPos + 1);
+            if(resultExp.nextPos + 1 == tokens.length) {
+                stmtResult = new ParseResult<>(tokenHere == KeywordToken.TK_PRINT ?
+                        new PrintStmt(resultExp.result) : new PrintlnStmt(resultExp.result), resultExp.nextPos + 1);
+            } else {
+                checkTokenIsOr(resultExp.nextPos + 1, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                stmtResult = new ParseResult<>(tokenHere == KeywordToken.TK_PRINT ?
+                        new PrintStmt(resultExp.result) : new PrintlnStmt(resultExp.result), resultExp.nextPos + 2);
+            }
+        } else if(tokenHere == KeywordToken.TK_BREAK || tokenHere == KeywordToken.TK_CONTINUE) {
+            if(startPos + 1 == tokens.length) {
+                stmtResult = new ParseResult<>(tokenHere == KeywordToken.TK_BREAK ?
+                        ControlLoopStmt.STMT_BREAK : ControlLoopStmt.STMT_CONTINUE, startPos + 1);
+            } else {
+                checkTokenIsOr(startPos + 1, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                stmtResult = new ParseResult<>(tokenHere == KeywordToken.TK_BREAK ?
+                        ControlLoopStmt.STMT_BREAK : ControlLoopStmt.STMT_CONTINUE, startPos + 2);
+            }
+        } else if(tokenHere == KeywordToken.TK_RETURN) {
+            ParseResult<Exp> returnExp = parseExp(startPos + 1);
+            if(returnExp.nextPos == tokens.length) {
+                stmtResult = new ParseResult<>(new ReturnStmt(returnExp.result), returnExp.nextPos);
+            } else {
+                checkTokenIsOr(returnExp.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                stmtResult = new ParseResult<>(new ReturnStmt(returnExp.result), returnExp.nextPos + 1);
+            }
         }
         return stmtResult;
     }
 
+    private int skipLineBreakOrSemicolon(final int startPos) throws ParseException {
+        if(startPos < tokens.length) {
+            Token token = readToken(startPos);
+            if (token != SymbolToken.TK_LINE_BREAK && token != SymbolToken.TK_SEMICOLON) {
+                return startPos;
+            } else {
+                int pos = startPos + 1;
+                if (pos < tokens.length) {
+                    token = readToken(pos);
+                    while (token == SymbolToken.TK_SEMICOLON || token == SymbolToken.TK_LINE_BREAK) {
+                        pos++;
+                        if (pos < tokens.length) {
+                            token = readToken(pos);
+                        } else {
+                            break;
+                        }
+                    }
+                }
+                return pos;
+            }
+        } else {
+            return startPos;
+        }
+    }
+
+    public ParseResult<BlockStmt> parseBlockStmt(final int startPos) throws ParseException {
+        checkTokenIs(startPos, BracketsToken.TK_LCURLY);
+        int pos = startPos + 1;
+        Token temp = null;
+        ParseResult<BlockStmt> resultStmt;
+        List<Stmt> stmtList = new ArrayList<>();
+        pos = skipLineBreakOrSemicolon(pos);
+        while((temp = readToken(pos)) != BracketsToken.TK_RCURLY) {
+            pos = skipLineBreakOrSemicolon(pos);
+            if(temp == KeywordToken.TK_FOR) {
+                pos++;
+                checkTokenIs(pos, BracketsToken.TK_LPAREN);
+                pos++;
+                if((temp = readToken(pos)) instanceof VariableToken) {
+                    VariableExp variableExp = new VariableExp(((VariableToken)temp).getName());
+                    pos++;
+                    checkTokenIs(pos, KeywordToken.TK_IN);
+                    pos++;
+                    if((temp = readToken(pos)) instanceof IntToken) {   // RangeExp
+                        IntExp startExp = new IntExp(((IntToken)temp).getValue());
+                        pos++;
+                        checkTokenIs(pos, SymbolToken.TK_DOT_DOT);
+                        pos++;
+                        if((temp = readToken(pos)) instanceof IntToken) {
+                            IntExp endExp = new IntExp(((IntToken)temp).getValue());
+                            pos++;
+                            checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                            pos++;
+                            ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                            stmtList.add(new ForStmt(variableExp, new RangeExp(startExp, endExp), blockStmt.result));
+                            pos = blockStmt.nextPos;
+                            checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                            pos++;
+                        } else {
+                            throw new ParseException("Integer expected in range expression!");
+                        }
+                    } else if((temp = readToken(pos)) instanceof VariableToken) {   // ArrayExp
+                        pos++;
+                        checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                        pos++;
+                        ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                        stmtList.add(new ForStmt(variableExp, new VariableExp(((VariableToken)temp).getName()), blockStmt.result));
+                        pos = blockStmt.nextPos;
+                        checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                        pos++;
+                    } else {
+                        throw new ParseException("Array or range expected in for loop!");
+                    }
+                }
+            } //Function Declaretion cannot be in block
+            else if(temp == KeywordToken.TK_IF) {
+                pos++;
+                checkTokenIs(pos, BracketsToken.TK_LPAREN);
+                pos++;
+                ParseResult<Exp> resultExp = parseExp(pos);
+                pos = resultExp.nextPos;
+                checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                pos++;
+                ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                ParseResult<BlockStmt> elseBlock = null;
+                if((temp = readToken(blockStmt.nextPos)) == KeywordToken.TK_ELSE) {
+                    elseBlock = parseBlockStmt(blockStmt.nextPos + 1);
+                }
+                stmtList.add(new IfStmt(resultExp.result, blockStmt.result, elseBlock == null ? null : elseBlock.result));
+                pos = elseBlock == null ? blockStmt.nextPos : elseBlock.nextPos;
+                checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                pos++;
+            } else if(temp == KeywordToken.TK_WHILE) {
+                pos++;
+                checkTokenIs(pos, BracketsToken.TK_LPAREN);
+                pos++;
+                ParseResult<Exp> resultExp = parseExp(pos);
+                pos = resultExp.nextPos;
+                checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                pos++;
+                ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                stmtList.add(new WhileStmt(resultExp.result, blockStmt.result));
+                pos = blockStmt.nextPos;
+                checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                pos++;
+            } else {
+                ParseResult<Stmt> primaryStmt = parsePrimaryStmt(pos);
+                stmtList.add(primaryStmt.result);
+                pos = primaryStmt.nextPos;
+            }
+            pos = skipLineBreakOrSemicolon(pos);
+        }
+        pos++;
+        return new ParseResult<>(new BlockStmt(stmtList), pos);
+    }
+
     public ParseResult<Stmt> parseStmt(final int startPos) throws ParseException {
-        return parsePrimaryStmt(startPos);
+        Token tokenHere = readToken(startPos);
+        int pos = startPos;
+        if(tokenHere == KeywordToken.TK_FOR) {
+            pos++;
+            checkTokenIs(pos, BracketsToken.TK_LPAREN);
+            pos++;
+            if((tokenHere = readToken(pos)) instanceof VariableToken) {
+                VariableExp variableExp = new VariableExp(((VariableToken)tokenHere).getName());
+                pos++;
+                checkTokenIs(pos, KeywordToken.TK_IN);
+                pos++;
+                if((tokenHere = readToken(pos)) instanceof IntToken) {   // RangeExp
+                    IntExp startExp = new IntExp(((IntToken)tokenHere).getValue());
+                    pos++;
+                    checkTokenIs(pos, SymbolToken.TK_DOT_DOT);
+                    pos++;
+                    if((tokenHere = readToken(pos)) instanceof IntToken) {
+                        IntExp endExp = new IntExp(((IntToken)tokenHere).getValue());
+                        pos++;
+                        checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                        pos++;
+                        ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                        pos = blockStmt.nextPos;
+                        if(pos < tokens.length) {   // not the end the program
+                            checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                            pos++;
+                        }
+                        return new ParseResult<>(new ForStmt(variableExp, new RangeExp(startExp, endExp), blockStmt.result), pos);
+                    } else {
+                        throw new ParseException("Integer expected in range expression!");
+                    }
+                } else if((tokenHere = readToken(pos)) instanceof VariableToken) {   // ArrayExp
+                    pos++;
+                    checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                    pos++;
+                    ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                    pos = blockStmt.nextPos;
+                    if(pos < tokens.length) {   // not the end the program
+                        checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                        pos++;
+                    }
+                    return new ParseResult<>(new ForStmt(variableExp, new VariableExp(((VariableToken)tokenHere).getName()), blockStmt.result), pos);
+                } else {
+                    throw new ParseException("Array or range expected in for loop!");
+                }
+            } else {
+                throw new ParseException("Variable expected in for loop!");
+            }
+        }
+        else if(tokenHere == KeywordToken.TK_FUN) {
+            pos++;
+            if((tokenHere = readToken(pos)) instanceof VariableToken) {
+                VariableExp asVar = new VariableExp(((VariableToken) tokenHere).getName());
+                VariableExp variableExp = null;
+                Type type = null;
+                pos++;
+                checkTokenIs(pos, BracketsToken.TK_LPAREN);
+                pos++;
+                LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
+                while((tokenHere = readToken(pos)) != BracketsToken.TK_RPAREN) {
+                    if (tokenHere instanceof VariableToken) {
+                        variableExp = new VariableExp(((VariableToken)tokenHere).getName());
+                        pos++;
+                        tokenHere = readToken(pos);
+                        if(tokenHere == SymbolToken.TK_COLON) {
+                            pos++;
+                            tokenHere = readToken(pos);
+                            switch ((TypeToken)tokenHere) {
+                                case TK_TYPE_INT:
+                                    type = BasicType.TYPE_INT;
+                                    pos++;
+                                    break;
+                                case TK_TYPE_STRING:
+                                    type = BasicType.TYPE_STRING;
+                                    pos++;
+                                    break;
+                                case TK_TYPE_BOOLEAN:
+                                    type = BasicType.TYPE_BOOLEAN;
+                                    pos++;
+                                    break;
+                                case TK_TYPE_UNIT:
+                                    type = BasicType.TYPE_UNIT;
+                                    pos++;
+                                    break;
+                                case TK_ANY:
+                                    type = BasicType.TYPE_ANY;
+                                    pos++;
+                                    break;
+                                case TK_ARRAY: case TK_MUTABLE_LIST:
+                                    pos++;
+                                    ParseResult<BasicType> genericType = parseGenericType(pos);
+                                    type = tokenHere == TypeToken.TK_ARRAY ? new TypeArray(genericType.result) :
+                                            new TypeMutableList(genericType.result);
+                                    pos = genericType.nextPos;
+                                    break;
+                            }
+                        }
+                        parameterList.put(variableExp, type);
+                        if(readToken(pos) != SymbolToken.TK_COMMA) {
+                            break;
+                        } else {
+                            pos++;
+                        }
+                    } else {
+                        if(parameterList.size() > 0) {
+                            throw new ParseException("Variable expected after ,");
+                        } else {
+                            pos++;
+                            break;
+                        }
+                    }
+                    type = null;
+                    variableExp = null;
+                }
+                checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                Type retureType = null;
+                pos++;
+                if((tokenHere = readToken(pos)) == SymbolToken.TK_COLON) {
+                    pos++;
+                    tokenHere = readToken(pos);
+                    switch ((TypeToken)tokenHere) {
+                        case TK_TYPE_INT:
+                            retureType = BasicType.TYPE_INT;
+                            pos++;
+                            break;
+                        case TK_TYPE_STRING:
+                            retureType = BasicType.TYPE_STRING;
+                            pos++;
+                            break;
+                        case TK_TYPE_BOOLEAN:
+                            retureType = BasicType.TYPE_BOOLEAN;
+                            pos++;
+                            break;
+                        case TK_TYPE_UNIT:
+                            retureType = BasicType.TYPE_UNIT;
+                            pos++;
+                            break;
+                        case TK_ANY:
+                            retureType = BasicType.TYPE_ANY;
+                            pos++;
+                            break;
+                        case TK_ARRAY: case TK_MUTABLE_LIST:
+                            pos++;
+                            ParseResult<BasicType> genericType = parseGenericType(pos);
+                            retureType = tokenHere == TypeToken.TK_ARRAY ? new TypeArray(genericType.result) :
+                                    new TypeMutableList(genericType.result);
+                            pos = genericType.nextPos;
+                            break;
+                    }
+                    ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                    pos = blockStmt.nextPos;
+                    if(pos < tokens.length) {   // not the end the program
+                        checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                        pos++;
+                    }
+                    return new ParseResult<>(new FunctionDeclareStmt(asVar, retureType, parameterList, blockStmt.result), pos);
+                } else if((tokenHere = readToken(pos)) == BracketsToken.TK_LCURLY) {
+                    ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                    pos = blockStmt.nextPos;
+                    if(pos < tokens.length) {   // not the end the program
+                        checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                        pos++;
+                    }
+                    return new ParseResult<>(new FunctionDeclareStmt(asVar, BasicType.TYPE_UNIT, parameterList, blockStmt.result), pos);
+                } else {
+                    throw new ParseException(": or { expected after function parameter!");
+                }
+            } else {
+                throw new ParseException("Function name expected!");
+            }
+        }
+        else if(tokenHere == KeywordToken.TK_IF) {
+            pos++;
+            checkTokenIs(pos, BracketsToken.TK_LPAREN);
+            pos++;
+            ParseResult<Exp> resultExp = parseExp(pos);
+            pos = resultExp.nextPos;
+            checkTokenIs(pos, BracketsToken.TK_RPAREN);
+            pos++;
+            ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+            ParseResult<BlockStmt> elseBlock = null;
+            if((tokenHere = readToken(blockStmt.nextPos)) == KeywordToken.TK_ELSE) {
+                elseBlock = parseBlockStmt(blockStmt.nextPos + 1);
+            }
+            pos = elseBlock == null ? blockStmt.nextPos : elseBlock.nextPos;
+            if(pos < tokens.length) {   // not the end the program
+                checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                pos++;
+            }
+            return new ParseResult<>(new IfStmt(resultExp.result, blockStmt.result, elseBlock.result), pos);
+        } else if(tokenHere == KeywordToken.TK_WHILE) {
+            pos++;
+            checkTokenIs(pos, BracketsToken.TK_LPAREN);
+            pos++;
+            ParseResult<Exp> resultExp = parseExp(pos);
+            pos = resultExp.nextPos;
+            checkTokenIs(pos, BracketsToken.TK_RPAREN);
+            pos++;
+            ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+            pos = blockStmt.nextPos;
+            if(pos < tokens.length) {   // not the end the program
+                checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                pos++;
+            }
+            return new ParseResult<>(new WhileStmt(resultExp.result, blockStmt.result), pos);
+        } else {
+            return parsePrimaryStmt(startPos);
+        }
     }
 
     public Stmt parseToplevelStmt() throws ParseException {

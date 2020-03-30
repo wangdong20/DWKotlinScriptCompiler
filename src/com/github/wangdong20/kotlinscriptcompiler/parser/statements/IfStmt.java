@@ -6,16 +6,16 @@ import java.util.List;
 
 public class IfStmt implements Stmt {
     private final Exp condition;
-    private final List<Stmt> trueBranch;
-    private final List<Stmt> falseBranch;
+    private final BlockStmt trueBranch;
+    private final BlockStmt falseBranch;
 
-    public IfStmt(Exp condition, List<Stmt> trueBranch, List<Stmt> falseBranch) {
+    public IfStmt(Exp condition, BlockStmt trueBranch, BlockStmt falseBranch) {
         this.condition = condition;
         this.trueBranch = trueBranch;
         this.falseBranch = falseBranch;
     }
 
-    public IfStmt(Exp condition, List<Stmt> trueBranch) {
+    public IfStmt(Exp condition, BlockStmt trueBranch) {
         this.condition = condition;
         this.trueBranch = trueBranch;
         this.falseBranch = null;
@@ -25,11 +25,11 @@ public class IfStmt implements Stmt {
         return condition;
     }
 
-    public List<Stmt> getTrueBranch() {
+    public BlockStmt getTrueBranch() {
         return trueBranch;
     }
 
-    public List<Stmt> getFalseBranch() {
+    public BlockStmt getFalseBranch() {
         return falseBranch;
     }
 

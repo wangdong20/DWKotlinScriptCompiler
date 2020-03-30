@@ -6,25 +6,25 @@ import java.util.List;
 
 public class WhileStmt implements Stmt {
     private final Exp condition;
-    private final List<Stmt> stmtList;
+    private final BlockStmt blockStmt;
 
-    public WhileStmt(Exp condition, List<Stmt> stmtList) {
+    public WhileStmt(Exp condition, BlockStmt blockStmt) {
         this.condition = condition;
-        this.stmtList = stmtList;
+        this.blockStmt = blockStmt;
     }
 
     public Exp getCondition() {
         return condition;
     }
 
-    public List<Stmt> getStmtList() {
-        return stmtList;
+    public BlockStmt getBlockStmt() {
+        return blockStmt;
     }
 
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof WhileStmt) {
-            if(((WhileStmt) obj).getCondition().equals(condition) && ((WhileStmt) obj).getStmtList().equals(stmtList)) {
+            if(((WhileStmt) obj).getCondition().equals(condition) && ((WhileStmt) obj).getBlockStmt().equals(blockStmt)) {
                 return true;
             }
         }
@@ -35,7 +35,7 @@ public class WhileStmt implements Stmt {
     public String toString() {
         return "WhileStmt{" +
                 "condition=" + condition +
-                ", stmtList=" + stmtList +
+                ", blockStmt=" + blockStmt +
                 '}';
     }
 }

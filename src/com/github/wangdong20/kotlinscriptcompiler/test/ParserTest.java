@@ -8,6 +8,7 @@ import com.github.wangdong20.kotlinscriptcompiler.parser.type.TypeHighOrderFunct
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import org.junit.jupiter.api.Test;
+import sun.tools.tree.VarDeclarationStatement;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -39,6 +40,100 @@ class ParserTest {
                 ()->{
                     assertEquals(expected, (new Parser(tokens)).parseToplevelStmt());
                 });
+    }
+
+    @Test
+    /**
+     * for(i in 0..9) {
+     *     for(j in a) {
+     *         println(i * j)
+     *     }
+     * }
+     */
+    public void forInsideForStmt() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new MultiplicativeExp(new VariableExp("i"), new VariableExp("j"),
+                MultiplicativeOp.OP_MULTIPLY)));
+        ForStmt forInside = new ForStmt(new VariableExp("j"), new VariableExp("a"), new BlockStmt(stmtListInside));
+        List<Stmt> stmtListOutside = new ArrayList<>();
+        stmtListOutside.add(forInside);
+        assertParseStmts(new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(0), new IntExp(9)),
+                new BlockStmt(stmtListOutside)),
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new IntToken(0), SymbolToken.TK_DOT_DOT, new IntToken(9), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_FOR, BracketsToken.TK_LPAREN,
+                new VariableToken("j"), KeywordToken.TK_IN, new VariableToken("a"), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BinopToken.TK_MULTIPLY, new VariableToken("j"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY);
+    }
+
+    @Test
+    /**
+     * while(true) {
+     *     if(a > 10) {
+     *         break
+     *     }
+     *     a++;
+     * }
+     */
+    public void ifInsidewhileStmt() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(ControlLoopStmt.STMT_BREAK);
+        List<Stmt> stmtListOutside = new ArrayList<>();
+        stmtListOutside.add(new IfStmt(new ComparableExp(new VariableExp("a"), new IntExp(10), ComparableOp.OP_GREATER_THAN),
+                new BlockStmt(stmtListInside)));
+        stmtListOutside.add(new SelfOperationStmt(new SelfOperationExp(new VariableExp("a"), SelfOp.OP_SELF_INCREASE, false)));
+        assertParseStmts(new WhileStmt(new BooleanExp(true), new BlockStmt(stmtListOutside)),
+                KeywordToken.TK_WHILE, BracketsToken.TK_LPAREN, KeywordToken.TK_TRUE, BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_IF, BracketsToken.TK_LPAREN,
+                new VariableToken("a"), BinopToken.TK_GREATER_THAN, new IntToken(10), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_BREAK, SymbolToken.TK_LINE_BREAK,
+                BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK, new VariableToken("a"), UnopToken.TK_PLUS_PLUS,
+                SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY);
+    }
+
+    @Test
+    /**
+     * fun search(i: Int, a: Array<Int>): Boolean {
+     *     var index = 0
+     *     for(index in a) {
+     *         if(i == index) {
+     *             return true
+     *         }
+     *     }
+     *     return false
+     * }
+     */
+    public void functionDeclareWithReturnType() throws ParseException {
+        List<Stmt> stmtListInIf = new ArrayList<>();
+        stmtListInIf.add(new ReturnStmt(new BooleanExp(true)));
+        List<Stmt> stmtListInFor = new ArrayList<>();
+        stmtListInFor.add(new IfStmt(new ComparableExp(new VariableExp("i"), new VariableExp("index"), ComparableOp.OP_EQUAL_EQUAL),
+                new BlockStmt(stmtListInIf)));
+        List<Stmt> stmtListInFun = new ArrayList<>();
+        stmtListInFun.add(new AssignStmt(new IntExp(0), new VariableExp("index"), false));
+        stmtListInFun.add(new ForStmt(new VariableExp("index"), new VariableExp("a"),
+                new BlockStmt(stmtListInFor)));
+        stmtListInFun.add(new ReturnStmt(new BooleanExp(false)));
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
+        parameterList.put(new VariableExp("i"), BasicType.TYPE_INT);
+        parameterList.put(new VariableExp("a"), new TypeArray(BasicType.TYPE_INT));
+        assertParseStmts(new FunctionDeclareStmt(new VariableExp("search"), BasicType.TYPE_BOOLEAN,
+                parameterList, new BlockStmt(stmtListInFun)),
+                KeywordToken.TK_FUN, new VariableToken("search"), BracketsToken.TK_LPAREN,
+                new VariableToken("i"), SymbolToken.TK_COLON, TypeToken.TK_TYPE_INT, SymbolToken.TK_COMMA,
+                new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_ARRAY, BracketsToken.TK_LANGLE,
+                TypeToken.TK_TYPE_INT, BracketsToken.TK_RANGLE, BracketsToken.TK_RPAREN, SymbolToken.TK_COLON,
+                TypeToken.TK_TYPE_BOOLEAN, BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK,
+                KeywordToken.TK_VAR, new VariableToken("index"), BinopToken.TK_EQUAL, new IntToken(0),
+                SymbolToken.TK_LINE_BREAK, KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("index"),
+                KeywordToken.TK_IN, new VariableToken("a"), BracketsToken.TK_RPAREN, BracketsToken.TK_LCURLY,
+                SymbolToken.TK_LINE_BREAK, KeywordToken.TK_IF, BracketsToken.TK_LPAREN, new VariableToken("i"),
+                BinopToken.TK_EQUAL_EQUAL, new VariableToken("index"), BracketsToken.TK_RPAREN, BracketsToken.TK_LCURLY,
+                SymbolToken.TK_LINE_BREAK, KeywordToken.TK_RETURN, KeywordToken.TK_TRUE, SymbolToken.TK_LINE_BREAK,
+                BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK,
+                KeywordToken.TK_RETURN, KeywordToken.TK_FALSE, SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY);
     }
 
     @Test
