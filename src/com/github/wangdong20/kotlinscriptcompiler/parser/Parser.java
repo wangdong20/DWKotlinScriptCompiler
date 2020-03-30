@@ -411,21 +411,7 @@ public class Parser {
 
     public  ParseResult<Exp> parseExp(final int startPos) throws ParseException {
         final Token tokenHere = readToken(startPos);
-        if(tokenHere == KeywordToken.TK_IF) {
-            checkTokenIs(startPos + 1, BracketsToken.TK_LPAREN);
-            final ParseResult<Exp> condition = parseExp(startPos + 2);
-            checkTokenIs(condition.nextPos, BracketsToken.TK_RPAREN);
-            final ParseResult<Exp> ifTrue = parseExp(condition.nextPos + 1);
-            if(tokens.length > ifTrue.nextPos && tokens[ifTrue.nextPos] == KeywordToken.TK_ELSE) {
-                final ParseResult<Exp> ifFalse = parseExp(ifTrue.nextPos + 1);
-                return new ParseResult<Exp>(new IfExp(condition.result, ifTrue.result, ifFalse.result),
-                        ifFalse.nextPos);
-            } else {
-                return new ParseResult<Exp>(new IfExp(condition.result, ifTrue.result),
-                        ifTrue.nextPos);
-            }
-
-        } else if(tokenHere == KeywordToken.TK_ARRAY_OF || tokenHere == KeywordToken.TK_MUTABLE_LIST_OF) {
+        if(tokenHere == KeywordToken.TK_ARRAY_OF || tokenHere == KeywordToken.TK_MUTABLE_LIST_OF) {
             checkTokenIs(startPos + 1, BracketsToken.TK_LPAREN);
             int pos = startPos + 2;
             List<Exp> expList = new ArrayList<>();

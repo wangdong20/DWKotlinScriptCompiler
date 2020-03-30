@@ -301,32 +301,6 @@ class ParserTest {
     }
 
     @Test
-    public void ifElseParses() throws ParseException {
-        assertParses(new IfExp(new IntExp(1),
-                        new IntExp(2),
-                        new IntExp(3)),
-                KeywordToken.TK_IF,
-                BracketsToken.TK_LPAREN,
-                new IntToken(1),
-                BracketsToken.TK_RPAREN,
-                new IntToken(2),
-                KeywordToken.TK_ELSE,
-                new IntToken(3));
-    }
-
-    @Test
-    public void ifParses() throws ParseException {
-        assertParses(new IfExp(new IntExp(1),
-                        new IntExp(2),
-                        null),
-                KeywordToken.TK_IF,
-                BracketsToken.TK_LPAREN,
-                new IntToken(1),
-                BracketsToken.TK_RPAREN,
-                new IntToken(2));
-    }
-
-    @Test
     // ++i
     public void selfIncreasePreorderParses() throws ParseException {
         assertParses(new SelfOperationExp(new VariableExp("i"), SelfOp.OP_SELF_INCREASE, true),
