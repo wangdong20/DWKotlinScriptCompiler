@@ -1089,6 +1089,24 @@ public class Parser {
     }
 
     public ParseResult<Program> parseProgram(final int startPos) throws ParseException {
-        return null;
+        List<Stmt> stmtList = new ArrayList<>();
+        int pos = startPos;
+        while(pos < tokens.length) {
+            pos = skipLineBreakOrSemicolon(pos);
+            ParseResult<Stmt> stmtParseResult = parseStmt(pos);
+            stmtList.add(stmtParseResult.result);
+            pos = skipLineBreakOrSemicolon(stmtParseResult.nextPos);
+        }
+        return new ParseResult<>(new Program(stmtList), pos);
+    }
+
+    public Program parseToplevelProgram() throws ParseException {
+        final ParseResult<Program> result = parseProgram(0);
+
+        if(result.nextPos == tokens.length) {
+            return result.result;
+        } else {
+            throw new ParseException("Extra tokens at end");
+        }
     }
 }
