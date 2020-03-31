@@ -1,17 +1,17 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser.expressions;
 
 public class SelfOperationExp implements Exp {
-    private final Exp variableExp;
+    private final Variable variableExp;
     private final SelfOp op;
     private final boolean isPreOrder;   // if true, then ++i else , then i++
 
-    public SelfOperationExp(Exp variableExp, SelfOp op, boolean isPreOrder) {
+    public SelfOperationExp(Variable variableExp, SelfOp op, boolean isPreOrder) {
         this.variableExp = variableExp;
         this.op = op;
         this.isPreOrder = isPreOrder;
     }
 
-    public Exp getVariableExp() {
+    public Variable getVariableExp() {
         return variableExp;
     }
 
