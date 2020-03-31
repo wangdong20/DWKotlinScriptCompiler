@@ -76,8 +76,8 @@ public class TokenizerTest {
     }
 
     public static void testBracketsToken() throws TokenizerException {
-        testTokenizes("(){ }", BracketsToken.TK_LPAREN, BracketsToken.TK_RPAREN,
-                BracketsToken.TK_LCURLY, BracketsToken.TK_RCURLY);
+        testTokenizes("(){ }][", BracketsToken.TK_LPAREN, BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, BracketsToken.TK_RCURLY, BracketsToken.TK_RBRACKET, BracketsToken.TK_LBRACKET);
     }
 
     public static void testSymbolToken() throws TokenizerException {

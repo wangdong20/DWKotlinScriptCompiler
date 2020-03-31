@@ -1,6 +1,7 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser.statements;
 
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.Exp;
+import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.Variable;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.VariableExp;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
 
@@ -10,16 +11,16 @@ import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
  */
 public class CompoundAssignStmt implements Stmt {
     private final Exp expression;
-    private final VariableExp variable;
+    private final Variable variable;
     private final CompoundAssignOp op;
 
-    public CompoundAssignStmt(Exp expression, VariableExp variable, CompoundAssignOp op) {
+    public CompoundAssignStmt(Exp expression, Variable variable, CompoundAssignOp op) {
         this.expression = expression;
         this.variable = variable;
         this.op = op;
     }
 
-    public CompoundAssignStmt(Exp expression, VariableExp variable, CompoundAssignOp op, Type type) {
+    public CompoundAssignStmt(Exp expression, Variable variable, CompoundAssignOp op, Type type) {
         this.expression = expression;
         this.variable = variable;
         this.op = op;
@@ -29,7 +30,7 @@ public class CompoundAssignStmt implements Stmt {
         return expression;
     }
 
-    public VariableExp getVariable() {
+    public Variable getVariable() {
         return variable;
     }
 

@@ -1,7 +1,7 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser.expressions;
 
 
-public class VariableExp implements Exp {
+public class VariableExp implements Exp, Variable {
     private final String name;
 
     public VariableExp(final String name) {

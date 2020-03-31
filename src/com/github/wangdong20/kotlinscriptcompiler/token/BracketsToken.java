@@ -5,6 +5,8 @@ public enum BracketsToken implements Token {
     TK_RPAREN,      // )
     TK_LCURLY,      // {
     TK_RCURLY,      // }
-    TK_LANGLE,      // <
-    TK_RANGLE,      // >
+//    TK_LANGLE,      // <
+//    TK_RANGLE,      // >
+    TK_LBRACKET,    // [
+    TK_RBRACKET     // ]
 }

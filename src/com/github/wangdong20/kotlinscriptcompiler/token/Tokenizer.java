@@ -41,6 +41,8 @@ public class Tokenizer {
         bracketsMap.put(")", BracketsToken.TK_RPAREN);
         bracketsMap.put("{", BracketsToken.TK_LCURLY);
         bracketsMap.put("}", BracketsToken.TK_RCURLY);
+        bracketsMap.put("[", BracketsToken.TK_LBRACKET);
+        bracketsMap.put("]", BracketsToken.TK_RBRACKET);
 
         // Angle brackets may have conflict with greater, less token, so comment first
 //        bracketsMap.put("<", BracketsToken.TK_LANGLE);

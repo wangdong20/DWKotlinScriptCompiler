@@ -187,8 +187,8 @@ class ParserTest {
                 parameterList, new BlockStmt(stmtListInFun)),
                 KeywordToken.TK_FUN, new VariableToken("search"), BracketsToken.TK_LPAREN,
                 new VariableToken("i"), SymbolToken.TK_COLON, TypeToken.TK_TYPE_INT, SymbolToken.TK_COMMA,
-                new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_ARRAY, BracketsToken.TK_LANGLE,
-                TypeToken.TK_TYPE_INT, BracketsToken.TK_RANGLE, BracketsToken.TK_RPAREN, SymbolToken.TK_COLON,
+                new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_ARRAY, BinopToken.TK_LESS_THAN,
+                TypeToken.TK_TYPE_INT, BinopToken.TK_GREATER_THAN, BracketsToken.TK_RPAREN, SymbolToken.TK_COLON,
                 TypeToken.TK_TYPE_BOOLEAN, BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK,
                 KeywordToken.TK_VAR, new VariableToken("index"), BinopToken.TK_EQUAL, new IntToken(0),
                 SymbolToken.TK_LINE_BREAK, KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("index"),
@@ -208,35 +208,60 @@ class ParserTest {
     }
 
     @Test
+    // a[0] = 1;
+    public void assignArrayIndexStmt() throws ParseException {
+        assertParseStmts(new AssignStmt(new IntExp(1), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(0)), false, false),
+                new VariableToken("a"), BracketsToken.TK_LBRACKET, new IntToken(0),
+                BracketsToken.TK_RBRACKET, BinopToken.TK_EQUAL, new IntToken(1), SymbolToken.TK_SEMICOLON);
+    }
+
+    @Test
     // var a += 1 Exception expected
-    public void varStmtWithCoumpoundAssignment() throws ParseException {
+    public void varStmtWithCoumpoundAssignment() {
         assertParseStmtsExpectException(new CompoundAssignStmt(new IntExp(1), new VariableExp("a"), CompoundAssignOp.EXP_PLUS_EQUAL),
                 KeywordToken.TK_VAR, new VariableToken("a"), BinopToken.TK_PLUS_EQUAL, new IntToken(1));
     }
 
     @Test
-    // a /= 1
-    public void coumpoundAssignmentParse() throws ParseException {
-        assertParseStmts(new CompoundAssignStmt(new IntExp(1), new VariableExp("a"), CompoundAssignOp.EXP_DIVIDE_EQUAL),
-                new VariableToken("a"), BinopToken.TK_DIVIDE_EQUAL, new IntToken(1));
+    // a += 1
+    public void variableStmtWithCoumpoundAssignment() throws ParseException {
+        assertParseStmts(new CompoundAssignStmt(new IntExp(1), new VariableExp("a"), CompoundAssignOp.EXP_PLUS_EQUAL),
+                new VariableToken("a"), BinopToken.TK_PLUS_EQUAL, new IntToken(1));
     }
 
     @Test
-    // val a : String = "abc"
+    // a[0] += 1;
+    public void arrayIndexStmtWithCoumpoundAssignment() throws ParseException {
+        assertParseStmts(new CompoundAssignStmt(new IntExp(1), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(0)), CompoundAssignOp.EXP_PLUS_EQUAL),
+                new VariableToken("a"), BracketsToken.TK_LBRACKET, new IntToken(0), BracketsToken.TK_RBRACKET, BinopToken.TK_PLUS_EQUAL, new IntToken(1),
+                SymbolToken.TK_SEMICOLON);
+    }
+
+    @Test
+    // a /= 1;;
+    public void coumpoundAssignmentParse() throws ParseException {
+        assertParseStmts(new CompoundAssignStmt(new IntExp(1), new VariableExp("a"), CompoundAssignOp.EXP_DIVIDE_EQUAL),
+                new VariableToken("a"), BinopToken.TK_DIVIDE_EQUAL, new IntToken(1),
+                SymbolToken.TK_SEMICOLON, SymbolToken.TK_SEMICOLON);
+    }
+
+    @Test
+    // val a : String = "abc";
     public void valStmtWithBasicType() throws ParseException {
         assertParseStmts(new AssignStmt(new StringExp("abc", null), new VariableExp("a"), BasicType.TYPE_STRING, true, true),
                 KeywordToken.TK_VAL, new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_TYPE_STRING,
-                        BinopToken.TK_EQUAL, new StringToken("abc"));
+                        BinopToken.TK_EQUAL, new StringToken("abc"), SymbolToken.TK_SEMICOLON);
     }
 
     @Test
-    // val a : Array<Int> = Array(10, { -> 0})
+    // val a : Array<Int> = Array(10, { -> 0});;
     public void valStmtWithArrayType() throws ParseException {
         assertParseStmts(new AssignStmt(new ArrayExp(new IntExp(10), new LambdaExp(null, new IntExp(0))), new VariableExp("a"), new TypeArray(BasicType.TYPE_INT), true, true),
-                KeywordToken.TK_VAL, new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_ARRAY, BracketsToken.TK_LANGLE,
-                TypeToken.TK_TYPE_INT, BracketsToken.TK_RANGLE, BinopToken.TK_EQUAL, TypeToken.TK_ARRAY,
+                KeywordToken.TK_VAL, new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_ARRAY, BinopToken.TK_LESS_THAN,
+                TypeToken.TK_TYPE_INT, BinopToken.TK_GREATER_THAN, BinopToken.TK_EQUAL, TypeToken.TK_ARRAY,
                 BracketsToken.TK_LPAREN, new IntToken(10), SymbolToken.TK_COMMA, BracketsToken.TK_LCURLY,
-                SymbolToken.TK_ARROW, new IntToken(0), BracketsToken.TK_RCURLY, BracketsToken.TK_RPAREN);
+                SymbolToken.TK_ARROW, new IntToken(0), BracketsToken.TK_RCURLY, BracketsToken.TK_RPAREN,
+                SymbolToken.TK_SEMICOLON, SymbolToken.TK_SEMICOLON);
     }
 
     @Test
@@ -315,10 +340,27 @@ class ParserTest {
     }
 
     @Test
+    // ++a[0]
+    public void selfIncreasePreorderWithArrayIndex() throws ParseException {
+        assertParses(new SelfOperationExp(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(0)), SelfOp.OP_SELF_INCREASE, true),
+                UnopToken.TK_PLUS_PLUS, new VariableToken("a"), BracketsToken.TK_LBRACKET,
+                new IntToken(0), BracketsToken.TK_RBRACKET);
+    }
+
+    @Test
     // i++
     public void selfIncreaseNoPreorderParses() throws ParseException {
         assertParses(new SelfOperationExp(new VariableExp("i"), SelfOp.OP_SELF_INCREASE, false),
                 new VariableToken("i"), UnopToken.TK_PLUS_PLUS);
+    }
+
+    @Test
+    // a[i + 1]++
+    public void selfIncreasePostorderWithArrayIndex() throws ParseException {
+        assertParses(new SelfOperationExp(new ArrayWithIndexExp(new VariableExp("a"), new AdditiveExp(
+                new VariableExp("i"), new IntExp(1), AdditiveOp.EXP_PLUS)), SelfOp.OP_SELF_INCREASE, false),
+                new VariableToken("a"), BracketsToken.TK_LBRACKET, new VariableToken("i"), BinopToken.TK_PLUS,
+                new IntToken(1), BracketsToken.TK_RBRACKET, UnopToken.TK_PLUS_PLUS);
     }
 
     @Test
@@ -330,11 +372,28 @@ class ParserTest {
     }
 
     @Test
+    // a[i]++ + 2
+    public void selfDecreasePostorderArrayElementAdd() throws ParseException {
+        assertParses(new AdditiveExp(new SelfOperationExp(new ArrayWithIndexExp(new VariableExp("a"), new VariableExp("i")), SelfOp.OP_SELF_INCREASE, false),
+                        new IntExp(2), AdditiveOp.EXP_PLUS), new VariableToken("a"), BracketsToken.TK_LBRACKET,
+                new VariableToken("i"), BracketsToken.TK_RBRACKET, UnopToken.TK_PLUS_PLUS, BinopToken.TK_PLUS, new IntToken(2));
+    }
+
+    @Test
     // 2 + ++i
     public void selfDecreaseInAdditiveRightParses() throws ParseException {
         assertParses( new AdditiveExp(new IntExp(2), new SelfOperationExp(new VariableExp("i"), SelfOp.OP_SELF_INCREASE, true),
                         AdditiveOp.EXP_PLUS),
                 new IntToken(2), BinopToken.TK_PLUS, UnopToken.TK_PLUS_PLUS,  new VariableToken("i"));
+    }
+
+    @Test
+    // 2 + ++a[i]
+    public void selfDecreasePreorderArrayElementAdd() throws ParseException {
+        assertParses(new AdditiveExp(new IntExp(2), new SelfOperationExp(new ArrayWithIndexExp(new VariableExp("a"), new VariableExp("i")), SelfOp.OP_SELF_INCREASE, true)
+                        , AdditiveOp.EXP_PLUS), new IntToken(2), BinopToken.TK_PLUS,
+                UnopToken.TK_PLUS_PLUS, new VariableToken("a"), BracketsToken.TK_LBRACKET,
+                new VariableToken("i"), BracketsToken.TK_RBRACKET);
     }
 
     @Test

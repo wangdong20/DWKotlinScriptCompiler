@@ -244,6 +244,22 @@ public class Parser {
                     return new ParseResult<>(new SelfOperationExp(name,
                             next == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE,
                             false), startPos + 2);
+                } else if(next == BracketsToken.TK_LBRACKET) {  // array with index case
+                    int pos = startPos + 2;
+                    ParseResult<Exp> result = parseExp(pos);
+                    pos = result.nextPos;
+                    checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                    pos++;
+                    if(pos < tokens.length) {
+                        Token temp = readToken(pos);
+                        pos++;
+                        if (temp == UnopToken.TK_PLUS_PLUS || temp == UnopToken.TK_MINUS_MINUS) {
+                            return new ParseResult<>(new SelfOperationExp(new ArrayWithIndexExp(name, result.result),
+                                    temp == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE,
+                                    false), pos);
+                        }
+                    }
+                    return new ParseResult<>(new ArrayWithIndexExp(name, result.result), pos);
                 }
                 else {
                     return new ParseResult<>(new VariableExp(asVar.getName()), startPos + 1);
@@ -265,6 +281,19 @@ public class Parser {
             if(startPos + 1 < tokens.length) {
                 Token next = readToken(startPos + 1);
                 if(next instanceof VariableToken) {
+                    if(startPos + 2 < tokens.length) {
+                        int pos = startPos + 2;
+                        if(readToken(pos) == BracketsToken.TK_LBRACKET) {   // array with index case
+                            pos++;
+                            ParseResult<Exp> result = parseExp(pos);
+                            pos = result.nextPos;
+                            checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                            pos++;
+                            return new ParseResult<>(new SelfOperationExp(new ArrayWithIndexExp(new VariableExp(((VariableToken) next).getName()), result.result),
+                                    tokenHere == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE,
+                                    true), pos);
+                        }
+                    }
                     return new ParseResult<>(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
                             tokenHere == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE,
                             true), startPos + 2);
@@ -480,7 +509,7 @@ public class Parser {
      * generic type only support basic type
      */
     public ParseResult<BasicType> parseGenericType(final int startPos) throws ParseException {
-        checkTokenIs(startPos, BracketsToken.TK_LANGLE);
+        checkTokenIs(startPos, BinopToken.TK_LESS_THAN);
         final Token tokenHere = readToken(startPos + 1);
         BasicType genericType = null;
         switch ((TypeToken)tokenHere) {
@@ -500,7 +529,7 @@ public class Parser {
                 genericType = BasicType.TYPE_ANY;
                 break;
         }
-        checkTokenIs(startPos + 2, BracketsToken.TK_RANGLE);
+        checkTokenIs(startPos + 2, BinopToken.TK_GREATER_THAN);
         return new ParseResult<>(genericType, startPos + 3);
     }
 
@@ -590,7 +619,12 @@ public class Parser {
                 Token next = readToken(startPos + 1);
                 if(next == BinopToken.TK_EQUAL) {
                     ParseResult<Exp> expParseResult = parseExp(startPos + 2);
-                    stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new VariableExp(asVar.getName()), false, false), expParseResult.nextPos);
+                    if(expParseResult.nextPos == tokens.length) {
+                        stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new VariableExp(asVar.getName()), false, false), expParseResult.nextPos);
+                    } else {
+                        checkTokenIsOr(expParseResult.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                        stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new VariableExp(asVar.getName()), false, false), expParseResult.nextPos + 1);
+                    }
                 } else if(next == BinopToken.TK_PLUS_EQUAL || next == BinopToken.TK_MULTIPLY_EQUAL
                     || next == BinopToken.TK_MINUS_EQUAL || next == BinopToken.TK_DIVIDE_EQUAL) {
                     ParseResult<Exp> expParseResult = parseExp(startPos + 2);
@@ -612,7 +646,7 @@ public class Parser {
                         stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
                                 new VariableExp(asVar.getName()), op), expParseResult.nextPos);
                     } else {
-                        checkTokenIsOr(expParseResult.nextPos + 1, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                        checkTokenIsOr(expParseResult.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
                         stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
                                 new VariableExp(asVar.getName()), op), expParseResult.nextPos + 1);
                     }
@@ -655,9 +689,69 @@ public class Parser {
                         checkTokenIsOr(pos + 1, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
                         stmtResult = new ParseResult<>(new FunctionInstanceStmt(new FunctionInstanceExp(new VariableExp(asVar.getName()), parameterList)), pos + 2);
                     }
+                } else if(next == BracketsToken.TK_LBRACKET) {  // Array with index case
+                    int pos = startPos + 2;
+                    ParseResult<Exp> result = parseExp(pos);
+                    pos = result.nextPos;
+                    checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                    pos++;
+                    if(pos < tokens.length) {
+                        Token temp = readToken(pos);
+                        pos++;
+                        if (temp == UnopToken.TK_PLUS_PLUS || temp == UnopToken.TK_MINUS_MINUS) {
+                            if(pos == tokens.length) {
+                                stmtResult = new ParseResult<>(new SelfOperationStmt(new SelfOperationExp(new ArrayWithIndexExp(new VariableExp(asVar.getName()), result.result),
+                                        temp == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE,
+                                        false)), pos);
+                            } else {
+                                checkTokenIsOr(pos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                                pos++;
+                                stmtResult = new ParseResult<>(new SelfOperationStmt(new SelfOperationExp(new ArrayWithIndexExp(new VariableExp(asVar.getName()), result.result),
+                                        temp == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE,
+                                        false)), pos);
+                            }
+                        } else if(temp == BinopToken.TK_PLUS_EQUAL || temp == BinopToken.TK_MULTIPLY_EQUAL
+                                || temp == BinopToken.TK_MINUS_EQUAL || temp == BinopToken.TK_DIVIDE_EQUAL) {
+                            ParseResult<Exp> expParseResult = parseExp(pos);
+                            CompoundAssignOp op = null;
+                            switch ((BinopToken)temp) {
+                                case TK_PLUS_EQUAL:
+                                    op = CompoundAssignOp.EXP_PLUS_EQUAL;
+                                    break;
+                                case TK_MINUS_EQUAL:
+                                    op = CompoundAssignOp.EXP_MINUS_EQUAL;
+                                    break;
+                                case TK_MULTIPLY_EQUAL:
+                                    op = CompoundAssignOp.EXP_MULTIPLY_EQUAL;
+                                    break;
+                                case TK_DIVIDE_EQUAL:
+                                    op = CompoundAssignOp.EXP_DIVIDE_EQUAL;
+                            }
+                            if(expParseResult.nextPos == tokens.length) {
+                                stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
+                                        new VariableExp(asVar.getName()), op), expParseResult.nextPos);
+                            } else {
+                                checkTokenIsOr(expParseResult.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                                stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
+                                        new ArrayWithIndexExp(new VariableExp(asVar.getName()), result.result), op), expParseResult.nextPos + 1);
+                            }
+                        } else if(temp == BinopToken.TK_EQUAL) {
+                            ParseResult<Exp> expParseResult = parseExp(pos);
+                            if(expParseResult.nextPos == tokens.length) {
+                                stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new ArrayWithIndexExp(new VariableExp(asVar.getName()), result.result), false, false), expParseResult.nextPos);
+                            } else {
+                                checkTokenIsOr(expParseResult.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                                stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new ArrayWithIndexExp(new VariableExp(asVar.getName()), result.result), false, false), expParseResult.nextPos + 1);
+                            }
+                        } else {
+                            throw new ParseException("Token expected after array[] expression!");
+                        }
+                    } else {
+                        throw new ParseException("Array[] is not a statement!");
+                    }
                 }
             } else {
-                throw new ParseException("Assignment operator expected!");
+                throw new ParseException("Token expected after variable!");
             }
         } else if(tokenHere == UnopToken.TK_PLUS_PLUS || tokenHere == UnopToken.TK_MINUS_MINUS) {
             if(startPos + 1 < tokens.length) {
@@ -667,10 +761,33 @@ public class Parser {
                         stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
                                 tokenHere == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, true)), startPos + 2);
                     } else {
-                        checkTokenIsOr(startPos + 2, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
-                        stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
-                                next == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, false)), startPos + 3);
+                        int pos = startPos + 2;
+                        Token temp = null;
+                        if((temp = readToken(pos)) == BracketsToken.TK_LBRACKET) {
+                            pos++;
+                            ParseResult<Exp> result = parseExp(pos);
+                            pos = result.nextPos;
+                            checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                            pos++;
+                            if(pos == tokens.length) {
+                                stmtResult = new ParseResult<>(new SelfOperationStmt(new SelfOperationExp(new ArrayWithIndexExp(new VariableExp(((VariableToken) next).getName()), result.result),
+                                        tokenHere == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE,
+                                        true)), pos);
+                            } else {
+                                checkTokenIsOr(pos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                                pos++;
+                                stmtResult = new ParseResult<>(new SelfOperationStmt(new SelfOperationExp(new ArrayWithIndexExp(new VariableExp(((VariableToken) next).getName()), result.result),
+                                        tokenHere == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE,
+                                        true)), pos);
+                            }
+                        } else {
+                            checkTokenIsOr(startPos + 2, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                            stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
+                                    tokenHere == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, true)), startPos + 3);
+                        }
                     }
+                } else {
+                    throw new ParseException("Variable expected after ++, --");
                 }
             } else {
                 throw new ParseException("Variable expected after ++, --");
@@ -1095,9 +1212,11 @@ public class Parser {
     }
 
     public Stmt parseToplevelStmt() throws ParseException {
-        final ParseResult<Stmt> result = parseStmt(0);
+        int pos = skipLineBreakOrSemicolon(0);
+        final ParseResult<Stmt> result = parseStmt(pos);
+        pos = skipLineBreakOrSemicolon(result.nextPos);
 
-        if(result.nextPos == tokens.length) {
+        if(pos == tokens.length) {
             return result.result;
         } else {
             throw new ParseException("Extra tokens at end");
