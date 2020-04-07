@@ -6,6 +6,7 @@ import com.github.wangdong20.kotlinscriptcompiler.parser.type.*;
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -18,10 +19,10 @@ public class Parser {
     }
 
     private class ParseResult<A> {
-        public final A result;
-        public final int nextPos;
+        private final A result;
+        private final int nextPos;
 
-        public ParseResult(A result, int nextPos) {
+        private ParseResult(A result, int nextPos) {
             this.result = result;
             this.nextPos = nextPos;
         }
@@ -42,7 +43,7 @@ public class Parser {
                return t;
             }
         }
-        throw new ParseException("Expected: " + token.toString() +
+        throw new ParseException("Expected: " + Arrays.toString(token) +
                 "\nReceived: " + tokens[position].toString());
     }
 
@@ -54,7 +55,7 @@ public class Parser {
         }
     } // readToken
 
-    public ParseResult<Exp> parseAdditiveExpHelper(final int startPos, final Exp leftExp) {
+    private ParseResult<Exp> parseAdditiveExpHelper(final int startPos, final Exp leftExp) {
         int curPos = startPos;
         Exp resultExp = leftExp;
 
@@ -69,10 +70,10 @@ public class Parser {
                 break;
             }
         }
-        return new ParseResult<Exp>(resultExp, curPos);
+        return new ParseResult<>(resultExp, curPos);
     }
 
-    public ParseResult<Exp> parseMultiplicativeExpHelper(final int startPos, final Exp leftExp) {
+    private ParseResult<Exp> parseMultiplicativeExpHelper(final int startPos, final Exp leftExp) {
         int curPos = startPos;
         Exp resultExp = leftExp;
         MultiplicativeOp op = null;
@@ -99,20 +100,20 @@ public class Parser {
             }
         }
 
-        return new ParseResult<Exp>(resultExp, curPos);
+        return new ParseResult<>(resultExp, curPos);
     }
 
-    public ParseResult<Exp> parseAdditiveExp(final int startPos, Exp resultExp) {
+    private ParseResult<Exp> parseAdditiveExp(final int startPos, Exp resultExp) {
         return parseAdditiveExpHelper(startPos, resultExp);
     }
 
-    public ParseResult<Exp> parseMultiplicative(final int startPos) throws ParseException {
+    private ParseResult<Exp> parseMultiplicative(final int startPos) throws ParseException {
         final ParseResult<Exp> starting = parsePrimary(startPos);
         Exp resultExp = starting.result;
         return parseMultiplicativeExpHelper(starting.nextPos, resultExp);
     }
 
-    public ParseResult<Exp> parseNotExp(final int startPos) throws ParseException {
+    private ParseResult<Exp> parseNotExp(final int startPos) throws ParseException {
         Token t = readToken(startPos);
         if(t == UnopToken.TK_NOT) {
             ParseResult<Exp> result = parseMultiplicative(startPos + 1);
@@ -123,14 +124,14 @@ public class Parser {
         }
     }
 
-    public ParseResult<Exp> parseComparableExp(final int startPos, Exp leftExp) throws ParseException{
-        int curPos = startPos;
+    private ParseResult<Exp> parseComparableExp(final int startPos, Exp leftExp) throws ParseException{
+//        int curPos = startPos;
         ParseResult<Exp> result = null;
         ComparableOp op = null;
 
-        if(curPos < tokens.length) {
+        if(startPos < tokens.length) {
             try {
-                Token t = checkTokenIsOr(curPos, BinopToken.TK_GREATER_THAN, BinopToken.TK_LESS_THAN,
+                Token t = checkTokenIsOr(startPos, BinopToken.TK_GREATER_THAN, BinopToken.TK_LESS_THAN,
                         BinopToken.TK_GREATER_OR_EQUAL, BinopToken.TK_LESS_OR_EQUAL, BinopToken.TK_EQUAL_EQUAL,
                         BinopToken.TK_NOT_EQUAL);
 
@@ -154,7 +155,7 @@ public class Parser {
                         op = ComparableOp.OP_NOT_EQUAL;
                         break;
                 }
-                result =  parseNotExp(curPos + 1);
+                result =  parseNotExp(startPos + 1);
                 if(result.nextPos - startPos >= 1) {    // at least parse primary
                     result = parseAdditiveExp(result.nextPos, result.result);
                 }
@@ -172,7 +173,7 @@ public class Parser {
         }
     }
 
-    public ParseResult<Exp> parseBilogicalExp(final int startPos, Exp leftExp) throws ParseException{
+    private ParseResult<Exp> parseBilogicalExp(final int startPos, Exp leftExp) throws ParseException{
         int curPos = startPos;
         ParseResult<Exp> result = null;
         BiLogicalOp op = null;
@@ -206,7 +207,7 @@ public class Parser {
         }
     }
 
-    public ParseResult<Exp> parsePrimary(final int startPos) throws ParseException {
+    private ParseResult<Exp> parsePrimary(final int startPos) throws ParseException {
         final Token tokenHere = readToken(startPos);
         // We will consider variable or function variable instance as primary
         if (tokenHere instanceof VariableToken) {
@@ -216,7 +217,7 @@ public class Parser {
                 VariableExp name = new VariableExp(asVar.getName());
 
                 if(next == BracketsToken.TK_LPAREN) {
-                    Token temp = null;
+                    Token temp;
                     int pos = startPos + 2;
                     List<Exp> parameterList = new ArrayList<>();
                     while((temp = readToken(pos)) != BracketsToken.TK_RPAREN) {
@@ -227,7 +228,7 @@ public class Parser {
                         } else if(temp instanceof StringToken) {
                             parameterList.add(parseString(temp, pos).result);
                         } else if(temp == KeywordToken.TK_TRUE || temp == KeywordToken.TK_FALSE) {
-                            parameterList.add(new BooleanExp(temp == KeywordToken.TK_TRUE ? true : false));
+                            parameterList.add(new BooleanExp(temp == KeywordToken.TK_TRUE));
                         } else {
                             throw new ParseException("Unsupport function parameter!");
                         }
@@ -313,7 +314,7 @@ public class Parser {
         }
     }
 
-    public ParseResult<Exp> parseString(final Token token, final int startPos) throws ParseException {
+    private ParseResult<Exp> parseString(final Token token, final int startPos) throws ParseException {
         String value = ((StringToken)token).getValue();
         String temp = value;
         int index = 0;
@@ -347,10 +348,12 @@ public class Parser {
                     index++;
                     interpolation += value.charAt(index);
                     index++;
+                    StringBuilder buffer = new StringBuilder(interpolation);
                     while(index < length && Character.isLetterOrDigit(value.charAt(index))) {
-                        interpolation += value.charAt(index);
+                        buffer.append(value.charAt(index));
                         index++;
                     }
+                    interpolation = buffer.toString();
                 } else if(index + 1 < length && Character.isWhitespace(value.charAt(index + 1))){
                     index++;
                     location += 2;   // Now $ count
@@ -374,13 +377,13 @@ public class Parser {
                 location++;
             }
         }
-        return new ParseResult<Exp>(map.size() > 0 ? new StringExp(temp, map) : new StringExp(temp, null), startPos + 1);
+        return new ParseResult<>(map.size() > 0 ? new StringExp(temp, map) : new StringExp(temp, null), startPos + 1);
     }
 
-    public ParseResult<Exp> parseLambdaExp(final int startPos) throws ParseException {
+    private ParseResult<Exp> parseLambdaExp(final int startPos) throws ParseException {
         checkTokenIs(startPos, BracketsToken.TK_LCURLY);
         Token tokenHere;
-        VariableExp variableExp = null;
+        VariableExp variableExp;
         Type type = null;
         int pos = startPos + 1;
         LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
@@ -430,7 +433,6 @@ public class Parser {
                 }
             }
             type = null;
-            variableExp = null;
         }
         checkTokenIs(pos, SymbolToken.TK_ARROW);
         ParseResult<Exp> returnExp = parseExp(pos + 1);
@@ -438,7 +440,7 @@ public class Parser {
         return new ParseResult<>(new LambdaExp(parameterList, returnExp.result), returnExp.nextPos + 1);
     }
 
-    public  ParseResult<Exp> parseExp(final int startPos) throws ParseException {
+    private  ParseResult<Exp> parseExp(final int startPos) throws ParseException {
         final Token tokenHere = readToken(startPos);
         if(tokenHere == KeywordToken.TK_ARRAY_OF || tokenHere == KeywordToken.TK_MUTABLE_LIST_OF) {
             checkTokenIs(startPos + 1, BracketsToken.TK_LPAREN);
@@ -463,8 +465,8 @@ public class Parser {
         } else if(tokenHere == TypeToken.TK_ARRAY || tokenHere == TypeToken.TK_MUTABLE_LIST) {
             checkTokenIs(startPos + 1, BracketsToken.TK_LPAREN);
             int pos = startPos + 2;
-            IntExp intExp  = null;
-            LambdaExp lambdaExp = null;
+            IntExp intExp;
+            LambdaExp lambdaExp;
             final Token t = readToken(pos);
             if(t instanceof IntToken) {
                 intExp = new IntExp(((IntToken)t).getValue());
@@ -508,7 +510,7 @@ public class Parser {
     /**
      * generic type only support basic type
      */
-    public ParseResult<BasicType> parseGenericType(final int startPos) throws ParseException {
+    private ParseResult<BasicType> parseGenericType(final int startPos) throws ParseException {
         checkTokenIs(startPos, BinopToken.TK_LESS_THAN);
         final Token tokenHere = readToken(startPos + 1);
         BasicType genericType = null;
@@ -533,12 +535,11 @@ public class Parser {
         return new ParseResult<>(genericType, startPos + 3);
     }
 
-    public ParseResult<TypeHighOrderFunction> parseTypeHighOrderFunction(final int startPos) throws ParseException {
+    private ParseResult<TypeHighOrderFunction> parseTypeHighOrderFunction(final int startPos) throws ParseException {
         checkTokenIs(startPos, BracketsToken.TK_LPAREN);
-        ParseResult<Type> typeResult = null;
         List<Type> parameterTypes = new ArrayList<>();
         int pos = startPos + 1;
-        Token temp = null;
+        Token temp;
         while((temp = readToken(pos)) != BracketsToken.TK_RPAREN) {
             switch ((TypeToken)temp) {
                 case TK_TYPE_INT:
@@ -569,7 +570,7 @@ public class Parser {
                     pos = genericType.nextPos;
                     break;
             }
-            if((temp = readToken(pos)) == SymbolToken.TK_COMMA) {
+            if(readToken(pos) == SymbolToken.TK_COMMA) {
                 pos++;
             }
         }
@@ -610,7 +611,7 @@ public class Parser {
         return new ParseResult<>(new TypeHighOrderFunction(parameterTypes, retureType), pos);
     }
 
-    public ParseResult<Stmt> parsePrimaryStmt(final int startPos) throws ParseException {
+    private ParseResult<Stmt> parsePrimaryStmt(final int startPos) throws ParseException {
         final Token tokenHere = readToken(startPos);
         ParseResult<Stmt> stmtResult = null;
         if(tokenHere instanceof VariableToken) {
@@ -620,10 +621,10 @@ public class Parser {
                 if(next == BinopToken.TK_EQUAL) {
                     ParseResult<Exp> expParseResult = parseExp(startPos + 2);
                     if(expParseResult.nextPos == tokens.length) {
-                        stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new VariableExp(asVar.getName()), false, false), expParseResult.nextPos);
+                        stmtResult = new ParseResult<>(new AssignStmt(expParseResult.result, new VariableExp(asVar.getName()), false, false), expParseResult.nextPos);
                     } else {
                         checkTokenIsOr(expParseResult.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
-                        stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new VariableExp(asVar.getName()), false, false), expParseResult.nextPos + 1);
+                        stmtResult = new ParseResult<>(new AssignStmt(expParseResult.result, new VariableExp(asVar.getName()), false, false), expParseResult.nextPos + 1);
                     }
                 } else if(next == BinopToken.TK_PLUS_EQUAL || next == BinopToken.TK_MULTIPLY_EQUAL
                     || next == BinopToken.TK_MINUS_EQUAL || next == BinopToken.TK_DIVIDE_EQUAL) {
@@ -643,24 +644,24 @@ public class Parser {
                             op = CompoundAssignOp.EXP_DIVIDE_EQUAL;
                     }
                     if(expParseResult.nextPos == tokens.length) {
-                        stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
+                        stmtResult = new ParseResult<>(new CompoundAssignStmt(expParseResult.result,
                                 new VariableExp(asVar.getName()), op), expParseResult.nextPos);
                     } else {
                         checkTokenIsOr(expParseResult.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
-                        stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
+                        stmtResult = new ParseResult<>(new CompoundAssignStmt(expParseResult.result,
                                 new VariableExp(asVar.getName()), op), expParseResult.nextPos + 1);
                     }
                 } else if(next == UnopToken.TK_PLUS_PLUS || next == UnopToken.TK_MINUS_MINUS) {
                     if(startPos + 2 == tokens.length) {
-                        stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(asVar.getName()),
+                        stmtResult = new ParseResult<>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(asVar.getName()),
                                 next == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, false)), startPos + 2);
                     } else {
                         checkTokenIsOr(startPos + 2, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
-                        stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(asVar.getName()),
+                        stmtResult = new ParseResult<>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(asVar.getName()),
                                 next == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, false)), startPos + 3);
                     }
                 } else if(next == BracketsToken.TK_LPAREN) {
-                    Token temp = null;
+                    Token temp;
                     int pos = startPos + 2;
                     List<Exp> parameterList = new ArrayList<>();
                     while((temp = readToken(pos)) != BracketsToken.TK_RPAREN) {
@@ -671,7 +672,7 @@ public class Parser {
                         } else if(temp instanceof StringToken) {
                             parameterList.add(parseString(temp, pos).result);
                         } else if(temp == KeywordToken.TK_TRUE || temp == KeywordToken.TK_FALSE) {
-                            parameterList.add(new BooleanExp(temp == KeywordToken.TK_TRUE ? true : false));
+                            parameterList.add(new BooleanExp(temp == KeywordToken.TK_TRUE));
                         } else {
                             throw new ParseException("Unsupport function parameter!");
                         }
@@ -728,20 +729,20 @@ public class Parser {
                                     op = CompoundAssignOp.EXP_DIVIDE_EQUAL;
                             }
                             if(expParseResult.nextPos == tokens.length) {
-                                stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
+                                stmtResult = new ParseResult<>(new CompoundAssignStmt(expParseResult.result,
                                         new VariableExp(asVar.getName()), op), expParseResult.nextPos);
                             } else {
                                 checkTokenIsOr(expParseResult.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
-                                stmtResult = new ParseResult<Stmt>(new CompoundAssignStmt(expParseResult.result,
+                                stmtResult = new ParseResult<>(new CompoundAssignStmt(expParseResult.result,
                                         new ArrayWithIndexExp(new VariableExp(asVar.getName()), result.result), op), expParseResult.nextPos + 1);
                             }
                         } else if(temp == BinopToken.TK_EQUAL) {
                             ParseResult<Exp> expParseResult = parseExp(pos);
                             if(expParseResult.nextPos == tokens.length) {
-                                stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new ArrayWithIndexExp(new VariableExp(asVar.getName()), result.result), false, false), expParseResult.nextPos);
+                                stmtResult = new ParseResult<>(new AssignStmt(expParseResult.result, new ArrayWithIndexExp(new VariableExp(asVar.getName()), result.result), false, false), expParseResult.nextPos);
                             } else {
                                 checkTokenIsOr(expParseResult.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
-                                stmtResult = new ParseResult<Stmt>(new AssignStmt(expParseResult.result, new ArrayWithIndexExp(new VariableExp(asVar.getName()), result.result), false, false), expParseResult.nextPos + 1);
+                                stmtResult = new ParseResult<>(new AssignStmt(expParseResult.result, new ArrayWithIndexExp(new VariableExp(asVar.getName()), result.result), false, false), expParseResult.nextPos + 1);
                             }
                         } else {
                             throw new ParseException("Token expected after array[] expression!");
@@ -758,12 +759,12 @@ public class Parser {
                 Token next = readToken(startPos + 1);
                 if(next instanceof VariableToken) {
                     if(startPos + 2 == tokens.length) {
-                        stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
+                        stmtResult = new ParseResult<>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
                                 tokenHere == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, true)), startPos + 2);
                     } else {
                         int pos = startPos + 2;
-                        Token temp = null;
-                        if((temp = readToken(pos)) == BracketsToken.TK_LBRACKET) {
+//                        Token temp;
+                        if(readToken(pos) == BracketsToken.TK_LBRACKET) {
                             pos++;
                             ParseResult<Exp> result = parseExp(pos);
                             pos = result.nextPos;
@@ -782,7 +783,7 @@ public class Parser {
                             }
                         } else {
                             checkTokenIsOr(startPos + 2, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
-                            stmtResult = new ParseResult<Stmt>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
+                            stmtResult = new ParseResult<>(new SelfOperationStmt(new SelfOperationExp(new VariableExp(((VariableToken) next).getName()),
                                     tokenHere == UnopToken.TK_PLUS_PLUS ? SelfOp.OP_SELF_INCREASE : SelfOp.OP_SELF_DECREASE, true)), startPos + 3);
                         }
                     }
@@ -799,7 +800,7 @@ public class Parser {
             if(next instanceof VariableToken) {
                 final VariableToken asVar = (VariableToken)next;
                 int pos = startPos + 2;
-                if((next = readToken(pos)) == SymbolToken.TK_COLON) {
+                if(readToken(pos) == SymbolToken.TK_COLON) {
                     pos++;
                     next = readToken(pos);
                     if(next == BracketsToken.TK_LPAREN) {
@@ -838,15 +839,23 @@ public class Parser {
                         }
                     }
                 }
-                checkTokenIs(pos, BinopToken.TK_EQUAL);
-                ParseResult<Exp> resultExp = parseExp(pos + 1);
-                if(resultExp.nextPos == tokens.length) {
-                    stmtResult = new ParseResult<>(new AssignStmt(resultExp.result, new VariableExp(asVar.getName()),
-                            type, tokenHere == KeywordToken.TK_VAL ? true : false, true), resultExp.nextPos);
-                } else {
-                    checkTokenIsOr(resultExp.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
-                    stmtResult = new ParseResult<>(new AssignStmt(resultExp.result, new VariableExp(asVar.getName()),
-                            type, tokenHere == KeywordToken.TK_VAL ? true : false, true), resultExp.nextPos + 1);
+                if(pos < tokens.length && readToken(pos) == BinopToken.TK_EQUAL) {
+                    ParseResult<Exp> resultExp = parseExp(pos + 1);
+                    if (resultExp.nextPos == tokens.length) {
+                        stmtResult = new ParseResult<>(new AssignStmt(resultExp.result, new VariableExp(asVar.getName()),
+                                type, tokenHere == KeywordToken.TK_VAL, true), resultExp.nextPos);
+                    } else {
+                        checkTokenIsOr(resultExp.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                        stmtResult = new ParseResult<>(new AssignStmt(resultExp.result, new VariableExp(asVar.getName()),
+                                type, tokenHere == KeywordToken.TK_VAL, true), resultExp.nextPos + 1);
+                    }
+                } else {    // VariableDeclareStmt
+                    if(pos == tokens.length) {
+                        stmtResult = new ParseResult<>(new VariableDeclareStmt(new VariableExp(asVar.getName()), type, tokenHere == KeywordToken.TK_VAL), pos);
+                    } else {
+                        checkTokenIsOr(pos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                        stmtResult = new ParseResult<>(new VariableDeclareStmt(new VariableExp(asVar.getName()), type, tokenHere == KeywordToken.TK_VAL), pos + 1);
+                    }
                 }
             } else {
                 throw new ParseException("Variable expected in var, val statement!");
@@ -909,11 +918,10 @@ public class Parser {
         }
     }
 
-    public ParseResult<BlockStmt> parseBlockStmt(final int startPos) throws ParseException {
+    private ParseResult<BlockStmt> parseBlockStmt(final int startPos) throws ParseException {
         checkTokenIs(startPos, BracketsToken.TK_LCURLY);
         int pos = startPos + 1;
-        Token temp = null;
-        ParseResult<BlockStmt> resultStmt;
+        Token temp;
         List<Stmt> stmtList = new ArrayList<>();
         pos = skipLineBreakOrSemicolon(pos);
         while((temp = readToken(pos)) != BracketsToken.TK_RCURLY) {
@@ -969,7 +977,7 @@ public class Parser {
                 pos++;
                 ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
                 ParseResult<BlockStmt> elseBlock = null;
-                if((temp = readToken(blockStmt.nextPos)) == KeywordToken.TK_ELSE) {
+                if(readToken(blockStmt.nextPos) == KeywordToken.TK_ELSE) {
                     elseBlock = parseBlockStmt(blockStmt.nextPos + 1);
                 }
                 stmtList.add(new IfStmt(resultExp.result, blockStmt.result, elseBlock == null ? null : elseBlock.result));
@@ -1000,7 +1008,7 @@ public class Parser {
         return new ParseResult<>(new BlockStmt(stmtList), pos);
     }
 
-    public ParseResult<Stmt> parseStmt(final int startPos) throws ParseException {
+    private ParseResult<Stmt> parseStmt(final int startPos) throws ParseException {
         Token tokenHere = readToken(startPos);
         int pos = startPos;
         if(tokenHere == KeywordToken.TK_FOR) {
@@ -1054,7 +1062,7 @@ public class Parser {
             pos++;
             if((tokenHere = readToken(pos)) instanceof VariableToken) {
                 VariableExp asVar = new VariableExp(((VariableToken) tokenHere).getName());
-                VariableExp variableExp = null;
+                VariableExp variableExp;
                 Type type = null;
                 pos++;
                 checkTokenIs(pos, BracketsToken.TK_LPAREN);
@@ -1113,12 +1121,11 @@ public class Parser {
                         }
                     }
                     type = null;
-                    variableExp = null;
                 }
                 checkTokenIs(pos, BracketsToken.TK_RPAREN);
                 Type retureType = null;
                 pos++;
-                if((tokenHere = readToken(pos)) == SymbolToken.TK_COLON) {
+                if(readToken(pos) == SymbolToken.TK_COLON) {
                     pos++;
                     tokenHere = readToken(pos);
                     switch ((TypeToken)tokenHere) {
@@ -1157,7 +1164,7 @@ public class Parser {
                         pos++;
                     }
                     return new ParseResult<>(new FunctionDeclareStmt(asVar, retureType, parameterList, blockStmt.result), pos);
-                } else if((tokenHere = readToken(pos)) == BracketsToken.TK_LCURLY) {
+                } else if(readToken(pos) == BracketsToken.TK_LCURLY) {
                     ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
                     pos = blockStmt.nextPos;
                     if(pos < tokens.length) {   // not the end the program
@@ -1182,7 +1189,7 @@ public class Parser {
             pos++;
             ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
             ParseResult<BlockStmt> elseBlock = null;
-            if((tokenHere = readToken(blockStmt.nextPos)) == KeywordToken.TK_ELSE) {
+            if(readToken(blockStmt.nextPos) == KeywordToken.TK_ELSE) {
                 elseBlock = parseBlockStmt(blockStmt.nextPos + 1);
             }
             pos = elseBlock == null ? blockStmt.nextPos : elseBlock.nextPos;
@@ -1190,7 +1197,8 @@ public class Parser {
                 checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
                 pos++;
             }
-            return new ParseResult<>(new IfStmt(resultExp.result, blockStmt.result, elseBlock.result), pos);
+            return new ParseResult<>(elseBlock == null ? new IfStmt(resultExp.result, blockStmt.result) :
+                    new IfStmt(resultExp.result, blockStmt.result, elseBlock.result), pos);
         } else if(tokenHere == KeywordToken.TK_WHILE) {
             pos++;
             checkTokenIs(pos, BracketsToken.TK_LPAREN);
@@ -1223,7 +1231,7 @@ public class Parser {
         }
     }
 
-    public ParseResult<Program> parseProgram(final int startPos) throws ParseException {
+    private ParseResult<Program> parseProgram(final int startPos) throws ParseException {
         List<Stmt> stmtList = new ArrayList<>();
         int pos = startPos;
         while(pos < tokens.length) {

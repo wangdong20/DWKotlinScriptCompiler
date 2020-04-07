@@ -54,6 +54,29 @@ class ParserTest {
     }
 
     @Test
+    // var a : Int;
+    public void parseVarDeclareWithType() throws ParseException {
+        VariableDeclareStmt stmt = new VariableDeclareStmt(new VariableExp("a"), BasicType.TYPE_INT, false);
+        assertParseStmts(stmt, KeywordToken.TK_VAR, new VariableToken("a"), SymbolToken.TK_COLON,
+                TypeToken.TK_TYPE_INT, SymbolToken.TK_SEMICOLON);
+    }
+
+    @Test
+    // val a : Boolean
+    public void parseValDeclareWithType() throws ParseException {
+        VariableDeclareStmt stmt = new VariableDeclareStmt(new VariableExp("a"), BasicType.TYPE_BOOLEAN, true);
+        assertParseStmts(stmt, KeywordToken.TK_VAL, new VariableToken("a"), SymbolToken.TK_COLON,
+                TypeToken.TK_TYPE_BOOLEAN);
+    }
+
+    @Test
+    // var a;;
+    public void parseVarDeclareWithOutType() throws ParseException {
+        VariableDeclareStmt stmt = new VariableDeclareStmt(new VariableExp("a"), null, false);
+        assertParseStmts(stmt, KeywordToken.TK_VAR, new VariableToken("a"), SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
     /**
      * for(i in 0..9) {
      *     for(j in a) {

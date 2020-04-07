@@ -5,7 +5,6 @@ import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.VariableExp
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 
 public class FunctionDeclareStmt implements Stmt {
     private final VariableExp funcName;
