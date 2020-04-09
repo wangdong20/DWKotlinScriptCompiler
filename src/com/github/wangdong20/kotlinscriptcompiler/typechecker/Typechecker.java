@@ -131,8 +131,18 @@ public class Typechecker {
             }
             Pair<Variable, List<Type>> key = new Pair<>(((FunctionInstanceExp) e).getFuncName(), parameters);
             if(!funcMap.containsKey(key)) {
-                throw new IllTypedException("Function " + ((FunctionInstanceExp) e).getFuncName().getName() + "("
-                    + parameters + ")" + " undefined");
+                if(gamma.containsKey(((FunctionInstanceExp) e).getFuncName())) {
+                    if(gamma.get(((FunctionInstanceExp) e).getFuncName()).getFirst() instanceof TypeHighOrderFunction) {
+                        TypeHighOrderFunction highOrderFunction = (TypeHighOrderFunction) gamma.get(((FunctionInstanceExp) e).getFuncName()).getFirst();
+                        return highOrderFunction.getReturnType();
+                    } else {
+                        throw new IllTypedException("Function " + ((FunctionInstanceExp) e).getFuncName().getName() + "("
+                                + parameters + ")" + " undefined");
+                    }
+                } else {
+                    throw new IllTypedException("Function " + ((FunctionInstanceExp) e).getFuncName().getName() + "("
+                            + parameters + ")" + " undefined");
+                }
             } else {
                 return funcMap.get(key).getReturnType();
             }
