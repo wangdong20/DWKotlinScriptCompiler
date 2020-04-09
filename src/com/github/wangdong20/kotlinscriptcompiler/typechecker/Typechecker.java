@@ -2,10 +2,7 @@ package com.github.wangdong20.kotlinscriptcompiler.typechecker;
 
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.*;
-import com.github.wangdong20.kotlinscriptcompiler.parser.type.BasicType;
-import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
-import com.github.wangdong20.kotlinscriptcompiler.parser.type.TypeArray;
-import com.github.wangdong20.kotlinscriptcompiler.parser.type.TypeMutableList;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.*;
 
 import java.util.*;
 
@@ -80,10 +77,10 @@ public class Typechecker {
                 lambdaExp.getParameterList().keySet().toArray(variables);
                 lambdaExp.getParameterList().values().toArray(types);
                 if(types[0] == null) {
-                    newGama.put((VariableExp)variables[0], new Pair<>(BasicType.TYPE_INT, false));
+                    newGama.put(variables[0], new Pair<>(BasicType.TYPE_INT, false));
                 } else {
                     if(types[0] == BasicType.TYPE_INT) {
-                        newGama.put((VariableExp)variables[0], new Pair<>(types[0], false));
+                        newGama.put(variables[0], new Pair<>(types[0], false));
                     } else {
                         throw new IllTypedException("Expected parameter type of Int!");
                     }
@@ -153,9 +150,11 @@ public class Typechecker {
                     newGama.put(variableExps[i], new Pair<>(types[i], false));
                 }
                 Type returnType = typeOf(newGama, ((LambdaExp) e).getReturnExp());
-                return returnType;
+                List<Type> parameterTypes = Arrays.asList(types);
+                return new TypeHighOrderFunction(parameterTypes, returnType);
             } else {
-                return typeOf(gamma, ((LambdaExp) e).getReturnExp());
+                Type returnType = typeOf(gamma, ((LambdaExp) e).getReturnExp());
+                return new TypeHighOrderFunction(new ArrayList<>(), returnType);
             }
         } else if(e instanceof MutableListExp) {
             LambdaExp lambdaExp = ((MutableListExp) e).getLambdaExp();
@@ -166,10 +165,10 @@ public class Typechecker {
                 lambdaExp.getParameterList().keySet().toArray(variables);
                 lambdaExp.getParameterList().values().toArray(types);
                 if(types[0] == null) {
-                    newGama.put((VariableExp)variables[0], new Pair<>(BasicType.TYPE_INT, false));
+                    newGama.put(variables[0], new Pair<>(BasicType.TYPE_INT, false));
                 } else {
                     if(types[0] == BasicType.TYPE_INT) {
-                        newGama.put((VariableExp)variables[0], new Pair<>(types[0], false));
+                        newGama.put(variables[0], new Pair<>(types[0], false));
                     } else {
                         throw new IllTypedException("Expected parameter type of Int!");
                     }
