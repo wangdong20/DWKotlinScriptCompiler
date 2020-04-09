@@ -386,7 +386,7 @@ public class Parser {
         VariableExp variableExp;
         Type type = null;
         int pos = startPos + 1;
-        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
+        LinkedHashMap<VariableExp, Type> parameterList = new LinkedHashMap<>();
         while((tokenHere = readToken(pos)) != SymbolToken.TK_ARROW) {
             if (tokenHere instanceof VariableToken) {
                 variableExp = new VariableExp(((VariableToken)tokenHere).getName());
@@ -425,7 +425,11 @@ public class Parser {
                             break;
                     }
                 }
-                parameterList.put(variableExp, type);
+                if(parameterList.containsKey(variableExp)) {
+                    throw new ParseException("Cannot have same parameter name in lambda expression");
+                } else {
+                    parameterList.put(variableExp, type);
+                }
                 if(readToken(pos) != SymbolToken.TK_COMMA) {
                     break;
                 } else {
@@ -1106,7 +1110,11 @@ public class Parser {
                                     break;
                             }
                         }
-                        parameterList.put(variableExp, type);
+                        if(parameterList.containsKey(variableExp)) {    // Function declaration cannot have same parameter name.
+                            throw new ParseException("Cannot have same parameter name in function declaration");
+                        } else {
+                            parameterList.put(variableExp, type);
+                        }
                         if(readToken(pos) != SymbolToken.TK_COMMA) {
                             break;
                         } else {

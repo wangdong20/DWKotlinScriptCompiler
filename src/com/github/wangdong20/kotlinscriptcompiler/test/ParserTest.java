@@ -290,7 +290,7 @@ class ParserTest {
     @Test
     // var a : (Int, Int)->Int = {a : Int, b: Int -> a + b}
     public void varStmtWithHighOrderFunctionType() throws ParseException {
-        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        LinkedHashMap<VariableExp, Type> parameterList = new LinkedHashMap<>();
         parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
         parameterList.put(new VariableExp("b"), BasicType.TYPE_INT);
         List<Type> types = new ArrayList<>();
@@ -492,7 +492,7 @@ class ParserTest {
     @Test
     // {a: Int, b: Int -> a + b}
     public void lambdaExpParses() throws ParseException {
-        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        LinkedHashMap<VariableExp, Type> parameterList = new LinkedHashMap<>();
         parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
         parameterList.put(new VariableExp("b"), BasicType.TYPE_INT);
         assertParses(new LambdaExp(parameterList, new AdditiveExp(new VariableExp("a"),
@@ -506,7 +506,7 @@ class ParserTest {
     @Test
     // var b = 3; {a: Int -> a + b}
     public void lambdaExpWithSingleParameterParses() throws ParseException {
-        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        LinkedHashMap<VariableExp, Type> parameterList = new LinkedHashMap<>();
         parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
         assertParses(new LambdaExp(parameterList, new AdditiveExp(new VariableExp("a"),
                         new VariableExp("b"), AdditiveOp.EXP_PLUS)),
@@ -518,7 +518,7 @@ class ParserTest {
     @Test
     // val a = 2; var b = 3; { -> a + b}
     public void lambdaExpWithNoParameterParses() throws ParseException {
-        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        LinkedHashMap<VariableExp, Type> parameterList = new LinkedHashMap<>();
         assertParses(new LambdaExp(parameterList, new AdditiveExp(new VariableExp("a"),
                         new VariableExp("b"), AdditiveOp.EXP_PLUS)),
                 BracketsToken.TK_LCURLY,  SymbolToken.TK_ARROW, new VariableToken("a"), BinopToken.TK_PLUS,
@@ -528,7 +528,7 @@ class ParserTest {
     @Test
     // Array(10, {i -> "s" + i * 2})
     public void arrayExpParses() throws ParseException {
-        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        LinkedHashMap<VariableExp, Type> parameterList = new LinkedHashMap<>();
         parameterList.put(new VariableExp("i"), null);
         assertParses(new ArrayExp(new IntExp(10), new LambdaExp(parameterList,
                 new AdditiveExp(new StringExp("s", null),
@@ -544,7 +544,7 @@ class ParserTest {
     @Test
     // MutableList(10, {i -> "s" + i * 2})
     public void mutableListExpParses() throws ParseException {
-        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<Exp, Type>();
+        LinkedHashMap<VariableExp, Type> parameterList = new LinkedHashMap<>();
         parameterList.put(new VariableExp("i"), null);
         assertParses(new MutableListExp(new IntExp(10), new LambdaExp(parameterList,
                         new AdditiveExp(new StringExp("s", null),

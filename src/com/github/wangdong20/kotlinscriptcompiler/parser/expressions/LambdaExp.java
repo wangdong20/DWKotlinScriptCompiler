@@ -11,15 +11,15 @@ public class LambdaExp implements Exp {
      * val a = { i: Int -> i + 1 } in this case, i is record as VariableExp in parse process,
      * but we will lose it type information. Type only support basic type
      */
-    private final LinkedHashMap<Exp, Type> parameterList;
+    private final LinkedHashMap<VariableExp, Type> parameterList;
     private final Exp returnExp;
 
-    public LambdaExp(LinkedHashMap<Exp, Type> parameterList, Exp returnExp) {
+    public LambdaExp(LinkedHashMap<VariableExp, Type> parameterList, Exp returnExp) {
         this.parameterList = parameterList;
         this.returnExp = returnExp;
     }
 
-    public LinkedHashMap<Exp, Type> getParameterList() {
+    public LinkedHashMap<VariableExp, Type> getParameterList() {
         return parameterList;
     }
 
