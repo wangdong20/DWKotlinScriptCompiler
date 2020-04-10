@@ -1,5 +1,6 @@
 package com.github.wangdong20.kotlinscriptcompiler.typechecker;
 
+import com.github.wangdong20.kotlinscriptcompiler.parser.Program;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.*;
@@ -16,7 +17,7 @@ public class Typechecker {
         returnTypeFromFunc = null;
     }
 
-    public static Type typeOf(final Map<Variable, Pair<Type, Boolean>> gamma, final Exp e) throws IllTypedException {
+    private static Type typeOf(final Map<Variable, Pair<Type, Boolean>> gamma, final Exp e) throws IllTypedException {
         if(e instanceof IntExp) {
             return BasicType.TYPE_INT;
         } else if(e instanceof BooleanExp) {
@@ -384,16 +385,28 @@ public class Typechecker {
             }
             return gamma;
         } else if(s instanceof IfStmt) {
-            return null;
+            Type conditionType = typeOf(gamma, ((IfStmt) s).getCondition());
+            if(conditionType != BasicType.TYPE_BOOLEAN) {
+                throw new IllTypedException("if condition should be boolean type.");
+            } else {
+                typecheckBlockStmts(gamma, continueBreakOk, returnOk, ((IfStmt) s).getTrueBranch());
+                typecheckBlockStmts(gamma, continueBreakOk, returnOk, ((IfStmt) s).getFalseBranch());
+                return gamma;
+            }
         } else if(s instanceof SelfOperationStmt) {
-            return null;
+            Type variableType = typeOf(gamma, ((SelfOperationStmt) s).getSelfOperationExp());
+            if(variableType != BasicType.TYPE_INT) {
+                throw new IllTypedException("Only Int support ++, --");
+            } else {
+                return gamma;
+            }
         } else {
             assert(false);
             throw new IllTypedException("Unknown statement");
         }
     }
 
-    public static Map<Variable, Pair<Type, Boolean>> typecheckBlockStmts(Map<Variable, Pair<Type, Boolean>> gamma, boolean continueBreakOK, boolean returnOk, final BlockStmt blockStmt) throws IllTypedException {
+    private static Map<Variable, Pair<Type, Boolean>> typecheckBlockStmts(Map<Variable, Pair<Type, Boolean>> gamma, boolean continueBreakOK, boolean returnOk, final BlockStmt blockStmt) throws IllTypedException {
         for(Stmt s : blockStmt.getStmtList()) {
             if(s instanceof FunctionDeclareStmt) {
                 throw new IllTypedException("Function declaration is not allowed in block");
@@ -404,8 +417,14 @@ public class Typechecker {
     }
 
     private static Map<Variable, Pair<Type, Boolean>> newCopy(final Map<Variable, Pair<Type, Boolean>> gamma) {
-        final Map<Variable, Pair<Type, Boolean>> copy = new HashMap<>();
-        copy.putAll(gamma);
-        return copy;
+        return new HashMap<>(gamma);
+    }
+
+    public static void typecheckProgram(final Program program) throws IllTypedException {
+        List<Stmt> stmtList = program.getStmtList();
+        Map<Variable, Pair<Type, Boolean>> gamma = new HashMap<>();
+        for(Stmt s : stmtList) {
+            gamma = typecheckStmt(gamma, false, false, s);
+        }
     }
 }
