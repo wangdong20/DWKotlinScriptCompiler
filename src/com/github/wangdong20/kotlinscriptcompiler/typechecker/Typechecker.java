@@ -135,6 +135,11 @@ public class Typechecker {
                 if(gamma.containsKey(((FunctionInstanceExp) e).getFuncName())) {
                     if(gamma.get(((FunctionInstanceExp) e).getFuncName()).getFirst() instanceof TypeHighOrderFunction) {
                         TypeHighOrderFunction highOrderFunction = (TypeHighOrderFunction) gamma.get(((FunctionInstanceExp) e).getFuncName()).getFirst();
+                        if(!highOrderFunction.getParameterList().equals(parameters)) {
+                            throw new IllTypedException("Function instance " + ((FunctionInstanceExp) e).getFuncName().getName() + "("
+                                + parameters + ") does not match with the Function declaration " + ((FunctionInstanceExp) e).getFuncName().getName() + "("
+                                + highOrderFunction.getParameterList() + ")");
+                        }
                         return highOrderFunction.getReturnType();
                     } else {
                         throw new IllTypedException("Function " + ((FunctionInstanceExp) e).getFuncName().getName() + "("
