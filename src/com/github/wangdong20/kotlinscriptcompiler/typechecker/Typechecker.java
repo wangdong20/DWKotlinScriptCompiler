@@ -12,10 +12,10 @@ public class Typechecker {
     private static Map<Pair<Variable, List<Type>>, FunctionDeclareStmt> funcMap;
     private static Type returnTypeFromFunc;
 
-    static {
-        funcMap = new HashMap<>();
-        returnTypeFromFunc = null;
-    }
+//    static {
+//        funcMap = new HashMap<>();
+//        returnTypeFromFunc = null;
+//    }
 
     private static Type typeOf(final Map<Variable, Pair<Type, Boolean>> gamma, final Exp e) throws IllTypedException {
         if(e instanceof IntExp) {
@@ -243,7 +243,7 @@ public class Typechecker {
         }
     }
 
-    public static Map<Variable, Pair<Type, Boolean>> typecheckStmt(final Map<Variable, Pair<Type, Boolean>> gamma, boolean continueBreakOk, boolean returnOk, Stmt s) throws IllTypedException {
+    private static Map<Variable, Pair<Type, Boolean>> typecheckStmt(final Map<Variable, Pair<Type, Boolean>> gamma, boolean continueBreakOk, boolean returnOk, Stmt s) throws IllTypedException {
         if(s instanceof VariableDeclareStmt) {
             if(gamma.containsKey(((VariableDeclareStmt) s).getVariableExp())) {
                 throw new IllTypedException("Redefined variable " + ((VariableDeclareStmt) s).getVariableExp().getName());
@@ -428,6 +428,10 @@ public class Typechecker {
     public static void typecheckProgram(final Program program) throws IllTypedException {
         List<Stmt> stmtList = program.getStmtList();
         Map<Variable, Pair<Type, Boolean>> gamma = new HashMap<>();
+        if(funcMap == null || funcMap.size() > 0) {
+            funcMap = new HashMap<>();
+        }
+        returnTypeFromFunc = null;
         for(Stmt s : stmtList) {
             gamma = typecheckStmt(gamma, false, false, s);
         }
