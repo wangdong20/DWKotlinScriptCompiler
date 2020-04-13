@@ -54,6 +54,42 @@ class ParserTest {
     }
 
     @Test
+    // return
+    public void parseReturnWithoutExp() throws ParseException {
+        ReturnStmt stmt = new ReturnStmt(null);
+        assertParseStmts(stmt, KeywordToken.TK_RETURN);
+    }
+
+    @Test
+    // return\n
+    public void parseReturnWithoutExpWithLineBreak() throws ParseException {
+        ReturnStmt stmt = new ReturnStmt(null);
+        assertParseStmts(stmt, KeywordToken.TK_RETURN, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    // return 0
+    public void parseReturnWithSingleExp() throws ParseException {
+        ReturnStmt stmt = new ReturnStmt(new IntExp(0));
+        assertParseStmts(stmt, KeywordToken.TK_RETURN, new IntToken(0));
+    }
+
+    @Test
+    // return 0;
+    public void parseReturnWithSingleExpWithSemicolon() throws ParseException {
+        ReturnStmt stmt = new ReturnStmt(new IntExp(0));
+        assertParseStmts(stmt, KeywordToken.TK_RETURN, new IntToken(0), SymbolToken.TK_SEMICOLON);
+    }
+
+    @Test
+    // return a + b;\n
+    public void parseReturnWithDoubleExpWithSemicolon() throws ParseException {
+        ReturnStmt stmt = new ReturnStmt(new AdditiveExp(new VariableExp("a"), new VariableExp("b"), AdditiveOp.EXP_PLUS));
+        assertParseStmts(stmt, KeywordToken.TK_RETURN, new VariableToken("a"), BinopToken.TK_PLUS
+                , new VariableToken("b"), SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
     // var a : Int;
     public void parseVarDeclareWithType() throws ParseException {
         VariableDeclareStmt stmt = new VariableDeclareStmt(new VariableExp("a"), BasicType.TYPE_INT, false);

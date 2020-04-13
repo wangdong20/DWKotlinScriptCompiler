@@ -361,17 +361,24 @@ public class Typechecker {
                     + "(" + parameters + ")" + " redefined");
             }
             returnTypeFromFunc = asFunDeclare.getReturnType();
-            typecheckBlockStmts(gamma, false, true, asFunDeclare.getBlockStmt());
+            typecheckBlockStmts(gamma, continueBreakOk, true, asFunDeclare.getBlockStmt());
             returnTypeFromFunc = null;
             funcMap.put(new Pair<>(asFunDeclare.getFuncName(), parameters), asFunDeclare);
             return gamma;
         } else if(s instanceof ReturnStmt) {
-            Type returnType = typeOf(gamma, ((ReturnStmt) s).getReturnExp());
-            if(!returnOk) {
-                throw new IllTypedException("return statement should only be in function declare statement");
+            if (!returnOk) {
+                throw new IllTypedException("return statement should only be in the body of function declare statement");
             }
-            if(returnTypeFromFunc == null || (returnTypeFromFunc != null && returnTypeFromFunc != returnType)) {
-                throw new IllTypedException("return type should be the same as type in function declaration.");
+
+            if(((ReturnStmt) s).getReturnExp() != null) {
+                Type returnType = typeOf(gamma, ((ReturnStmt) s).getReturnExp());
+                if (returnTypeFromFunc == null || returnTypeFromFunc != returnType) {
+                    throw new IllTypedException("return type should be the same as return type in function declaration.");
+                }
+            } else {    // no exp after return
+                if(returnTypeFromFunc != BasicType.TYPE_UNIT) {
+                    throw new IllTypedException("the function is void function, you should not return anything.");
+                }
             }
             return gamma;
         } else if(s instanceof FunctionInstanceStmt) {

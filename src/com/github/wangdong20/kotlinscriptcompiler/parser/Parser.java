@@ -886,13 +886,32 @@ public class Parser {
                         ControlLoopStmt.STMT_BREAK : ControlLoopStmt.STMT_CONTINUE, startPos + 2);
             }
         } else if(tokenHere == KeywordToken.TK_RETURN) {
-            ParseResult<Exp> returnExp = parseExp(startPos + 1);
-            if(returnExp.nextPos == tokens.length) {
-                stmtResult = new ParseResult<>(new ReturnStmt(returnExp.result), returnExp.nextPos);
+            boolean nothingReturn = false;
+            if(startPos + 1 < tokens.length) {
+                ParseResult<Exp> returnExp = null;
+                try {
+                    returnExp = parseExp(startPos + 1);
+                } catch (ParseException e) {
+                    if(startPos + 1 == tokens.length) {
+                        stmtResult = new ParseResult<>(new ReturnStmt(null), startPos + 1);
+                    } else {
+                        checkTokenIsOr(startPos + 1, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                        stmtResult = new ParseResult<>(new ReturnStmt(null), startPos + 2);
+                    }
+                    nothingReturn = true;
+                }
+                if(!nothingReturn) {
+                    if (returnExp.nextPos == tokens.length) {
+                        stmtResult = new ParseResult<>(new ReturnStmt(returnExp.result), returnExp.nextPos);
+                    } else {
+                        checkTokenIsOr(returnExp.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
+                        stmtResult = new ParseResult<>(new ReturnStmt(returnExp.result), returnExp.nextPos + 1);
+                    }
+                }
             } else {
-                checkTokenIsOr(returnExp.nextPos, SymbolToken.TK_LINE_BREAK, SymbolToken.TK_SEMICOLON);
-                stmtResult = new ParseResult<>(new ReturnStmt(returnExp.result), returnExp.nextPos + 1);
+                stmtResult = new ParseResult<>(new ReturnStmt(null), startPos + 1);
             }
+
         }
         return stmtResult;
     }
@@ -1170,6 +1189,9 @@ public class Parser {
                     if(pos < tokens.length) {   // not the end the program
                         checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
                         pos++;
+                    }
+                    if(retureType == null) {
+                        throw new ParseException("Unknown return type.");
                     }
                     return new ParseResult<>(new FunctionDeclareStmt(asVar, retureType, parameterList, blockStmt.result), pos);
                 } else if(readToken(pos) == BracketsToken.TK_LCURLY) {

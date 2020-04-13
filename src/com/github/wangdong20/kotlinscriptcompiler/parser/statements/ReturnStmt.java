@@ -16,7 +16,7 @@ public class ReturnStmt implements Stmt {
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof ReturnStmt) {
-            if(((ReturnStmt) obj).getReturnExp().equals(returnExp)) {
+            if((((ReturnStmt) obj).getReturnExp() == null && returnExp == null) || ((ReturnStmt) obj).getReturnExp().equals(returnExp)) {
                 return true;
             }
         }
