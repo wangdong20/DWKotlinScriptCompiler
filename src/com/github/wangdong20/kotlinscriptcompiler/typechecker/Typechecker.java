@@ -377,7 +377,7 @@ public class Typechecker {
                 }
             } else {    // no exp after return
                 if(returnTypeFromFunc != BasicType.TYPE_UNIT) {
-                    throw new IllTypedException("the function is void function, you should not return anything.");
+                    throw new IllTypedException("the function is not void function, should return something.");
                 }
             }
             return gamma;
