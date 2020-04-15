@@ -12,11 +12,6 @@ public class Typechecker {
     private static Map<Pair<Variable, List<Type>>, FunctionDeclareStmt> funcMap;
     private static Type returnTypeFromFunc;
 
-//    static {
-//        funcMap = new HashMap<>();
-//        returnTypeFromFunc = null;
-//    }
-
     private static Type typeOf(final Map<Variable, Pair<Type, Boolean>> gamma, final Exp e) throws IllTypedException {
         if(e instanceof IntExp) {
             return BasicType.TYPE_INT;
@@ -419,13 +414,17 @@ public class Typechecker {
     }
 
     private static Map<Variable, Pair<Type, Boolean>> typecheckBlockStmts(Map<Variable, Pair<Type, Boolean>> gamma, boolean continueBreakOK, boolean returnOk, final BlockStmt blockStmt) throws IllTypedException {
-        for(Stmt s : blockStmt.getStmtList()) {
-            if(s instanceof FunctionDeclareStmt) {
-                throw new IllTypedException("Function declaration is not allowed in block");
+        if(blockStmt != null) {
+            for (Stmt s : blockStmt.getStmtList()) {
+                if (s instanceof FunctionDeclareStmt) {
+                    throw new IllTypedException("Function declaration is not allowed in block");
+                }
+                gamma = typecheckStmt(gamma, continueBreakOK, returnOk, s);
             }
-            gamma = typecheckStmt(gamma, continueBreakOK, returnOk, s);
+            return gamma;
+        } else {
+            return gamma;
         }
-        return gamma;
     }
 
     private static Map<Variable, Pair<Type, Boolean>> newCopy(final Map<Variable, Pair<Type, Boolean>> gamma) {

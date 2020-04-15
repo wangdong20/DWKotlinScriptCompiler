@@ -1,5 +1,7 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser.type;
 
+import java.util.Objects;
+
 public class TypeMutableList implements Type {
     private final BasicType basicType;
 
@@ -19,6 +21,11 @@ public class TypeMutableList implements Type {
             }
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(basicType);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser.type;
 
 import java.util.List;
+import java.util.Objects;
 
 public class TypeHighOrderFunction implements Type {
     private final List<Type> parameterList;
@@ -28,6 +29,11 @@ public class TypeHighOrderFunction implements Type {
             }
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(parameterList, returnType);
     }
 
     @Override
