@@ -18,6 +18,16 @@ public class Typechecker {
         } else if(e instanceof BooleanExp) {
             return BasicType.TYPE_BOOLEAN;
         } else if(e instanceof StringExp) {
+            if(((StringExp) e).getInterpolationExp() != null) {
+                List<Exp> exps = new ArrayList<>(((StringExp) e).getInterpolationExp().values());
+                Type type;
+                for (Exp exp : exps) {
+                    type = typeOf(gamma, exp);
+                    if (!(type instanceof BasicType)) {
+                        throw new IllTypedException("Only basic type can be the type in string interpolation expression");
+                    }
+                }
+            }
             return BasicType.TYPE_STRING;
         } else if(e instanceof AdditiveExp) {
             final Type leftType = typeOf(gamma, ((AdditiveExp) e).getLeft());
@@ -350,15 +360,19 @@ public class Typechecker {
         }
         else if(s instanceof FunctionDeclareStmt) {
             FunctionDeclareStmt asFunDeclare = (FunctionDeclareStmt)s;
-            List<Type> parameters = new ArrayList<>(asFunDeclare.getParameterList().values());
-            if(funcMap.containsKey(new Pair<Variable, List<Type>>(asFunDeclare.getFuncName(), parameters))) {
-                throw new IllTypedException("Function " + asFunDeclare.getFuncName().getName()
-                    + "(" + parameters + ")" + " redefined");
+            LinkedHashMap<Exp, Type> parameters = asFunDeclare.getParameterList();
+            VariableExp[] variableExps = new VariableExp[parameters.size()];
+            Type[] types = new Type[parameters.size()];
+            final Map<Variable, Pair<Type, Boolean>> newGama = newCopy(gamma);
+            parameters.keySet().toArray(variableExps);
+            parameters.values().toArray(types);
+
+            for(int i = 0; i < variableExps.length; i++) {
+                newGama.put(variableExps[i], new Pair<>(types[i], false));
             }
             returnTypeFromFunc = asFunDeclare.getReturnType();
-            typecheckBlockStmts(gamma, continueBreakOk, true, asFunDeclare.getBlockStmt());
+            typecheckBlockStmts(newGama, continueBreakOk, true, asFunDeclare.getBlockStmt());
             returnTypeFromFunc = null;
-            funcMap.put(new Pair<>(asFunDeclare.getFuncName(), parameters), asFunDeclare);
             return gamma;
         } else if(s instanceof ReturnStmt) {
             if (!returnOk) {
@@ -438,6 +452,20 @@ public class Typechecker {
             funcMap = new HashMap<>();
         }
         returnTypeFromFunc = null;
+
+        for(Stmt s : stmtList) {
+            if(s instanceof FunctionDeclareStmt) {
+                FunctionDeclareStmt asFunDeclare = (FunctionDeclareStmt)s;
+                List<Type> parameters = new ArrayList<>(asFunDeclare.getParameterList().values());
+                if(!funcMap.containsKey(new Pair<>(asFunDeclare.getFuncName(), parameters))) {
+                    funcMap.put(new Pair<>(asFunDeclare.getFuncName(), parameters), asFunDeclare);
+                } else {
+                    throw new IllTypedException("Function " + asFunDeclare.getFuncName().getName()
+                        + "(" + parameters + ")" + " redefined");
+                }
+            }
+        }
+
         for(Stmt s : stmtList) {
             gamma = typecheckStmt(gamma, false, false, s);
         }

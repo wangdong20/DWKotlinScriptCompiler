@@ -134,6 +134,20 @@ public class TypecheckerTest {
     }
 
     @Test
+    // Test pair equal
+    public void testPairEqual() {
+        List<Type> para1 = new ArrayList<>();
+        para1.add(new TypeArray(BasicType.TYPE_INT));
+        para1.add(BasicType.TYPE_INT);
+        Pair<Variable, List<Type>> p1 = new Pair<>(new VariableExp("search"), para1);
+        List<Type> para2 = new ArrayList<>();
+        para2.add(new TypeArray(BasicType.TYPE_INT));
+        para2.add(BasicType.TYPE_INT);
+        Pair<Variable, List<Type>> p2 = new Pair<>(new VariableExp("search"), para2);
+        assertEquals(p1.hashCode(), p2.hashCode());
+    }
+
+    @Test
     // var a = Array(10, {i -> i*2})
     // val b = 3
     // fun search(a: Array<Int>, b: Int): Boolean {
@@ -180,16 +194,43 @@ public class TypecheckerTest {
     }
 
     @Test
-    // Test pair equal
-    public void testPairEqual() throws IllTypedException {
-        List<Type> para1 = new ArrayList<>();
-        para1.add(new TypeArray(BasicType.TYPE_INT));
-        para1.add(BasicType.TYPE_INT);
-        Pair<Variable, List<Type>> p1 = new Pair<>(new VariableExp("search"), para1);
-        List<Type> para2 = new ArrayList<>();
-        para2.add(new TypeArray(BasicType.TYPE_INT));
-        para2.add(BasicType.TYPE_INT);
-        Pair<Variable, List<Type>> p2 = new Pair<>(new VariableExp("search"), para2);
-        assertEquals(p1.hashCode(), p2.hashCode());
+    // print(fib(5))
+    // fun fib(n : Int) : Int {
+    //      if (n <= 1) {
+    //       return n;
+    //      }
+    //    return fib(n-1) + fib(n-2);
+    // }
+    public void fibRecursion() throws IllTypedException {
+        List<Exp> paraInFuncInstance = new ArrayList<>();
+        paraInFuncInstance.add(new IntExp(5));
+        FunctionInstanceExp functionInstanceExp = new FunctionInstanceExp(new VariableExp("fib"), paraInFuncInstance);
+        PrintStmt printStmt = new PrintStmt(functionInstanceExp);
+        List<Stmt> stmtsInBlockInBlock = new ArrayList<>();
+        stmtsInBlockInBlock.add(new ReturnStmt(new VariableExp("n")));
+        IfStmt ifStmt = new IfStmt(new ComparableExp(new VariableExp("n"), new IntExp(1), ComparableOp.OP_LESS_EQUAL),
+                new BlockStmt(stmtsInBlockInBlock));
+        List<Stmt> stmtsInBlock = new ArrayList<>();
+        stmtsInBlock.add(ifStmt);
+
+        List<Exp> paraNMinus1 = new ArrayList<>();
+        paraNMinus1.add(new AdditiveExp(new VariableExp("n"), new IntExp(1), AdditiveOp.EXP_MINUS));
+        FunctionInstanceExp functionInstanceNMinus1 = new FunctionInstanceExp(new VariableExp("fib"), paraNMinus1);
+
+        List<Exp> paraNMinus2 = new ArrayList<>();
+        paraNMinus2.add(new AdditiveExp(new VariableExp("n"), new IntExp(2), AdditiveOp.EXP_MINUS));
+        FunctionInstanceExp functionInstanceNMinus2 = new FunctionInstanceExp(new VariableExp("fib"), paraNMinus2);
+
+        ReturnStmt returnStmt = new ReturnStmt(new AdditiveExp(functionInstanceNMinus1, functionInstanceNMinus2, AdditiveOp.EXP_PLUS));
+        stmtsInBlock.add(returnStmt);
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
+        parameterList.put(new VariableExp("n"), BasicType.TYPE_INT);
+        FunctionDeclareStmt functionDeclareStmt = new FunctionDeclareStmt(new VariableExp("fib"), BasicType.TYPE_INT,
+                parameterList, new BlockStmt(stmtsInBlock));
+        List<Stmt> stmts = new ArrayList<>();
+        stmts.add(printStmt);
+        stmts.add(functionDeclareStmt);
+        Program program = new Program(stmts);
+        assertTypecheckProgram(program);
     }
 }
