@@ -236,7 +236,7 @@ public class TypecheckerTest {
 
     @Test
     // fun max(a : Int, b : Int) : Int {
-    //      if(a < b) {
+    //      if(a <= b) {
     //          return b
     //      }
     // }
@@ -256,6 +256,86 @@ public class TypecheckerTest {
         stmtList.add(functionDeclareStmt);
         Program program = new Program(stmtList);
         assertTypecheckProgramExpectedException(program);
+    }
+
+    @Test
+    // fun max(a : Int, b : Int) : Int {
+    //      if(a <= b) {
+    //      } else {
+    //          return a
+    //      }
+    // }
+    public void ifNotReturn() {
+        List<Stmt> stmtsInBlockInBlockTrue = new ArrayList<>();
+        List<Stmt> stmtsInBlockInBlockFalse = new ArrayList<>();
+        stmtsInBlockInBlockFalse.add(new ReturnStmt(new VariableExp("a")));
+        IfStmt ifStmt = new IfStmt(new ComparableExp(new VariableExp("a"), new VariableExp("b"), ComparableOp.OP_LESS_EQUAL),
+                new BlockStmt(stmtsInBlockInBlockTrue), new BlockStmt(stmtsInBlockInBlockFalse));
+        List<Stmt> stmtsInBlock = new ArrayList<>();
+        stmtsInBlock.add(ifStmt);
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
+        parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
+        parameterList.put(new VariableExp("b"), BasicType.TYPE_INT);
+        FunctionDeclareStmt functionDeclareStmt = new FunctionDeclareStmt(new VariableExp("max"), BasicType.TYPE_INT,
+                parameterList, new BlockStmt(stmtsInBlock));
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(functionDeclareStmt);
+        Program program = new Program(stmtList);
+        assertTypecheckProgramExpectedException(program);
+    }
+
+    @Test
+    // fun max(a : Int, b : Int) : Int {
+    //      if(a <= b) {
+    //      } else {
+    //      }
+    //      return b
+    // }
+    public void returnOutsideIf() throws IllTypedException {
+        List<Stmt> stmtsInBlockInBlockTrue = new ArrayList<>();
+        List<Stmt> stmtsInBlockInBlockFalse = new ArrayList<>();
+        IfStmt ifStmt = new IfStmt(new ComparableExp(new VariableExp("a"), new VariableExp("b"), ComparableOp.OP_LESS_EQUAL),
+                new BlockStmt(stmtsInBlockInBlockTrue), new BlockStmt(stmtsInBlockInBlockFalse));
+        List<Stmt> stmtsInBlock = new ArrayList<>();
+        stmtsInBlock.add(ifStmt);
+        stmtsInBlock.add(new ReturnStmt(new VariableExp("b")));
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
+        parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
+        parameterList.put(new VariableExp("b"), BasicType.TYPE_INT);
+        FunctionDeclareStmt functionDeclareStmt = new FunctionDeclareStmt(new VariableExp("max"), BasicType.TYPE_INT,
+                parameterList, new BlockStmt(stmtsInBlock));
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(functionDeclareStmt);
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
+    // fun max(a : Int, b : Int) : Int {
+    //      if(a <= b) {
+    //      } else {
+    //          return a
+    //      }
+    //      return b
+    // }
+    public void returnOutsideIfAndReturnInOneIfBranch() throws IllTypedException {
+        List<Stmt> stmtsInBlockInBlockTrue = new ArrayList<>();
+        List<Stmt> stmtsInBlockInBlockFalse = new ArrayList<>();
+        stmtsInBlockInBlockFalse.add(new ReturnStmt(new VariableExp("a")));
+        IfStmt ifStmt = new IfStmt(new ComparableExp(new VariableExp("a"), new VariableExp("b"), ComparableOp.OP_LESS_EQUAL),
+                new BlockStmt(stmtsInBlockInBlockTrue), new BlockStmt(stmtsInBlockInBlockFalse));
+        List<Stmt> stmtsInBlock = new ArrayList<>();
+        stmtsInBlock.add(ifStmt);
+        stmtsInBlock.add(new ReturnStmt(new VariableExp("b")));
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
+        parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
+        parameterList.put(new VariableExp("b"), BasicType.TYPE_INT);
+        FunctionDeclareStmt functionDeclareStmt = new FunctionDeclareStmt(new VariableExp("max"), BasicType.TYPE_INT,
+                parameterList, new BlockStmt(stmtsInBlock));
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(functionDeclareStmt);
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
     }
 
     @Test

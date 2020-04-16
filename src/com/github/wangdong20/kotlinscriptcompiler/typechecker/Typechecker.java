@@ -11,8 +11,7 @@ public class Typechecker {
 
     private static Map<Pair<Variable, List<Type>>, FunctionDeclareStmt> funcMap;
     private static Type returnTypeFromFunc;
-    private static boolean mustReturn = false;
-    private static boolean isInIf = false;
+    private static int returnEvaluate = 0;  // Evaluate return, if return needed in Function declaration, it is -1, if return not needed it is 0, if return need in if statement, it is -2 for both true false branch.
 
     private static Type typeOf(final Map<Variable, Pair<Type, Boolean>> gamma, final Exp e) throws IllTypedException {
         if(e instanceof IntExp) {
@@ -374,10 +373,10 @@ public class Typechecker {
             }
             returnTypeFromFunc = asFunDeclare.getReturnType();
             if(returnTypeFromFunc != BasicType.TYPE_UNIT) {
-                mustReturn = true;
+                returnEvaluate = -1;
             }
             typecheckBlockStmts(newGama, continueBreakOk, true, asFunDeclare.getBlockStmt());
-            if(mustReturn) {
+            if(returnEvaluate < 0) {
                 throw new IllTypedException("Missing return " + returnTypeFromFunc + " in Function Declaration " + asFunDeclare.getFuncName()
                     + "(" + Arrays.toString(types) + ")" + " : " + returnTypeFromFunc);
             }
@@ -398,8 +397,8 @@ public class Typechecker {
                     throw new IllTypedException("the function is not void function, should return something.");
                 }
             }
-            if(!isInIf && mustReturn) {
-                mustReturn = false;
+            if(returnEvaluate < 0) {
+                returnEvaluate++;
             }
             return gamma;
         } else if(s instanceof FunctionInstanceStmt) {
@@ -422,10 +421,14 @@ public class Typechecker {
             if(conditionType != BasicType.TYPE_BOOLEAN) {
                 throw new IllTypedException("if condition should be boolean type.");
             } else {
-                isInIf = true;
+                if(returnEvaluate < 0) {
+                    returnEvaluate = -2;
+                }
                 typecheckBlockStmts(gamma, continueBreakOk, returnOk, ((IfStmt) s).getTrueBranch());
-                isInIf = false;
                 typecheckBlockStmts(gamma, continueBreakOk, returnOk, ((IfStmt) s).getFalseBranch());
+                if(returnEvaluate < 0) {
+                    returnEvaluate = -1;
+                }
                 return gamma;
             }
         } else if(s instanceof SelfOperationStmt) {
@@ -466,8 +469,7 @@ public class Typechecker {
             funcMap = new HashMap<>();
         }
         returnTypeFromFunc = null;
-        isInIf = false;
-        mustReturn = false;
+        returnEvaluate = 0;
 
         for(Stmt s : stmtList) {
             if(s instanceof FunctionDeclareStmt) {
