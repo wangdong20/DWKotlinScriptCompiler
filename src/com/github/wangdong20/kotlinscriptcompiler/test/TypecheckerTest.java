@@ -233,4 +233,45 @@ public class TypecheckerTest {
         Program program = new Program(stmts);
         assertTypecheckProgram(program);
     }
+
+    @Test
+    // fun max(a : Int, b : Int) : Int {
+    //      if(a < b) {
+    //          return b
+    //      }
+    // }
+    public void elseNotReturn() {
+        List<Stmt> stmtsInBlockInBlock = new ArrayList<>();
+        stmtsInBlockInBlock.add(new ReturnStmt(new VariableExp("b")));
+        IfStmt ifStmt = new IfStmt(new ComparableExp(new VariableExp("a"), new VariableExp("b"), ComparableOp.OP_LESS_EQUAL),
+                new BlockStmt(stmtsInBlockInBlock));
+        List<Stmt> stmtsInBlock = new ArrayList<>();
+        stmtsInBlock.add(ifStmt);
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
+        parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
+        parameterList.put(new VariableExp("b"), BasicType.TYPE_INT);
+        FunctionDeclareStmt functionDeclareStmt = new FunctionDeclareStmt(new VariableExp("max"), BasicType.TYPE_INT,
+                parameterList, new BlockStmt(stmtsInBlock));
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(functionDeclareStmt);
+        Program program = new Program(stmtList);
+        assertTypecheckProgramExpectedException(program);
+    }
+
+    @Test
+    // fun print() {
+    //      print("Hello world")
+    // }
+    public void voidFunction() throws IllTypedException {
+        List<Stmt> stmtsInBlock = new ArrayList<>();
+        PrintStmt printStmt = new PrintStmt(new StringExp("Hello world", null));
+        stmtsInBlock.add(printStmt);
+        FunctionDeclareStmt functionDeclareStmt = new FunctionDeclareStmt(new VariableExp("print"), BasicType.TYPE_UNIT,
+                new LinkedHashMap<>(), new BlockStmt(stmtsInBlock));
+        List<Stmt> stmts = new ArrayList<>();
+        stmts.add(functionDeclareStmt);
+        Program program = new Program(stmts);
+        assertTypecheckProgram(program);
+    }
+
 }
