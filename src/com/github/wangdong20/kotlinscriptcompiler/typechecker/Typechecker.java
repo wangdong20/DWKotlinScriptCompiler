@@ -12,6 +12,7 @@ public class Typechecker {
     private static Map<Pair<Variable, List<Type>>, FunctionDeclareStmt> funcMap;
     private static Type returnTypeFromFunc;
     private static int returnEvaluate = 0;  // Evaluate return, if return needed in Function declaration, it is -1, if return not needed it is 0, if return need in if statement, it is -2 for both true false branch.
+    private static boolean alreadyReturn;   // Already return in block statements, no need to check remain statements in block statement.
 
     private static Type typeOf(final Map<Variable, Pair<Type, Boolean>> gamma, final Exp e) throws IllTypedException {
         if(e instanceof IntExp) {
@@ -400,6 +401,7 @@ public class Typechecker {
             if(returnEvaluate < 0) {
                 returnEvaluate++;
             }
+            alreadyReturn = true;
             return gamma;
         } else if(s instanceof FunctionInstanceStmt) {
             FunctionInstanceStmt asFunInstance = (FunctionInstanceStmt)s;
@@ -421,13 +423,14 @@ public class Typechecker {
             if(conditionType != BasicType.TYPE_BOOLEAN) {
                 throw new IllTypedException("if condition should be boolean type.");
             } else {
+                int temp = returnEvaluate;
                 if(returnEvaluate < 0) {
-                    returnEvaluate = -2;
+                    returnEvaluate--;
                 }
                 typecheckBlockStmts(gamma, continueBreakOk, returnOk, ((IfStmt) s).getTrueBranch());
                 typecheckBlockStmts(gamma, continueBreakOk, returnOk, ((IfStmt) s).getFalseBranch());
                 if(returnEvaluate < 0) {
-                    returnEvaluate = -1;
+                    returnEvaluate = temp;
                 }
                 return gamma;
             }
@@ -445,13 +448,23 @@ public class Typechecker {
     }
 
     private static Map<Variable, Pair<Type, Boolean>> typecheckBlockStmts(Map<Variable, Pair<Type, Boolean>> gamma, boolean continueBreakOK, boolean returnOk, final BlockStmt blockStmt) throws IllTypedException {
+        alreadyReturn = false;
         if(blockStmt != null) {
-            for (Stmt s : blockStmt.getStmtList()) {
+            Stmt s;
+            for (int i = 0; i < blockStmt.getStmtList().size(); i++) {
+                s = blockStmt.getStmtList().get(i);
                 if (s instanceof FunctionDeclareStmt) {
                     throw new IllTypedException("Function declaration is not allowed in block");
                 }
                 gamma = typecheckStmt(gamma, continueBreakOK, returnOk, s);
+                if(alreadyReturn) {
+                    if(i < blockStmt.getStmtList().size() - 1) {
+                        throw new IllTypedException("Statements after return cannot be reached in current block");
+                    }
+                    break;
+                }
             }
+            alreadyReturn = false;
             return gamma;
         } else {
             return gamma;
