@@ -359,6 +359,57 @@ public class TypecheckerTest {
     @Test
     // fun max(a : Int, b : Int) : Int {
     //      if(a <= b) {
+    //          if(a < 10) {
+    //              return a
+    //          } else {
+    //              return b
+    //          }
+    //      } else {
+    //          if(a < 10) {
+    //              return a
+    //          } else {
+    //              return b
+    //          }
+    //      }
+    // }
+    public void ifIfElseElseReturn() throws IllTypedException {
+        List<Stmt> stmtsInBlockInBlockTrue = new ArrayList<>();
+        List<Stmt> stmtsInBlockInBlockFalse = new ArrayList<>();
+        List<Stmt> stmtsInBlockInBlockInBlockInIfIfTrue = new ArrayList<>();
+        List<Stmt> stmtsInBlockInBlockInBlockInIfIfFalse = new ArrayList<>();
+
+        stmtsInBlockInBlockInBlockInIfIfTrue.add(new ReturnStmt(new VariableExp("a")));
+        stmtsInBlockInBlockInBlockInIfIfFalse.add(new ReturnStmt(new VariableExp("b")));
+        IfStmt ifIfStmt = new IfStmt(new ComparableExp(new VariableExp("a"), new IntExp(10), ComparableOp.OP_LESS_THAN),
+                new BlockStmt(stmtsInBlockInBlockInBlockInIfIfTrue), new BlockStmt(stmtsInBlockInBlockInBlockInIfIfFalse));
+        stmtsInBlockInBlockTrue.add(ifIfStmt);
+        
+        List<Stmt> stmtsInBlockInBlockInBlockInElseIfTrue = new ArrayList<>();
+        List<Stmt> stmtsInBlockInBlockInBlockInElseIfFalse = new ArrayList<>();
+        stmtsInBlockInBlockInBlockInElseIfTrue.add(new ReturnStmt(new VariableExp("a")));
+        stmtsInBlockInBlockInBlockInElseIfFalse.add(new ReturnStmt(new VariableExp("b")));
+        IfStmt elseIfStmt = new IfStmt(new ComparableExp(new VariableExp("a"), new IntExp(10), ComparableOp.OP_LESS_THAN),
+                new BlockStmt(stmtsInBlockInBlockInBlockInElseIfTrue), new BlockStmt(stmtsInBlockInBlockInBlockInElseIfFalse));
+        stmtsInBlockInBlockFalse.add(elseIfStmt);
+
+        IfStmt ifStmt = new IfStmt(new ComparableExp(new VariableExp("a"), new VariableExp("b"), ComparableOp.OP_LESS_EQUAL),
+                new BlockStmt(stmtsInBlockInBlockTrue), new BlockStmt(stmtsInBlockInBlockFalse));
+        List<Stmt> stmtsInBlock = new ArrayList<>();
+        stmtsInBlock.add(ifStmt);
+        LinkedHashMap<Exp, Type> parameterList = new LinkedHashMap<>();
+        parameterList.put(new VariableExp("a"), BasicType.TYPE_INT);
+        parameterList.put(new VariableExp("b"), BasicType.TYPE_INT);
+        FunctionDeclareStmt functionDeclareStmt = new FunctionDeclareStmt(new VariableExp("max"), BasicType.TYPE_INT,
+                parameterList, new BlockStmt(stmtsInBlock));
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(functionDeclareStmt);
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
+    // fun max(a : Int, b : Int) : Int {
+    //      if(a <= b) {
     //      } else {
     //      }
     //      return b
