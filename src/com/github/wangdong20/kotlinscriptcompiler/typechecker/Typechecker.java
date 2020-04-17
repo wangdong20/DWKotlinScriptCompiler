@@ -429,7 +429,7 @@ public class Typechecker {
                 }
                 typecheckBlockStmts(gamma, continueBreakOk, returnOk, ((IfStmt) s).getTrueBranch());
                 typecheckBlockStmts(gamma, continueBreakOk, returnOk, ((IfStmt) s).getFalseBranch());
-                if(returnEvaluate < 0) {
+                if(returnEvaluate - temp < 1) {     // It means returnEvaluate does not add by 2, it means not all two branch in if has return
                     returnEvaluate = temp;
                 }
                 return gamma;
