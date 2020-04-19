@@ -91,6 +91,17 @@ public class TypecheckerTest {
     }
 
     @Test
+    // var a = 1
+    // a = true
+    public void assignmentWrongParameter()  {
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(new AssignStmt(new IntExp(1), new VariableExp("a"), false, true));
+        stmtList.add(new AssignStmt(new BooleanExp(true), new VariableExp("a"), false, false));
+        Program program = new Program(stmtList);
+        assertTypecheckProgramExpectedException(program);
+    }
+
+    @Test
     // var a = arrayOf(1, 2, 3)
     // a[2] = 0
     public void arrayWithIndexAssign() throws IllTypedException {
@@ -103,6 +114,36 @@ public class TypecheckerTest {
         stmtList.add(new AssignStmt(new IntExp(0), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(2)), false, false));
         Program program = new Program(stmtList);
         assertTypecheckProgram(program);
+    }
+
+    @Test
+    // var a = arrayOf(1, 2, 3)
+    // a[true] = 0
+    public void arrayWithTrueIndexAssign()  {
+        List<Stmt> stmtList = new ArrayList<>();
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new IntExp(1));
+        exps.add(new IntExp(2));
+        exps.add(new IntExp(3));
+        stmtList.add(new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"),false, true));
+        stmtList.add(new AssignStmt(new IntExp(0), new ArrayWithIndexExp(new VariableExp("a"), new BooleanExp(true)), false, false));
+        Program program = new Program(stmtList);
+        assertTypecheckProgramExpectedException(program);
+    }
+
+    @Test
+    // var a = arrayOf(1, 2, 3)
+    // a[0] = true
+    public void arrayWithIndexTrueAssign()  {
+        List<Stmt> stmtList = new ArrayList<>();
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new IntExp(1));
+        exps.add(new IntExp(2));
+        exps.add(new IntExp(3));
+        stmtList.add(new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"),false, true));
+        stmtList.add(new AssignStmt(new BooleanExp(true), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(0)), false, false));
+        Program program = new Program(stmtList);
+        assertTypecheckProgramExpectedException(program);
     }
 
     @Test

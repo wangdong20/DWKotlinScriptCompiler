@@ -125,7 +125,10 @@ public class Typechecker {
             }
         } else if(e instanceof ArrayWithIndexExp) {
             if(gamma.containsKey(((ArrayWithIndexExp) e).getVariableExp())) {
-                return gamma.get(e).getFirst();
+                if(typeOf(gamma, ((ArrayWithIndexExp) e).getIndexExp()) != BasicType.TYPE_INT) {
+                    throw new IllTypedException("Array Index should be Int type");
+                }
+                return gamma.get(((ArrayWithIndexExp) e).getVariableExp()).getFirst();
             } else {
                 throw new IllTypedException("Not in scope " + ((ArrayWithIndexExp) e).getVariableExp().getName());
             }
@@ -291,6 +294,10 @@ public class Typechecker {
                     if(gamma.get(((AssignStmt) s).getVariable()).getSecond()) { // Read only variable
                         throw new IllTypedException(((AssignStmt) s).getVariable() + " is read only variable!");
                     } else {
+                        Type expectedType = typeOf(gamma, (Exp)((AssignStmt) s).getVariable());
+                        if(!typeOf(gamma, ((AssignStmt) s).getExpression()).equals(expectedType)) {
+                            throw new IllTypedException(expectedType + " expected");
+                        }
                         return gamma;
                     }
                 } else if(((AssignStmt) s).getVariable() instanceof ArrayWithIndexExp) {
@@ -298,6 +305,12 @@ public class Typechecker {
                         if(gamma.get(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp()).getSecond()) { // Read only variable
                             throw new IllTypedException(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp() + " is read only variable!");
                         } else {
+                            Type expectedArray = typeOf(gamma, (ArrayWithIndexExp)((AssignStmt) s).getVariable());
+                            if(expectedArray instanceof TypeArray) {
+                                if(!typeOf(gamma, ((AssignStmt) s).getExpression()).equals(((TypeArray) expectedArray).getBasicType())) {
+                                    throw new IllTypedException(((TypeArray) expectedArray).getBasicType() + " expected");
+                                }
+                            }
                             return gamma;
                         }
                     } else {
