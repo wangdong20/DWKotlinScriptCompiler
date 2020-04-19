@@ -133,6 +133,23 @@ public class TypecheckerTest {
     }
 
     @Test
+    // var a = arrayOf(1, 2, 3)
+    // val sum = a[0] + a[1] + a[2]
+    public void arrayWithIndexAssignSum() throws IllTypedException {
+        List<Stmt> stmtList = new ArrayList<>();
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new IntExp(1));
+        exps.add(new IntExp(2));
+        exps.add(new IntExp(3));
+        stmtList.add(new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"),false, true));
+        stmtList.add(new AssignStmt(new AdditiveExp(new AdditiveExp(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(0)), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)), AdditiveOp.EXP_PLUS),
+                new ArrayWithIndexExp(new VariableExp("a"), new IntExp(2)), AdditiveOp.EXP_PLUS),
+                new VariableExp("sum"), true, true));
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
     // var a = true
     // a[2] = 0
     public void arrayWithIndexAssignButNotArray() {
