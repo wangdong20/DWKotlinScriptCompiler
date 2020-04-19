@@ -128,7 +128,11 @@ public class Typechecker {
                 if(typeOf(gamma, ((ArrayWithIndexExp) e).getIndexExp()) != BasicType.TYPE_INT) {
                     throw new IllTypedException("Array Index should be Int type");
                 }
-                return gamma.get(((ArrayWithIndexExp) e).getVariableExp()).getFirst();
+                if(gamma.get(((ArrayWithIndexExp) e).getVariableExp()).getFirst() instanceof TypeArray) {
+                    return ((TypeArray) gamma.get(((ArrayWithIndexExp) e).getVariableExp()).getFirst()).getBasicType();
+                } else {
+                    throw new IllTypedException(((ArrayWithIndexExp) e).getVariableExp().getName() + " is not a array");
+                }
             } else {
                 throw new IllTypedException("Not in scope " + ((ArrayWithIndexExp) e).getVariableExp().getName());
             }
@@ -301,22 +305,14 @@ public class Typechecker {
                         return gamma;
                     }
                 } else if(((AssignStmt) s).getVariable() instanceof ArrayWithIndexExp) {
-                    if(gamma.containsKey(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp())) {
-                        if(gamma.get(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp()).getSecond()) { // Read only variable
-                            throw new IllTypedException(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp() + " is read only variable!");
-                        } else {
-                            Type expectedArray = typeOf(gamma, (ArrayWithIndexExp)((AssignStmt) s).getVariable());
-                            if(expectedArray instanceof TypeArray) {
-                                if(!typeOf(gamma, ((AssignStmt) s).getExpression()).equals(((TypeArray) expectedArray).getBasicType())) {
-                                    throw new IllTypedException(((TypeArray) expectedArray).getBasicType() + " expected");
-                                }
-                            } else {
-                                throw new IllTypedException(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp() + " is not an array");
-                            }
-                            return gamma;
-                        }
+                    Type expected = typeOf(gamma, (Exp)((AssignStmt) s).getVariable());
+                    if(gamma.get(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp()).getSecond()) {
+                        throw new IllTypedException(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp() + " is read only variable!");
+                    }
+                    if(typeOf(gamma, ((AssignStmt) s).getExpression()).equals(expected)) {
+                        return gamma;
                     } else {
-                        throw new IllTypedException(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp() + " undefined!");
+                        throw new IllTypedException(expected + " expected for expression");
                     }
                 } else {
                     throw new IllTypedException(((AssignStmt) s).getVariable() + " undefined!");
@@ -347,22 +343,14 @@ public class Typechecker {
                     }
                 }
             } else if(((CompoundAssignStmt) s).getVariable() instanceof ArrayWithIndexExp) {
-                if(gamma.containsKey(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp())) {
-                    if(gamma.get(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp()).getSecond()) {
-                        throw new IllTypedException(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp() + " is read only variable!");
-                    } else {
-                        Type expectedArray = typeOf(gamma, (ArrayWithIndexExp)((CompoundAssignStmt) s).getVariable());
-                        if(expectedArray instanceof TypeArray) {
-                            if(!typeOf(gamma, ((CompoundAssignStmt) s).getExpression()).equals(((TypeArray) expectedArray).getBasicType())) {
-                                throw new IllTypedException(((TypeArray) expectedArray).getBasicType() + " expected");
-                            }
-                        } else {
-                            throw new IllTypedException(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp() + " is not an array");
-                        }
-                        return gamma;
-                    }
+                Type expected = typeOf(gamma, (Exp)((CompoundAssignStmt) s).getVariable());
+                if(gamma.get(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp()).getSecond()) {
+                    throw new IllTypedException(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp() + " is read only variable!");
+                }
+                if(typeOf(gamma, ((CompoundAssignStmt) s).getExpression()).equals(expected)) {
+                    return gamma;
                 } else {
-                    throw new IllTypedException(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp() + " undefined");
+                    throw new IllTypedException(expected + " expected for expression");
                 }
             } else {
                 throw new IllTypedException(((CompoundAssignStmt) s).getVariable() + " undefined!");
