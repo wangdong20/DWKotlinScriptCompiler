@@ -42,11 +42,20 @@ public class TypecheckerTest {
 
     @Test
     // val a : Int
-    public void varDefineWithoutAssign() {
+    public void valDefineWithoutAssign() {
         List<Stmt> stmtList = new ArrayList<>();
         stmtList.add(new VariableDeclareStmt(new VariableExp("a"), BasicType.TYPE_INT, true));
         Program program = new Program(stmtList);
         assertTypecheckProgramExpectedException(program);
+    }
+
+    @Test
+    // var a : Int
+    public void varDefineWithoutAssign() throws IllTypedException {
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(new VariableDeclareStmt(new VariableExp("a"), BasicType.TYPE_INT, false));
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
     }
 
     @Test
