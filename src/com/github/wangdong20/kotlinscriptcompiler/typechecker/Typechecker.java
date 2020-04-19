@@ -344,6 +344,22 @@ public class Typechecker {
                         throw new IllTypedException("Only Int += Int, String += Int, String += String supported!");
                     }
                 }
+            } else if(((CompoundAssignStmt) s).getVariable() instanceof ArrayWithIndexExp) {
+                if(gamma.containsKey(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp())) {
+                    if(gamma.get(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp()).getSecond()) {
+                        throw new IllTypedException(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp() + " is read only variable!");
+                    } else {
+                        Type expectedArray = typeOf(gamma, (ArrayWithIndexExp)((CompoundAssignStmt) s).getVariable());
+                        if(expectedArray instanceof TypeArray) {
+                            if(!typeOf(gamma, ((CompoundAssignStmt) s).getExpression()).equals(((TypeArray) expectedArray).getBasicType())) {
+                                throw new IllTypedException(((TypeArray) expectedArray).getBasicType() + " expected");
+                            }
+                        }
+                        return gamma;
+                    }
+                } else {
+                    throw new IllTypedException(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp() + " undefined");
+                }
             } else {
                 throw new IllTypedException(((CompoundAssignStmt) s).getVariable() + " undefined!");
             }

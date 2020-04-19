@@ -118,6 +118,21 @@ public class TypecheckerTest {
 
     @Test
     // var a = arrayOf(1, 2, 3)
+    // a[2] += 1
+    public void arrayWithIndexCompoundAssign() throws IllTypedException {
+        List<Stmt> stmtList = new ArrayList<>();
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new IntExp(1));
+        exps.add(new IntExp(2));
+        exps.add(new IntExp(3));
+        stmtList.add(new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"),false, true));
+        stmtList.add(new CompoundAssignStmt(new IntExp(1), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(2)), CompoundAssignOp.EXP_PLUS_EQUAL));
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
+    // var a = arrayOf(1, 2, 3)
     // a[true] = 0
     public void arrayWithTrueIndexAssign()  {
         List<Stmt> stmtList = new ArrayList<>();
@@ -142,6 +157,21 @@ public class TypecheckerTest {
         exps.add(new IntExp(3));
         stmtList.add(new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"),false, true));
         stmtList.add(new AssignStmt(new BooleanExp(true), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(0)), false, false));
+        Program program = new Program(stmtList);
+        assertTypecheckProgramExpectedException(program);
+    }
+
+    @Test
+    // var a = arrayOf(1, 2, 3)
+    // a[0] += true
+    public void arrayWithIndexTrueCompoundAssign()  {
+        List<Stmt> stmtList = new ArrayList<>();
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new IntExp(1));
+        exps.add(new IntExp(2));
+        exps.add(new IntExp(3));
+        stmtList.add(new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"),false, true));
+        stmtList.add(new CompoundAssignStmt(new BooleanExp(true), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(0)), CompoundAssignOp.EXP_PLUS_EQUAL));
         Program program = new Program(stmtList);
         assertTypecheckProgramExpectedException(program);
     }
