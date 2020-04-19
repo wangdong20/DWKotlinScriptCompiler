@@ -310,6 +310,8 @@ public class Typechecker {
                                 if(!typeOf(gamma, ((AssignStmt) s).getExpression()).equals(((TypeArray) expectedArray).getBasicType())) {
                                     throw new IllTypedException(((TypeArray) expectedArray).getBasicType() + " expected");
                                 }
+                            } else {
+                                throw new IllTypedException(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp() + " is not an array");
                             }
                             return gamma;
                         }
@@ -354,6 +356,8 @@ public class Typechecker {
                             if(!typeOf(gamma, ((CompoundAssignStmt) s).getExpression()).equals(((TypeArray) expectedArray).getBasicType())) {
                                 throw new IllTypedException(((TypeArray) expectedArray).getBasicType() + " expected");
                             }
+                        } else {
+                            throw new IllTypedException(((ArrayWithIndexExp) ((CompoundAssignStmt) s).getVariable()).getVariableExp() + " is not an array");
                         }
                         return gamma;
                     }

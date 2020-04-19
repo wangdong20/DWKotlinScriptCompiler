@@ -117,6 +117,17 @@ public class TypecheckerTest {
     }
 
     @Test
+    // var a = true
+    // a[2] = 0
+    public void arrayWithIndexAssignButNotArray() {
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(new AssignStmt(new BooleanExp(true), new VariableExp("a"),false, true));
+        stmtList.add(new AssignStmt(new IntExp(0), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(2)), false, false));
+        Program program = new Program(stmtList);
+        assertTypecheckProgramExpectedException(program);
+    }
+
+    @Test
     // var a = arrayOf(1, 2, 3)
     // a[2] += 1
     public void arrayWithIndexCompoundAssign() throws IllTypedException {
