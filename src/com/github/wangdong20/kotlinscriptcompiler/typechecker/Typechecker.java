@@ -256,6 +256,9 @@ public class Typechecker {
                 throw new IllTypedException("Redefined variable " + ((VariableDeclareStmt) s).getVariableExp().getName());
             } else {
                 if(((VariableDeclareStmt) s).getType() != null) {
+                    if(((VariableDeclareStmt) s).isReadOnly()) {
+                        throw new IllTypedException("This variable must either have a type annotation or be initialized");
+                    }
                     final Map<Variable, Pair<Type, Boolean>> copy = newCopy(gamma);
                     copy.put(((VariableDeclareStmt) s).getVariableExp(), new Pair<>(((VariableDeclareStmt) s).getType(), ((VariableDeclareStmt) s).isReadOnly()));
                     return copy;
@@ -289,6 +292,16 @@ public class Typechecker {
                         throw new IllTypedException(((AssignStmt) s).getVariable() + " is read only variable!");
                     } else {
                         return gamma;
+                    }
+                } else if(((AssignStmt) s).getVariable() instanceof ArrayWithIndexExp) {
+                    if(gamma.containsKey(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp())) {
+                        if(gamma.get(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp()).getSecond()) { // Read only variable
+                            throw new IllTypedException(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp() + " is read only variable!");
+                        } else {
+                            return gamma;
+                        }
+                    } else {
+                        throw new IllTypedException(((ArrayWithIndexExp) ((AssignStmt) s).getVariable()).getVariableExp() + " undefined!");
                     }
                 } else {
                     throw new IllTypedException(((AssignStmt) s).getVariable() + " undefined!");
