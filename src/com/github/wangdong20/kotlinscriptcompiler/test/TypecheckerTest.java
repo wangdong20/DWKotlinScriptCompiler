@@ -102,6 +102,17 @@ public class TypecheckerTest {
     }
 
     @Test
+    // var a : Boolean = !(1 == 2) && (1 > 2)
+    public void notExpAndCompareExp() throws IllTypedException {
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(new AssignStmt(new BiLogicalExp(new NotExp(new ComparableExp(new IntExp(1), new IntExp(2), ComparableOp.OP_EQUAL_EQUAL)),
+                new ComparableExp(new IntExp(1), new IntExp(2), ComparableOp.OP_GREATER_THAN), BiLogicalOp.OP_AND),
+                new VariableExp("a"), BasicType.TYPE_BOOLEAN, false, true));
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
     // var a = arrayOf(1, 2, 3)
     // a[2] = 0
     public void arrayWithIndexAssign() throws IllTypedException {
