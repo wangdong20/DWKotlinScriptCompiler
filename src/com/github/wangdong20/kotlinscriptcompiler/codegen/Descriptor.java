@@ -46,7 +46,7 @@ public class Descriptor {
         }
     }
 
-    private static String toDescriptorString(FunctionDeclareStmt functionDeclareStmt) throws CodeGeneratorException {
+    public static String toDescriptorString(FunctionDeclareStmt functionDeclareStmt) throws CodeGeneratorException {
         StringBuilder result = new StringBuilder();
         result.append("(");
         for(Type type : functionDeclareStmt.getParameterList().values()) {

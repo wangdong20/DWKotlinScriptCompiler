@@ -284,6 +284,15 @@ public class TypecheckerTest {
     }
 
     @Test
+    // val a : Int = 2
+    public void initialReadOnlyVariable() throws IllTypedException {
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(new AssignStmt(new IntExp(2), new VariableExp("a"), BasicType.TYPE_INT, true, true));
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
     // val a = 2
     // a = 1
     public void readOnlyVariable() {

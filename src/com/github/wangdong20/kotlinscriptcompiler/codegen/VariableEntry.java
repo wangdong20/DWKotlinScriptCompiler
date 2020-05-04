@@ -1,5 +1,6 @@
 package com.github.wangdong20.kotlinscriptcompiler.codegen;
 
+import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.ArrayWithIndexExp;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.Variable;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.BasicType;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
@@ -25,9 +26,30 @@ public class VariableEntry {
         if (type == BasicType.TYPE_INT ||
                 type == BasicType.TYPE_BOOLEAN) {
             visitor.visitVarInsn(ILOAD, index);
-        } else if (type instanceof TypeArray || type == BasicType.TYPE_STRING) {
+        } else if (type == BasicType.TYPE_STRING) {
             visitor.visitVarInsn(ALOAD, index);
-        } else {
+        } else if(type instanceof TypeArray) {
+            visitor.visitVarInsn(ALOAD, index);
+            if(variable instanceof ArrayWithIndexExp) {
+                CodeGenerator.writeExp(((ArrayWithIndexExp) variable).getIndexExp());
+                int opcode;
+                switch (((TypeArray) type).getBasicType()) {
+                    case TYPE_INT:
+                        opcode = IALOAD;
+                        break;
+                    case TYPE_BOOLEAN:
+                        opcode = BALOAD;
+                        break;
+                    case TYPE_STRING:
+                    case TYPE_ANY:
+                        opcode = AALOAD;
+                        break;
+                    default: throw new CodeGeneratorException("Unsupported type in array: " + type);
+                }
+                visitor.visitInsn(opcode);
+            }
+        }
+        else {
             throw new CodeGeneratorException("Unsupported load type: " + type);
         }
     } // load
