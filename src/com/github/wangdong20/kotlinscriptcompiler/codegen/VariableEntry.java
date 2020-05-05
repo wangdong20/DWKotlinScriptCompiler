@@ -21,7 +21,7 @@ public class VariableEntry {
         this.index = index;
     }
 
-    public void load(final MethodVisitor visitor) throws CodeGeneratorException {
+    public void load(CodeGenerator codeGenerator, final MethodVisitor visitor) throws CodeGeneratorException {
         // both are treated as integers at the bytecode level
         if (type == BasicType.TYPE_INT ||
                 type == BasicType.TYPE_BOOLEAN) {
@@ -31,7 +31,7 @@ public class VariableEntry {
         } else if(type instanceof TypeArray) {
             visitor.visitVarInsn(ALOAD, index);
             if(variable instanceof ArrayWithIndexExp) {
-                CodeGenerator.writeExp(((ArrayWithIndexExp) variable).getIndexExp());
+                codeGenerator.writeExp(((ArrayWithIndexExp) variable).getIndexExp());
                 int opcode;
                 switch (((TypeArray) type).getBasicType()) {
                     case TYPE_INT:
@@ -54,13 +54,33 @@ public class VariableEntry {
         }
     } // load
 
-    public void store(final MethodVisitor visitor) throws CodeGeneratorException {
+    public void store(CodeGenerator codeGenerator, final MethodVisitor visitor) throws CodeGeneratorException {
         // both are treated as integers at the bytecode level
         if (type == BasicType.TYPE_INT ||
                 type == BasicType.TYPE_BOOLEAN) {
             visitor.visitVarInsn(ISTORE, index);
-        } else if (type instanceof TypeArray || type == BasicType.TYPE_STRING) {
+        } else if (type == BasicType.TYPE_STRING) {
             visitor.visitVarInsn(ASTORE, index);
+        } else if(type instanceof TypeArray) {
+            visitor.visitVarInsn(ALOAD, index);
+            if(variable instanceof ArrayWithIndexExp) {
+                codeGenerator.writeExp(((ArrayWithIndexExp) variable).getIndexExp());
+                int opcode;
+                switch (((TypeArray) type).getBasicType()) {
+                    case TYPE_INT:
+                        opcode = IASTORE;
+                        break;
+                    case TYPE_BOOLEAN:
+                        opcode = BALOAD;
+                        break;
+                    case TYPE_STRING:
+                    case TYPE_ANY:
+                        opcode = AALOAD;
+                        break;
+                    default: throw new CodeGeneratorException("Unsupported type in array: " + type);
+                }
+                visitor.visitInsn(opcode);
+            }
         } else {
             throw new CodeGeneratorException("Unsupported store type: " + type);
         }

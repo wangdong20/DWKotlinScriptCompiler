@@ -1,6 +1,6 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser.expressions;
 
-public class AdditiveExp implements Exp {
+public class AdditiveExp extends BinaryIntExp {
     private final Exp left;
     private final Exp right;
     private final AdditiveOp op;
