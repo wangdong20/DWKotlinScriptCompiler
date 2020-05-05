@@ -28,4 +28,4 @@ hs_err_pid*
 .out/
 
 # Test ASM outline code java file
-TestForASMOutlineCode
+TestForASMOutlineCode.java
