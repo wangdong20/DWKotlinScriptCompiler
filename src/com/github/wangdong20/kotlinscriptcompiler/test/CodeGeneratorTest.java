@@ -2,10 +2,7 @@ import com.github.wangdong20.kotlinscriptcompiler.codegen.CodeGenerator;
 import com.github.wangdong20.kotlinscriptcompiler.codegen.CodeGeneratorException;
 import com.github.wangdong20.kotlinscriptcompiler.parser.Program;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
-import com.github.wangdong20.kotlinscriptcompiler.parser.statements.AssignStmt;
-import com.github.wangdong20.kotlinscriptcompiler.parser.statements.PrintStmt;
-import com.github.wangdong20.kotlinscriptcompiler.parser.statements.PrintlnStmt;
-import com.github.wangdong20.kotlinscriptcompiler.parser.statements.Stmt;
+import com.github.wangdong20.kotlinscriptcompiler.parser.statements.*;
 import com.sun.tools.javac.jvm.Code;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -130,5 +127,54 @@ public class CodeGeneratorTest {
                                 new IntExp(5), ComparableOp.OP_GREATER_THAN), new ComparableExp(new VariableExp("a"), new IntExp(2),
                                 ComparableOp.OP_EQUAL_EQUAL), BiLogicalOp.OP_AND), new VariableExp("b"), false, true),
                         new PrintStmt(new VariableExp("b"))), "true");
+    }
+
+    @Test
+    // var a = 2
+    // var b = (2 * 3 > 5) && (a > 2)
+    // print(b)
+    public void testCompareAndFalse(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(),
+                makeProgram(new AssignStmt(new IntExp(2), new VariableExp("a"), false, true),
+                        new AssignStmt(new BiLogicalExp(new ComparableExp(new MultiplicativeExp(new IntExp(2), new IntExp(3), MultiplicativeOp.OP_MULTIPLY),
+                                new IntExp(5), ComparableOp.OP_GREATER_THAN), new ComparableExp(new VariableExp("a"), new IntExp(2),
+                                ComparableOp.OP_GREATER_THAN), BiLogicalOp.OP_AND), new VariableExp("b"), false, true),
+                        new PrintStmt(new VariableExp("b"))), "false");
+    }
+
+    @Test
+    // var a = 2
+    // var b = 3
+    // var c = 4
+    // var d = 5
+    // var e = 7
+    // a += 3
+    // b *= 3
+    // c /= 2
+    // d -= a
+    // e /= a
+    // println(a)
+    // println(b)
+    // println(c)
+    // println(d)
+    // println(e)
+    public void testAllCompoundAssignment(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new IntExp(2), new VariableExp("a"), false, true),
+                new AssignStmt(new IntExp(3), new VariableExp("b"), false, true),
+                new AssignStmt(new IntExp(4), new VariableExp("c"), false, true),
+                new AssignStmt(new IntExp(5), new VariableExp("d"), false, true),
+                new AssignStmt(new IntExp(7), new VariableExp("e"), false, true),
+                new CompoundAssignStmt(new IntExp(3), new VariableExp("a"), CompoundAssignOp.EXP_PLUS_EQUAL),
+                new CompoundAssignStmt(new IntExp(3), new VariableExp("b"), CompoundAssignOp.EXP_MULTIPLY_EQUAL),
+                new CompoundAssignStmt(new IntExp(2), new VariableExp("c"), CompoundAssignOp.EXP_DIVIDE_EQUAL),
+                new CompoundAssignStmt(new VariableExp("a"), new VariableExp("d"), CompoundAssignOp.EXP_MINUS_EQUAL),
+                new CompoundAssignStmt(new VariableExp("a"), new VariableExp("e"), CompoundAssignOp.EXP_DIVIDE_EQUAL),
+                new PrintlnStmt(new VariableExp("a")),
+                new PrintlnStmt(new VariableExp("b")),
+                new PrintlnStmt(new VariableExp("c")),
+                new PrintlnStmt(new VariableExp("d")),
+                new PrintlnStmt(new VariableExp("e"))
+        ), "5", "9", "2", "0", "1");
     }
 }
