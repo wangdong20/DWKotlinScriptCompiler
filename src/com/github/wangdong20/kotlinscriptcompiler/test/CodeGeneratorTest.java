@@ -4,17 +4,15 @@ import com.github.wangdong20.kotlinscriptcompiler.parser.Program;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.AssignStmt;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.PrintStmt;
+import com.github.wangdong20.kotlinscriptcompiler.parser.statements.PrintlnStmt;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.Stmt;
-import org.junit.jupiter.api.BeforeEach;
+import com.sun.tools.javac.jvm.Code;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
@@ -33,7 +31,7 @@ public class CodeGeneratorTest {
     } // readUntilClose
 
     public static String[] readUntilClose(final BufferedReader reader) throws IOException {
-        final List<String> buffer = new ArrayList<String>();
+        final List<String> buffer = new ArrayList<>();
 
         try {
             String currentLine = "";
@@ -104,5 +102,33 @@ public class CodeGeneratorTest {
                 ), new VariableExp("x"), false, true),
                         new PrintStmt(new VariableExp("x"))),
                 "-4");
+    }
+
+    @Test
+    // var i  = 3;
+    // var j = ++i * 3;
+    // println(i)
+    // println(j)
+    public void testSelfIncreaseMultiply(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(),
+                makeProgram(new AssignStmt(new IntExp(3), new VariableExp("i"), false, true),
+                        new AssignStmt(new MultiplicativeExp(new SelfOperationExp(new VariableExp("i"),
+                                SelfOp.OP_SELF_INCREASE, true), new IntExp(3), MultiplicativeOp.OP_MULTIPLY),
+                                new VariableExp("j"), false, true),
+                        new PrintlnStmt(new VariableExp("i")),
+                        new PrintlnStmt(new VariableExp("j"))), "4", "12");
+    }
+
+    @Test
+    // var a = 2
+    // var b = (2 * 3 > 5) && (a == 2)
+    // print(b)
+    public void testCompareAnd(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(),
+                makeProgram(new AssignStmt(new IntExp(2), new VariableExp("a"), false, true),
+                        new AssignStmt(new BiLogicalExp(new ComparableExp(new MultiplicativeExp(new IntExp(2), new IntExp(3), MultiplicativeOp.OP_MULTIPLY),
+                                new IntExp(5), ComparableOp.OP_GREATER_THAN), new ComparableExp(new VariableExp("a"), new IntExp(2),
+                                ComparableOp.OP_EQUAL_EQUAL), BiLogicalOp.OP_AND), new VariableExp("b"), false, true),
+                        new PrintStmt(new VariableExp("b"))), "true");
     }
 }

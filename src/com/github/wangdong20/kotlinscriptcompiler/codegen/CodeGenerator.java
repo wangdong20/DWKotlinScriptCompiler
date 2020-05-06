@@ -353,6 +353,7 @@ public class CodeGenerator {
                 methodVisitor.visitIincInsn(index, -1);
             }
         }
+
         // load the variable after self operation
         final VariableEntry entry = getEntryFor(((SelfOperationExp) exp).getVariableExp());
         if(entry.type == BasicType.TYPE_INT) {
