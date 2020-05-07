@@ -3,7 +3,6 @@ import com.github.wangdong20.kotlinscriptcompiler.codegen.CodeGeneratorException
 import com.github.wangdong20.kotlinscriptcompiler.parser.Program;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.*;
-import com.sun.tools.javac.jvm.Code;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -177,4 +176,5 @@ public class CodeGeneratorTest {
                 new PrintlnStmt(new VariableExp("e"))
         ), "5", "9", "2", "0", "1");
     }
+
 }

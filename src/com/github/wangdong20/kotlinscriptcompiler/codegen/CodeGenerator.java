@@ -6,6 +6,7 @@ import com.github.wangdong20.kotlinscriptcompiler.parser.statements.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.BasicType;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.TypeArray;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.TypeMutableList;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -419,7 +420,12 @@ public class CodeGenerator {
         } else if (stmt instanceof AssignStmt) {
             final AssignStmt asAssign = (AssignStmt)stmt;
             Type type = writeExp(asAssign.getExpression());
-            final VariableEntry entry = addEntry(asAssign.getVariable(), type);
+            final VariableEntry entry;
+            if(((AssignStmt) stmt).isNew()) {
+                entry = addEntry(asAssign.getVariable(), type);
+            } else {
+                entry = getEntryFor(((AssignStmt) stmt).getVariable());
+            }
             entry.store(this, methodVisitor);
         } else if(stmt instanceof CompoundAssignStmt) {
             // support Int += first, then think about string concanation
@@ -520,6 +526,97 @@ public class CodeGenerator {
         return function.getReturnType();
     } // writeFunctionInstance
 
+    private Type typeOfVariable(Variable variable) throws CodeGeneratorException {
+        return getEntryFor(variable).type;
+    }
+
+    private Type typeOfFunctionInstance(FunctionInstanceExp exp) throws CodeGeneratorException {
+        final FunctionDeclareStmt function = functionTable.get(exp.getFuncName().getName());
+        if (function == null) {
+            throw new CodeGeneratorException("Call to nonexistent function: " + function.getFuncName().getName());
+        }
+        return function.getReturnType();
+    }
+
+    private BasicType basicTypeOf(Exp temp) throws CodeGeneratorException {
+        Type type;
+        if(temp instanceof IntExp || temp instanceof SelfOperationExp || temp instanceof BinaryIntExp) {
+            type = BasicType.TYPE_INT;
+        } else if(temp instanceof StringExp) {
+            type = BasicType.TYPE_STRING;
+        } else if(temp instanceof BooleanExp || temp instanceof ComparableExp ||
+                temp instanceof NotExp || temp instanceof BiLogicalExp) {
+            type = BasicType.TYPE_BOOLEAN;
+        } else if(temp instanceof VariableExp || temp instanceof ArrayWithIndexExp) {
+            type = typeOfVariable((Variable) temp);
+        } else if(temp instanceof FunctionInstanceExp) {
+            type = typeOfFunctionInstance((FunctionInstanceExp) temp);
+        } else {
+            throw new CodeGeneratorException("Unrecognized expression type");
+        }
+        if(type instanceof BasicType) {
+            return (BasicType) type;
+        } else {
+            throw new CodeGeneratorException(type + " is not BasicType");
+        }
+    }
+
+    private void writeStringExp(StringExp s) throws CodeGeneratorException {
+        if(s.getStrWithoutInterpolation() == null) {
+            throw new CodeGeneratorException("Null is StringExp!");
+        } else if(s.getInterpolationExp() == null || s.getInterpolationExp().size() == 0) {
+            methodVisitor.visitLdcInsn(s.getStrWithoutInterpolation());
+        } else {
+            // TODO
+            // support string interpolation here
+        }
+    }
+
+    private void writeValueToArray(BasicType type, List<Exp> exps) throws CodeGeneratorException {
+        int size = exps.size();
+        writeIntLiteral(size);
+        switch (type) {
+            case TYPE_INT:
+                methodVisitor.visitIntInsn(NEWARRAY, T_INT);
+                for(int i = 0; i < size; i++) {
+                    methodVisitor.visitInsn(DUP);
+                    writeIntLiteral(i);
+                    writeExp(exps.get(i));
+                    methodVisitor.visitInsn(IASTORE);
+                }
+                break;
+            case TYPE_BOOLEAN:
+                methodVisitor.visitIntInsn(NEWARRAY, T_BOOLEAN);
+                for(int i = 0; i < size; i++) {
+                    methodVisitor.visitInsn(DUP);
+                    writeIntLiteral(i);
+                    writeExp(exps.get(i));
+                    methodVisitor.visitInsn(BASTORE);
+                }
+                break;
+            case TYPE_STRING:
+                methodVisitor.visitTypeInsn(ANEWARRAY, "java/lang/String");
+                for(int i = 0; i < size; i++) {
+                    methodVisitor.visitInsn(DUP);
+                    writeIntLiteral(i);
+                    writeExp(exps.get(i));
+                    methodVisitor.visitInsn(AASTORE);
+                }
+                break;
+            case TYPE_ANY:
+                methodVisitor.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+                for(int i = 0; i < size; i++) {
+                    methodVisitor.visitInsn(DUP);
+                    writeIntLiteral(i);
+                    writeExp(exps.get(i));
+                    methodVisitor.visitInsn(AASTORE);
+                }
+                break;
+            case TYPE_UNIT:
+                throw new CodeGeneratorException("Void type only use for return from function!");
+        }
+    }
+
     public Type writeExp(Exp exp) throws CodeGeneratorException {
         if(exp instanceof IntExp) {
             writeIntLiteral(((IntExp) exp).getValue());
@@ -527,6 +624,9 @@ public class CodeGenerator {
         } else if(exp instanceof BooleanExp) {
             writeIntLiteral(((BooleanExp) exp).getValue() ? 1 : 0);
             return BasicType.TYPE_BOOLEAN;
+        } else if(exp instanceof StringExp) {
+            writeStringExp((StringExp) exp);
+            return BasicType.TYPE_STRING;
         } else if(exp instanceof VariableExp) {
             return loadVariable((VariableExp)exp).type;
         } else if(exp instanceof ArrayWithIndexExp) {
@@ -548,6 +648,27 @@ public class CodeGenerator {
             return BasicType.TYPE_BOOLEAN;
         } else if(exp instanceof FunctionInstanceExp) {
             return writeFunctionInstance((FunctionInstanceExp) exp);
+        } else if(exp instanceof ArrayOfExp) {
+            if(((ArrayOfExp) exp).getExpList().size() > 0) {
+                Exp temp = ((ArrayOfExp) exp).getExpList().get(0);
+                BasicType type = basicTypeOf(temp);
+                int size = ((ArrayOfExp) exp).getExpList().size();
+                boolean isAny = false;
+                for (Exp e : ((ArrayOfExp) exp).getExpList()) {
+                    if(type != basicTypeOf(e)) {
+                        isAny = true;
+                    }
+                }
+                if(isAny) {
+                    type = BasicType.TYPE_ANY;
+                }
+                writeIntLiteral(size);
+
+                writeValueToArray(type, ((ArrayOfExp) exp).getExpList());
+                return new TypeArray(type);
+            } else {
+                throw new CodeGeneratorException("arrayOf(exp*) should has at least one parameter");
+            }
         }
         else {
             throw new CodeGeneratorException("Unsupported expression so far!");
@@ -630,8 +751,9 @@ public class CodeGenerator {
             descriptor = "(Z)V";
         } else if(entry.type == BasicType.TYPE_STRING) {
             descriptor = "(Ljava/lang/String;)V";
-        }
-        else {
+        } else if(entry.type instanceof TypeArray || entry.type instanceof TypeMutableList) {
+            descriptor = "(Ljava/lang/Object;)V";
+        } else {
             assert(false);
             throw new CodeGeneratorException("Unrecognized type; " + entry.type);
         }

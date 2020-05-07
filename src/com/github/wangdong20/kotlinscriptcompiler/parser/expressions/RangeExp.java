@@ -4,19 +4,19 @@ package com.github.wangdong20.kotlinscriptcompiler.parser.expressions;
  * range expression, 1..5, range from 1 to 5 contain 1 and 5
  */
 public class RangeExp implements Exp {
-    private final IntExp start;
-    private final IntExp end;
+    private final Exp start;
+    private final Exp end;
 
-    public RangeExp(IntExp start, IntExp end) {
+    public RangeExp(Exp start, Exp end) {
         this.start = start;
         this.end = end;
     }
 
-    public IntExp getStart() {
+    public Exp getStart() {
         return start;
     }
 
-    public IntExp getEnd() {
+    public Exp getEnd() {
         return end;
     }
 

@@ -168,6 +168,267 @@ class ParserTest {
     @Test
     /**
      * for(i in 0..9) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithIntInt() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(0), new IntExp(9)), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new IntToken(0), SymbolToken.TK_DOT_DOT, new IntToken(9), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in 0..9 step 2) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithIntIntWithStepInt() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(0), new IntExp(9)), new IntExp(2), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new IntToken(0), SymbolToken.TK_DOT_DOT, new IntToken(9), KeywordToken.TK_STEP, new IntToken(2), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in 0..9 step a[i + 1]) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithIntIntWithStepArrayIndex() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(0), new IntExp(9)), new ArrayWithIndexExp(new VariableExp("a"), new AdditiveExp(new VariableExp("i"), new IntExp(1), AdditiveOp.EXP_PLUS)), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new IntToken(0), SymbolToken.TK_DOT_DOT, new IntToken(9), KeywordToken.TK_STEP, new VariableToken("a"), BracketsToken.TK_LBRACKET,
+                new VariableToken("i"), BinopToken.TK_PLUS, new IntToken(1), BracketsToken.TK_RBRACKET, BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in a..9) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithExp() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new VariableExp("a"), new IntExp(9)), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new VariableToken("a"), SymbolToken.TK_DOT_DOT, new IntToken(9), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in a..9 step a) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithVarStep() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new VariableExp("a"), new IntExp(9)), new VariableExp("a"), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new VariableToken("a"), SymbolToken.TK_DOT_DOT, new IntToken(9), KeywordToken.TK_STEP, new VariableToken("a"), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in 0..a step a[1]) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithVarStepArrayIndex() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(0), new VariableExp("a")), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new IntToken(0), SymbolToken.TK_DOT_DOT, new VariableToken("a"), KeywordToken.TK_STEP, new VariableToken("a"),
+                BracketsToken.TK_LBRACKET, new IntToken(1), BracketsToken.TK_RBRACKET, BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in 0..a[1] step a[1]) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithIntVarStepArrayIndex() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(0), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1))), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new IntToken(0), SymbolToken.TK_DOT_DOT, new VariableToken("a"), BracketsToken.TK_LBRACKET,
+                new IntToken(1), BracketsToken.TK_RBRACKET, KeywordToken.TK_STEP, new VariableToken("a"),
+                BracketsToken.TK_LBRACKET, new IntToken(1), BracketsToken.TK_RBRACKET, BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in a[0]..a[1] step a[1]) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithArrayArrayStepArrayIndex() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(0)), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1))), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new VariableToken("a"), BracketsToken.TK_LBRACKET, new IntToken(0), BracketsToken.TK_RBRACKET, SymbolToken.TK_DOT_DOT, new VariableToken("a"), BracketsToken.TK_LBRACKET,
+                new IntToken(1), BracketsToken.TK_RBRACKET, KeywordToken.TK_STEP, new VariableToken("a"),
+                BracketsToken.TK_LBRACKET, new IntToken(1), BracketsToken.TK_RBRACKET, BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in a..b) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithTwoExp() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new VariableExp("a"), new VariableExp("b")), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new VariableToken("a"), SymbolToken.TK_DOT_DOT, new VariableToken("b"), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in a..b step a) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithTwoExpWithStepVar() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new VariableExp("a"), new VariableExp("b")), new VariableExp("a"), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new VariableToken("a"), SymbolToken.TK_DOT_DOT, new VariableToken("b"), KeywordToken.TK_STEP,
+                new VariableToken("a"), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in a..b step 2) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithTwoExpWithStepInt() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new VariableExp("a"), new VariableExp("b")), new IntExp(2), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new VariableToken("a"), SymbolToken.TK_DOT_DOT, new VariableToken("b"), KeywordToken.TK_STEP,
+                new IntToken(2), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in a..9) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithVarAndIntExp() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new VariableExp("a"), new IntExp(9)), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new VariableToken("a"), SymbolToken.TK_DOT_DOT, new IntToken(9), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in a[1]..9) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithArrayIndexAndIntExp() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)), new IntExp(9)), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new VariableToken("a"), BracketsToken.TK_LBRACKET, new IntToken(1), BracketsToken.TK_RBRACKET, SymbolToken.TK_DOT_DOT, new IntToken(9), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in a[1]..a[5]) {
+     *     println(i)
+     * }
+     */
+    public void rangeWithArrayIndexAndArrayIndexExp() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt forInside = new ForStmt(new VariableExp("i"), new RangeExp(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(5))), new BlockStmt(stmtListInside));
+        assertParseStmts(forInside,
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new VariableToken("a"), BracketsToken.TK_LBRACKET, new IntToken(1), BracketsToken.TK_RBRACKET, SymbolToken.TK_DOT_DOT,
+                new VariableToken("a"), BracketsToken.TK_LBRACKET, new IntToken(5), BracketsToken.TK_RBRACKET, BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK);
+    }
+
+    @Test
+    /**
+     * for(i in 0..9) {
      *     for(j in a) {
      *         println(i * j)
      *     }
@@ -184,6 +445,58 @@ class ParserTest {
                 new BlockStmt(stmtListOutside)),
                 KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
                 new IntToken(0), SymbolToken.TK_DOT_DOT, new IntToken(9), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_FOR, BracketsToken.TK_LPAREN,
+                new VariableToken("j"), KeywordToken.TK_IN, new VariableToken("a"), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BinopToken.TK_MULTIPLY, new VariableToken("j"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY);
+    }
+
+    @Test
+    /**
+     * for(i in 0..9) {
+     *     for(j in 1..a step 2) {
+     *         println(i * j)
+     *     }
+     * }
+     */
+    public void forRangeStepInsideForStmt() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new MultiplicativeExp(new VariableExp("i"), new VariableExp("j"),
+                MultiplicativeOp.OP_MULTIPLY)));
+        ForStmt forInside = new ForStmt(new VariableExp("j"), new RangeExp(new IntExp(1), new VariableExp("a")), new IntExp(2), new BlockStmt(stmtListInside));
+        List<Stmt> stmtListOutside = new ArrayList<>();
+        stmtListOutside.add(forInside);
+        assertParseStmts(new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(0), new IntExp(9)),
+                        new BlockStmt(stmtListOutside)),
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new IntToken(0), SymbolToken.TK_DOT_DOT, new IntToken(9), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_FOR, BracketsToken.TK_LPAREN,
+                new VariableToken("j"), KeywordToken.TK_IN, new IntToken(1), SymbolToken.TK_DOT_DOT, new VariableToken("a"), KeywordToken.TK_STEP, new IntToken(2), BracketsToken.TK_RPAREN,
+                BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,
+                new VariableToken("i"), BinopToken.TK_MULTIPLY, new VariableToken("j"), BracketsToken.TK_RPAREN,
+                SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY, SymbolToken.TK_LINE_BREAK, BracketsToken.TK_RCURLY);
+    }
+
+    @Test
+    /**
+     * for(i in 0..9 step 2) {
+     *     for(j in a) {
+     *         println(i * j)
+     *     }
+     * }
+     */
+    public void forInsideForWithStepStmt() throws ParseException {
+        List<Stmt> stmtListInside = new ArrayList<>();
+        stmtListInside.add(new PrintlnStmt(new MultiplicativeExp(new VariableExp("i"), new VariableExp("j"),
+                MultiplicativeOp.OP_MULTIPLY)));
+        ForStmt forInside = new ForStmt(new VariableExp("j"), new VariableExp("a"), new BlockStmt(stmtListInside));
+        List<Stmt> stmtListOutside = new ArrayList<>();
+        stmtListOutside.add(forInside);
+        assertParseStmts(new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(0), new IntExp(9)), new IntExp(2),
+                        new BlockStmt(stmtListOutside)),
+                KeywordToken.TK_FOR, BracketsToken.TK_LPAREN, new VariableToken("i"), KeywordToken.TK_IN,
+                new IntToken(0), SymbolToken.TK_DOT_DOT, new IntToken(9), KeywordToken.TK_STEP, new IntToken(2), BracketsToken.TK_RPAREN,
                 BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_FOR, BracketsToken.TK_LPAREN,
                 new VariableToken("j"), KeywordToken.TK_IN, new VariableToken("a"), BracketsToken.TK_RPAREN,
                 BracketsToken.TK_LCURLY, SymbolToken.TK_LINE_BREAK, KeywordToken.TK_PRINTLN, BracketsToken.TK_LPAREN,

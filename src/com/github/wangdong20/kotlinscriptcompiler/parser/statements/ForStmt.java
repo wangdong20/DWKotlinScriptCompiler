@@ -1,16 +1,18 @@
 package com.github.wangdong20.kotlinscriptcompiler.parser.statements;
 
+import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.Exp;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.RangeExp;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.VariableExp;
 
 /**
  * This is for loop statement in Kotlin, suppport for(var in var: Array<T>) {S*} or
- * for(var in var(Int)..var(Int)) {s*}
+ * for(var in var(Int)..var(Int) step var(Int)) {s*}
  */
 public class ForStmt implements Stmt {
     private final VariableExp iteratorExp;
     private final VariableExp arrayExp;
     private final RangeExp rangeExp;
+    private final Exp stepExp;
     private final BlockStmt blockStmt;
 
     public ForStmt(VariableExp iteratorExp, VariableExp arrayExp, BlockStmt blockStmt) {
@@ -18,6 +20,7 @@ public class ForStmt implements Stmt {
         this.arrayExp = arrayExp;
         this.blockStmt = blockStmt;
         this.rangeExp = null;
+        this.stepExp = null;
     }
 
     public ForStmt(VariableExp iteratorExp, RangeExp rangeExp, BlockStmt blockStmt) {
@@ -25,6 +28,15 @@ public class ForStmt implements Stmt {
         this.rangeExp = rangeExp;
         this.blockStmt = blockStmt;
         this.arrayExp = null;
+        this.stepExp = null;
+    }
+
+    public ForStmt(VariableExp iteratorExp, RangeExp rangeExp, Exp stepExp, BlockStmt blockStmt) {
+        this.iteratorExp = iteratorExp;
+        this.rangeExp = rangeExp;
+        this.blockStmt = blockStmt;
+        this.arrayExp = null;
+        this.stepExp = stepExp;
     }
 
     public VariableExp getIteratorExp() {
@@ -43,6 +55,10 @@ public class ForStmt implements Stmt {
         return rangeExp;
     }
 
+    public Exp getStepExp() {
+        return stepExp;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof ForStmt) {
@@ -50,7 +66,10 @@ public class ForStmt implements Stmt {
                 if(((ForStmt)obj).getArrayExp() != null && arrayExp != null && ((ForStmt)obj).getArrayExp().equals(arrayExp)) {
                     return true;
                 } else if(((ForStmt)obj).getRangeExp() != null && rangeExp != null && ((ForStmt)obj).getRangeExp().equals(rangeExp)) {
-                    return true;
+                    if((((ForStmt) obj).getStepExp() != null && stepExp != null && ((ForStmt) obj).getStepExp().equals(stepExp)) ||
+                            (((ForStmt) obj).getStepExp() == null && stepExp == null)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -63,6 +82,7 @@ public class ForStmt implements Stmt {
                 "iteratorExp=" + iteratorExp +
                 ", arrayExp=" + arrayExp +
                 ", rangeExp=" + rangeExp +
+                ", stepExp=" + stepExp +
                 ", blockStmt=" + blockStmt +
                 '}';
     }

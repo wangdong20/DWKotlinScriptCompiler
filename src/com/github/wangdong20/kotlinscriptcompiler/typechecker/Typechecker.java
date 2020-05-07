@@ -370,6 +370,12 @@ public class Typechecker {
                     throw new IllTypedException(asFor.getArrayExp() + " is not a collection");
                 }
             } else {
+                if(asFor.getStepExp() != null) {    // Only range expression can have step expression
+                    Type type = typeOf(newGama, asFor.getStepExp());
+                    if(type != BasicType.TYPE_INT) {
+                        throw new IllTypedException("Expression after step should be Int type");
+                    }
+                }
                 newGama.put(asFor.getIteratorExp(), new Pair<>(BasicType.TYPE_INT, false));
             }
 

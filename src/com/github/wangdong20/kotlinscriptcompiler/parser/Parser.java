@@ -948,49 +948,11 @@ public class Parser {
         List<Stmt> stmtList = new ArrayList<>();
         pos = skipLineBreakOrSemicolon(pos);
         while((temp = readToken(pos)) != BracketsToken.TK_RCURLY) {
-            pos = skipLineBreakOrSemicolon(pos);
             if(temp == KeywordToken.TK_FOR) {
-                pos++;
-                checkTokenIs(pos, BracketsToken.TK_LPAREN);
-                pos++;
-                if((temp = readToken(pos)) instanceof VariableToken) {
-                    VariableExp variableExp = new VariableExp(((VariableToken)temp).getName());
-                    pos++;
-                    checkTokenIs(pos, KeywordToken.TK_IN);
-                    pos++;
-                    if((temp = readToken(pos)) instanceof IntToken) {   // RangeExp
-                        IntExp startExp = new IntExp(((IntToken)temp).getValue());
-                        pos++;
-                        checkTokenIs(pos, SymbolToken.TK_DOT_DOT);
-                        pos++;
-                        if((temp = readToken(pos)) instanceof IntToken) {
-                            IntExp endExp = new IntExp(((IntToken)temp).getValue());
-                            pos++;
-                            checkTokenIs(pos, BracketsToken.TK_RPAREN);
-                            pos++;
-                            ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
-                            stmtList.add(new ForStmt(variableExp, new RangeExp(startExp, endExp), blockStmt.result));
-                            pos = blockStmt.nextPos;
-                            checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
-                            pos++;
-                        } else {
-                            throw new ParseException("Integer expected in range expression!");
-                        }
-                    } else if((temp = readToken(pos)) instanceof VariableToken) {   // ArrayExp
-                        pos++;
-                        checkTokenIs(pos, BracketsToken.TK_RPAREN);
-                        pos++;
-                        ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
-                        stmtList.add(new ForStmt(variableExp, new VariableExp(((VariableToken)temp).getName()), blockStmt.result));
-                        pos = blockStmt.nextPos;
-                        checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
-                        pos++;
-                    } else {
-                        throw new ParseException("Array or range expected in for loop!");
-                    }
-                }
-            } //Function Declaretion cannot be in block
-            else if(temp == KeywordToken.TK_IF) {
+                ParseResult<Stmt> forResult = parseForStmt(pos);
+                stmtList.add(forResult.result);
+                pos = forResult.nextPos;
+            } else if(temp == KeywordToken.TK_IF) {
                 pos++;
                 checkTokenIs(pos, BracketsToken.TK_LPAREN);
                 pos++;
@@ -1031,40 +993,53 @@ public class Parser {
         return new ParseResult<>(new BlockStmt(stmtList), pos);
     }
 
-    private ParseResult<Stmt> parseStmt(final int startPos) throws ParseException {
-        Token tokenHere = readToken(startPos);
+    private ParseResult<Stmt> parseForStmt(final int startPos) throws ParseException {
         int pos = startPos;
-        if(tokenHere == KeywordToken.TK_FOR) {
+        checkTokenIs(pos, KeywordToken.TK_FOR);
+        Token tokenHere;
+        pos++;
+        checkTokenIs(pos, BracketsToken.TK_LPAREN);
+        pos++;
+        if((tokenHere = readToken(pos)) instanceof VariableToken) {
+            VariableExp variableExp = new VariableExp(((VariableToken)tokenHere).getName());
             pos++;
-            checkTokenIs(pos, BracketsToken.TK_LPAREN);
+            checkTokenIs(pos, KeywordToken.TK_IN);
             pos++;
-            if((tokenHere = readToken(pos)) instanceof VariableToken) {
-                VariableExp variableExp = new VariableExp(((VariableToken)tokenHere).getName());
+            if((tokenHere = readToken(pos)) instanceof IntToken) {   // RangeExp
+                IntExp startExp = new IntExp(((IntToken)tokenHere).getValue());
+                Exp stepExp = null;
                 pos++;
-                checkTokenIs(pos, KeywordToken.TK_IN);
+                checkTokenIs(pos, SymbolToken.TK_DOT_DOT);
                 pos++;
-                if((tokenHere = readToken(pos)) instanceof IntToken) {   // RangeExp
-                    IntExp startExp = new IntExp(((IntToken)tokenHere).getValue());
+                if((tokenHere = readToken(pos)) instanceof IntToken) {
+                    IntExp endExp = new IntExp(((IntToken)tokenHere).getValue());
                     pos++;
-                    checkTokenIs(pos, SymbolToken.TK_DOT_DOT);
-                    pos++;
-                    if((tokenHere = readToken(pos)) instanceof IntToken) {
-                        IntExp endExp = new IntExp(((IntToken)tokenHere).getValue());
+                    if(readToken(pos) == KeywordToken.TK_STEP) {
                         pos++;
-                        checkTokenIs(pos, BracketsToken.TK_RPAREN);
-                        pos++;
-                        ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
-                        pos = blockStmt.nextPos;
-                        if(pos < tokens.length) {   // not the end the program
-                            checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
-                            pos++;
+                        Token temp = readToken(pos);
+                        if(temp instanceof IntToken || temp instanceof VariableToken) {
+                            if(temp instanceof IntToken) {
+                                stepExp = new IntExp(((IntToken) temp).getValue());
+                                pos++;
+                            } else {
+                                pos++;
+                                String name = ((VariableToken) temp).getName();
+                                temp = readToken(pos);
+                                if (temp == BracketsToken.TK_LBRACKET) {
+                                    pos++;
+                                    ParseResult<Exp> index = parseExp(pos);
+                                    pos = index.nextPos;
+                                    checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                                    stepExp = new ArrayWithIndexExp(new VariableExp(name), index.result);
+                                    pos++;
+                                } else {
+                                    stepExp = new VariableExp(name);
+                                }
+                            }
+                        } else {
+                            throw new ParseException("Expression after step should be Int or Variable");
                         }
-                        return new ParseResult<>(new ForStmt(variableExp, new RangeExp(startExp, endExp), blockStmt.result), pos);
-                    } else {
-                        throw new ParseException("Integer expected in range expression!");
                     }
-                } else if((tokenHere = readToken(pos)) instanceof VariableToken) {   // ArrayExp
-                    pos++;
                     checkTokenIs(pos, BracketsToken.TK_RPAREN);
                     pos++;
                     ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
@@ -1073,15 +1048,192 @@ public class Parser {
                         checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
                         pos++;
                     }
-                    return new ParseResult<>(new ForStmt(variableExp, new VariableExp(((VariableToken)tokenHere).getName()), blockStmt.result), pos);
-                } else {
-                    throw new ParseException("Array or range expected in for loop!");
+                    return new ParseResult<>(new ForStmt(variableExp, new RangeExp(startExp, endExp), stepExp, blockStmt.result), pos);
+                } else if((tokenHere = readToken(pos)) instanceof VariableToken) {
+                    pos++;
+                    if(readToken(pos) == BracketsToken.TK_LBRACKET) {
+                        pos++;
+                        ParseResult<Exp> index = parseExp(pos);
+                        pos = index.nextPos;
+                        checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                        pos++;
+                        if(readToken(pos) == KeywordToken.TK_STEP) {
+                            pos++;
+                            Token temp = readToken(pos);
+                            if(temp instanceof IntToken || temp instanceof VariableToken) {
+                                if(temp instanceof IntToken) {
+                                    stepExp = new IntExp(((IntToken) temp).getValue());
+                                    pos++;
+                                } else {
+                                    pos++;
+                                    String name = ((VariableToken) temp).getName();
+                                    temp = readToken(pos);
+                                    if (temp == BracketsToken.TK_LBRACKET) {
+                                        pos++;
+                                        ParseResult<Exp> indexInside = parseExp(pos);
+                                        pos = indexInside.nextPos;
+                                        checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                                        stepExp = new ArrayWithIndexExp(new VariableExp(name), indexInside.result);
+                                        pos++;
+                                    } else {
+                                        stepExp = new VariableExp(name);
+                                    }
+                                }
+                            } else {
+                                throw new ParseException("Expression after step should be Int or Variable");
+                            }
+                        }
+                        checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                        pos++;
+                        ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                        pos = blockStmt.nextPos;
+                        Exp endExp = new ArrayWithIndexExp(new VariableExp(((VariableToken) tokenHere).getName()), index.result);
+                        if(pos < tokens.length) {   // not the end the program
+                            checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                            pos++;
+                        }
+                        return new ParseResult<>(new ForStmt(variableExp, new RangeExp(startExp, endExp), stepExp, blockStmt.result), pos);
+                    }
+                    if(readToken(pos) == KeywordToken.TK_STEP) {
+                        pos++;
+                        Token temp = readToken(pos);
+                        if(temp instanceof IntToken || temp instanceof VariableToken) {
+                            if(temp instanceof IntToken) {
+                                stepExp = new IntExp(((IntToken) temp).getValue());
+                                pos++;
+                            } else {
+                                pos++;
+                                String name = ((VariableToken) temp).getName();
+                                temp = readToken(pos);
+                                if (temp == BracketsToken.TK_LBRACKET) {
+                                    pos++;
+                                    ParseResult<Exp> index = parseExp(pos);
+                                    pos = index.nextPos;
+                                    checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                                    stepExp = new ArrayWithIndexExp(new VariableExp(name), index.result);
+                                    pos++;
+                                } else {
+                                    stepExp = new VariableExp(name);
+                                }
+                            }
+                        } else {
+                            throw new ParseException("Expression after step should be Int or Variable");
+                        }
+                    }
+                    checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                    pos++;
+                    ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                    pos = blockStmt.nextPos;
+                    Exp endExp = new VariableExp(((VariableToken) tokenHere).getName());
+                    if(pos < tokens.length) {   // not the end the program
+                        checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                        pos++;
+                    }
+                    return new ParseResult<>(new ForStmt(variableExp, new RangeExp(startExp, endExp), stepExp, blockStmt.result), pos);
                 }
+                else {
+                    throw new ParseException("Integer or variable expected in range expression!");
+                }
+            } else if((tokenHere = readToken(pos)) instanceof VariableToken) {   // ArrayExp or RangeExp
+                pos++;
+                Token temp;
+                String startName = ((VariableToken) tokenHere).getName();
+                Exp startExp;
+                if(readToken(pos) == BracketsToken.TK_LBRACKET) {
+                    pos++;
+                    ParseResult<Exp> index = parseExp(pos);
+                    pos = index.nextPos;
+                    checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                    startExp = new ArrayWithIndexExp(new VariableExp(startName), index.result);
+                    pos++;
+                } else {
+                    startExp = new VariableExp(startName);
+                }
+                if((readToken(pos)) == SymbolToken.TK_DOT_DOT) {
+                    pos++;
+                    temp = readToken(pos);
+                    Exp endExp;
+                    Exp stepExp = null;
+                    if(temp instanceof IntToken) {
+                        endExp = new IntExp(((IntToken) temp).getValue());
+                        pos++;
+                    } else if(temp instanceof VariableToken) {
+                        pos++;
+                        String name = ((VariableToken) temp).getName();
+                        temp = readToken(pos);
+                        if(temp == BracketsToken.TK_LBRACKET) {
+                            pos++;
+                            ParseResult<Exp> index = parseExp(pos);
+                            pos = index.nextPos;
+                            checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                            endExp = new ArrayWithIndexExp(new VariableExp(name), index.result);
+                            pos++;
+                        } else {
+                            endExp = new VariableExp(name);
+                        }
+                    } else {
+                        throw new ParseException("Range expression should be Int or Variable");
+                    }
+                    if(readToken(pos) == KeywordToken.TK_STEP) {
+                        pos++;
+                        temp = readToken(pos);
+                        if(temp instanceof IntToken || temp instanceof VariableToken) {
+                            if(temp instanceof IntToken) {
+                                stepExp = new IntExp(((IntToken) temp).getValue());
+                                pos++;
+                            } else {
+                                pos++;
+                                String name = ((VariableToken) temp).getName();
+                                temp = readToken(pos);
+                                if (temp == BracketsToken.TK_LBRACKET) {
+                                    pos++;
+                                    ParseResult<Exp> index = parseExp(pos);
+                                    pos = index.nextPos;
+                                    checkTokenIs(pos, BracketsToken.TK_RBRACKET);
+                                    stepExp = new ArrayWithIndexExp(new VariableExp(name), index.result);
+                                    pos++;
+                                } else {
+                                    stepExp = new VariableExp(name);
+                                }
+                            }
+                        } else {
+                            throw new ParseException("Expression after step should be Int or Variable");
+                        }
+                    }
+                    checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                    pos++;
+                    ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                    pos = blockStmt.nextPos;
+                    if(pos < tokens.length) {   // not the end the program
+                        checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                        pos++;
+                    }
+                    return new ParseResult<>(new ForStmt(variableExp, new RangeExp(startExp, endExp), stepExp, blockStmt.result), pos);
+                }
+                checkTokenIs(pos, BracketsToken.TK_RPAREN);
+                pos++;
+                ParseResult<BlockStmt> blockStmt = parseBlockStmt(pos);
+                pos = blockStmt.nextPos;
+                if(pos < tokens.length) {   // not the end the program
+                    checkTokenIsOr(pos, SymbolToken.TK_SEMICOLON, SymbolToken.TK_LINE_BREAK);
+                    pos++;
+                }
+                return new ParseResult<>(new ForStmt(variableExp, new VariableExp(((VariableToken)tokenHere).getName()), blockStmt.result), pos);
             } else {
-                throw new ParseException("Variable expected in for loop!");
+                throw new ParseException("Array or range expected in for loop!");
             }
+        } else {
+            throw new ParseException("Variable expected in for loop!");
         }
-        else if(tokenHere == KeywordToken.TK_FUN) {
+
+    }
+
+    private ParseResult<Stmt> parseStmt(final int startPos) throws ParseException {
+        Token tokenHere = readToken(startPos);
+        int pos = startPos;
+        if(tokenHere == KeywordToken.TK_FOR) {
+            return parseForStmt(pos);
+        } else if(tokenHere == KeywordToken.TK_FUN) {
             pos++;
             if((tokenHere = readToken(pos)) instanceof VariableToken) {
                 VariableExp asVar = new VariableExp(((VariableToken) tokenHere).getName());

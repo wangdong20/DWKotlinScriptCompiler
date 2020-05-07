@@ -357,6 +357,105 @@ public class TypecheckerTest {
     }
 
     @Test
+    // var a = 10
+    // for(i in 1..a) {
+    //      print(i)
+    // }
+    public void forInRangeWithVar() throws IllTypedException {
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(new AssignStmt(new IntExp(10), new VariableExp("a"), false, true));
+        List<Stmt> stmtInBlock = new ArrayList<>();
+        stmtInBlock.add(new PrintStmt(new VariableExp("i")));
+        ForStmt forStmt = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new VariableExp("a")),
+                new BlockStmt(stmtInBlock));
+        stmtList.add(forStmt);
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
+    // var a = 10
+    // for(i in 1..a step 2) {
+    //      print(i)
+    // }
+    public void forInRangeWithVarWithStep() throws IllTypedException {
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(new AssignStmt(new IntExp(10), new VariableExp("a"), false, true));
+        List<Stmt> stmtInBlock = new ArrayList<>();
+        stmtInBlock.add(new PrintStmt(new VariableExp("i")));
+        ForStmt forStmt = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new VariableExp("a")), new IntExp(2),
+                new BlockStmt(stmtInBlock));
+        stmtList.add(forStmt);
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
+    // var a = 10
+    // var b = 2
+    // for(i in 1..a step b) {
+    //      print(i)
+    // }
+    public void forInRangeWithVarWithStepVar() throws IllTypedException {
+        List<Stmt> stmtList = new ArrayList<>();
+        stmtList.add(new AssignStmt(new IntExp(10), new VariableExp("a"), false, true));
+        stmtList.add(new AssignStmt(new IntExp(2), new VariableExp("b"), false, true));
+        List<Stmt> stmtInBlock = new ArrayList<>();
+        stmtInBlock.add(new PrintStmt(new VariableExp("i")));
+        ForStmt forStmt = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new VariableExp("a")), new VariableExp("b"),
+                new BlockStmt(stmtInBlock));
+        stmtList.add(forStmt);
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
+    // var a = 10
+    // var b = arrayOf(1, 2, 3)
+    // for(i in 1..a step b) {
+    //      print(i)
+    // }
+    public void forInRangeWithVarWithStepArrayIndexException() {
+        List<Stmt> stmtList = new ArrayList<>();
+        List<Exp> parameter = new ArrayList<>();
+        parameter.add(new IntExp(1));
+        parameter.add(new IntExp(2));
+        parameter.add(new IntExp(3));
+        stmtList.add(new AssignStmt(new IntExp(10), new VariableExp("a"), false, true));
+        stmtList.add(new AssignStmt(new ArrayOfExp(parameter), new VariableExp("b"), false, true));
+        List<Stmt> stmtInBlock = new ArrayList<>();
+        stmtInBlock.add(new PrintStmt(new VariableExp("i")));
+        ForStmt forStmt = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new VariableExp("a")), new VariableExp("b"),
+                new BlockStmt(stmtInBlock));
+        stmtList.add(forStmt);
+        Program program = new Program(stmtList);
+        assertTypecheckProgramExpectedException(program);
+    }
+
+    @Test
+    // var a = 10
+    // var b = arrayOf(1, 2, 3)
+    // for(i in 1..a step b[0]) {
+    //      print(i)
+    // }
+    public void forInRangeWithVarWithStepArrayIndex() throws IllTypedException {
+        List<Stmt> stmtList = new ArrayList<>();
+        List<Exp> parameter = new ArrayList<>();
+        parameter.add(new IntExp(1));
+        parameter.add(new IntExp(2));
+        parameter.add(new IntExp(3));
+        stmtList.add(new AssignStmt(new IntExp(10), new VariableExp("a"), false, true));
+        stmtList.add(new AssignStmt(new ArrayOfExp(parameter), new VariableExp("b"), false, true));
+        List<Stmt> stmtInBlock = new ArrayList<>();
+        stmtInBlock.add(new PrintStmt(new VariableExp("i")));
+        ForStmt forStmt = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new VariableExp("a")), new ArrayWithIndexExp(new VariableExp("b"), new IntExp(0)),
+                new BlockStmt(stmtInBlock));
+        stmtList.add(forStmt);
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
     // Test pair equal
     public void testPairEqual() {
         List<Type> para1 = new ArrayList<>();

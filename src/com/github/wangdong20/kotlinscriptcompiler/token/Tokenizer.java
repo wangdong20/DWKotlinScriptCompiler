@@ -27,6 +27,7 @@ public class Tokenizer {
         keywordMap.put("var", KeywordToken.TK_VAR);
         keywordMap.put("val", KeywordToken.TK_VAL);
         keywordMap.put("in", KeywordToken.TK_IN);
+        keywordMap.put("step", KeywordToken.TK_STEP);
         keywordMap.put("return", KeywordToken.TK_RETURN);
         keywordMap.put("print", KeywordToken.TK_PRINT);
         keywordMap.put("println", KeywordToken.TK_PRINTLN);

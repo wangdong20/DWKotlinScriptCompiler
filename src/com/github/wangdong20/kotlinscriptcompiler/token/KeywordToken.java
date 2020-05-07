@@ -9,6 +9,7 @@ public enum KeywordToken implements Token {
     TK_CONTINUE,
     TK_FOR,
     TK_IN,
+    TK_STEP,    // step
     TK_VAR,     // var
     TK_VAL,     // val
     TK_PRINT,    // print
