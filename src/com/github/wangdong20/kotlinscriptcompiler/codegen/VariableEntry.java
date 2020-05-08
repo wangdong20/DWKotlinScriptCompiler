@@ -26,7 +26,7 @@ public class VariableEntry {
         if (type == BasicType.TYPE_INT ||
                 type == BasicType.TYPE_BOOLEAN) {
             visitor.visitVarInsn(ILOAD, index);
-        } else if (type == BasicType.TYPE_STRING) {
+        } else if (type == BasicType.TYPE_STRING || type == BasicType.TYPE_ANY) {
             visitor.visitVarInsn(ALOAD, index);
         } else if(type instanceof TypeArray) {
             visitor.visitVarInsn(ALOAD, index);
@@ -59,7 +59,7 @@ public class VariableEntry {
         if (type == BasicType.TYPE_INT ||
                 type == BasicType.TYPE_BOOLEAN) {
             visitor.visitVarInsn(ISTORE, index);
-        } else if (type == BasicType.TYPE_STRING) {
+        } else if (type == BasicType.TYPE_STRING || type == BasicType.TYPE_ANY) {
             visitor.visitVarInsn(ASTORE, index);
         } else if(type instanceof TypeArray) {
             if(variable instanceof ArrayWithIndexExp) {

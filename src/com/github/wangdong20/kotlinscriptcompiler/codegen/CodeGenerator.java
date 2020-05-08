@@ -726,6 +726,12 @@ public class CodeGenerator {
                     methodVisitor.visitInsn(DUP);
                     writeIntLiteral(i);
                     writeExp(exps.get(i));
+                    Type t = typeOf(exps.get(i));
+                    if(t == BasicType.TYPE_INT) {
+                        methodVisitor.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+                    } else if(t == BasicType.TYPE_BOOLEAN) {
+                        methodVisitor.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+                    }
                     methodVisitor.visitInsn(AASTORE);
                 }
                 break;
@@ -867,7 +873,7 @@ public class CodeGenerator {
             descriptor = "(Z)V";
         } else if(entry.type == BasicType.TYPE_STRING) {
             descriptor = "(Ljava/lang/String;)V";
-        } else if(entry.type instanceof TypeArray || entry.type instanceof TypeMutableList) {
+        } else if(entry.type instanceof TypeArray || entry.type instanceof TypeMutableList || entry.type == BasicType.TYPE_ANY) {
             descriptor = "(Ljava/lang/Object;)V";
         } else {
             assert(false);

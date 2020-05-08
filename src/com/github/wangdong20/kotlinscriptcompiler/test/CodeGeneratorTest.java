@@ -213,6 +213,24 @@ public class CodeGeneratorTest {
     }
 
     @Test
+    // var a = arrayOf("a", 1, true)
+    // for(i in a) {
+    //      println(i)
+    // }
+    public void testForInAnyArray(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new StringExp("a", null));
+        exps.add(new IntExp(1));
+        exps.add(new BooleanExp(true));
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"), false, true),
+                new ForStmt(new VariableExp("i"), new VariableExp("a"), new BlockStmt(stmtsInFor))
+        ), "a", "1", "true");
+    }
+
+    @Test
     // for(i in 1..3) {
     //      println(i)
     // }
