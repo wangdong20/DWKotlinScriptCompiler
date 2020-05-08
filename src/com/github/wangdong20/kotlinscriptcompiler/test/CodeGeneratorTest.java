@@ -12,7 +12,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
-
 public class CodeGeneratorTest {
     // ---BEGIN STATICS---
     public static final String CLASS_NAME_PREFIX = "Compiled";
@@ -177,4 +176,91 @@ public class CodeGeneratorTest {
         ), "5", "9", "2", "0", "1");
     }
 
+    @Test
+    // var a = arrayOf(1, 2, 3)
+    // for(i in a) {
+    //      println(i)
+    // }
+    public void testForInArray(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new IntExp(1));
+        exps.add(new IntExp(2));
+        exps.add(new IntExp(3));
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"), false, true),
+                new ForStmt(new VariableExp("i"), new VariableExp("a"), new BlockStmt(stmtsInFor))
+        ), "1", "2", "3");
+    }
+
+    @Test
+    // var a = arrayOf("a", "b", "c")
+    // for(i in a) {
+    //      println(i)
+    // }
+    public void testForInStringArray(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new StringExp("a", null));
+        exps.add(new StringExp("b", null));
+        exps.add(new StringExp("c", null));
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"), false, true),
+                new ForStmt(new VariableExp("i"), new VariableExp("a"), new BlockStmt(stmtsInFor))
+        ), "a", "b", "c");
+    }
+
+    @Test
+    // for(i in 1..3) {
+    //      println(i)
+    // }
+    public void testForInRange(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new IntExp(3)), new BlockStmt(stmtsInFor))
+        ), "1", "2");
+    }
+
+    @Test
+    // for(i in 1..10 step 2) {
+    //      println(i)
+    // }
+    public void testForInRangeWithStep2(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new IntExp(10)), new IntExp(2), new BlockStmt(stmtsInFor))
+        ), "1", "3", "5", "7", "9");
+    }
+
+    @Test
+    // var s = 2
+    // for(i in 1..10 step s) {
+    //      println(i)
+    // }
+    public void testForInRangeWithStepS(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(new AssignStmt(new IntExp(2), new VariableExp("s"), false, true),
+                new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new IntExp(10)), new VariableExp("s"), new BlockStmt(stmtsInFor))
+        ), "1", "3", "5", "7", "9");
+    }
+
+    @Test
+    // var s = 2
+    // var end = 10
+    // for(i in 1..end step s) {
+    //      println(i)
+    // }
+    public void testForInRangeWithEndStepS(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(new AssignStmt(new IntExp(2), new VariableExp("s"), false, true),
+                new AssignStmt(new IntExp(10), new VariableExp("end"), false, true),
+                new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new VariableExp("end")), new VariableExp("s"), new BlockStmt(stmtsInFor))
+        ), "1", "3", "5", "7", "9");
+    }
 }

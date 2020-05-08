@@ -62,24 +62,24 @@ public class VariableEntry {
         } else if (type == BasicType.TYPE_STRING) {
             visitor.visitVarInsn(ASTORE, index);
         } else if(type instanceof TypeArray) {
-            visitor.visitVarInsn(ALOAD, index);
             if(variable instanceof ArrayWithIndexExp) {
-                codeGenerator.writeExp(((ArrayWithIndexExp) variable).getIndexExp());
                 int opcode;
                 switch (((TypeArray) type).getBasicType()) {
                     case TYPE_INT:
                         opcode = IASTORE;
                         break;
                     case TYPE_BOOLEAN:
-                        opcode = BALOAD;
+                        opcode = BASTORE;
                         break;
                     case TYPE_STRING:
                     case TYPE_ANY:
-                        opcode = AALOAD;
+                        opcode = AASTORE;
                         break;
                     default: throw new CodeGeneratorException("Unsupported type in array: " + type);
                 }
                 visitor.visitInsn(opcode);
+            } else {
+                visitor.visitVarInsn(ASTORE, index);
             }
         } else {
             throw new CodeGeneratorException("Unsupported store type: " + type);

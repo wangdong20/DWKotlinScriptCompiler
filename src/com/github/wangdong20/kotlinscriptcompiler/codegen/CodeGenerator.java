@@ -337,10 +337,10 @@ public class CodeGenerator {
     }
 
     private void writeSelfOperationExp(SelfOperationExp exp) throws CodeGeneratorException {
-        int index = getEntryFor(((SelfOperationExp) exp).getVariableExp()).index;
-        if(((SelfOperationExp) exp).getPreOrder()) {
+        int index = getEntryFor(exp.getVariableExp()).index;
+        if(exp.getPreOrder()) {
             // ++i case
-            if(((SelfOperationExp) exp).getOp() == SelfOp.OP_SELF_INCREASE) {
+            if(exp.getOp() == SelfOp.OP_SELF_INCREASE) {
                 methodVisitor.visitIincInsn(index, 1);
             } else {
                 methodVisitor.visitIincInsn(index, -1);
@@ -348,7 +348,7 @@ public class CodeGenerator {
         } else {
             // i++ case
             // Did not figure out how to do i++ case
-            if(((SelfOperationExp) exp).getOp() == SelfOp.OP_SELF_INCREASE) {
+            if(exp.getOp() == SelfOp.OP_SELF_INCREASE) {
                 methodVisitor.visitIincInsn(index, 1);
             } else {
                 methodVisitor.visitIincInsn(index, -1);
@@ -356,13 +356,108 @@ public class CodeGenerator {
         }
 
         // load the variable after self operation
-        final VariableEntry entry = getEntryFor(((SelfOperationExp) exp).getVariableExp());
+        final VariableEntry entry = getEntryFor(exp.getVariableExp());
         if(entry.type == BasicType.TYPE_INT) {
             entry.load(this, methodVisitor);
         } else {
             assert (false);
             throw new CodeGeneratorException("Variable in AdditiveExp should be TYPE_INT.");
         }
+    }
+
+    private void writeForStatement(final ForStmt forStmt) throws CodeGeneratorException {
+        final Label head = new Label();
+        final Label afterFor = new Label();
+
+        Map<Variable, VariableEntry> gammaBefore = newCopy(variables);
+        VariableEntry entry;
+        if(forStmt.getArrayExp() != null) {
+            loadVariable(forStmt.getArrayExp());
+            String arrayLength = forStmt.getArrayExp().getName() + ".length";
+            Type type = typeOf(forStmt.getArrayExp());
+            BasicType basicType;
+            if(type instanceof TypeArray) {
+                basicType = ((TypeArray) type).getBasicType();
+            } else if(type instanceof TypeMutableList) {
+                basicType = ((TypeMutableList) type).getBasicType();
+            } else {
+                throw new CodeGeneratorException("For in variable should be array or list");
+            }
+            entry = addEntry(new VariableExp(arrayLength), BasicType.TYPE_INT);
+            methodVisitor.visitInsn(ARRAYLENGTH);
+            entry.store(this, methodVisitor);
+            writeIntLiteral(0);
+            entry = addEntry(new VariableExp(".index"), BasicType.TYPE_INT);
+            entry.store(this, methodVisitor);
+            methodVisitor.visitLabel(head);
+            loadVariable(new VariableExp(".index"));
+            loadVariable(new VariableExp(arrayLength));
+            methodVisitor.visitJumpInsn(IF_ICMPGE, afterFor);
+            loadVariable(forStmt.getArrayExp());
+            loadVariable(new VariableExp(".index"));
+            int opcode = 0;
+            switch (basicType) {
+                case TYPE_INT:
+                    opcode = IALOAD;
+                    break;
+                case TYPE_BOOLEAN:
+                    opcode = BALOAD;
+                    break;
+                case TYPE_STRING: case TYPE_ANY:
+                    opcode = AALOAD;
+                    break;
+                case TYPE_UNIT:
+                    throw new CodeGeneratorException("Void type only from return in function");
+            }
+            methodVisitor.visitInsn(opcode);
+            entry = addEntry(forStmt.getIteratorExp(), basicType);
+            entry.store(this, methodVisitor);
+
+            writeStatements(forStmt.getBlockStmt().getStmtList());
+            entry = getEntryFor(new VariableExp(".index"));
+            methodVisitor.visitIincInsn(entry.index, 1);
+            methodVisitor.visitJumpInsn(GOTO, head);
+            methodVisitor.visitLabel(afterFor);
+        } else {    // for in range case
+            RangeExp rangeExp = forStmt.getRangeExp();
+            writeExp(rangeExp.getStart());
+            entry = addEntry(forStmt.getIteratorExp(), BasicType.TYPE_INT);
+            entry.store(this, methodVisitor);
+            writeExp(rangeExp.getEnd());
+            entry = addEntry(new VariableExp(".end"), BasicType.TYPE_INT);
+            entry.store(this, methodVisitor);
+            if(forStmt.getStepExp() != null) {
+                writeExp(forStmt.getStepExp());
+                entry = addEntry(new VariableExp(".step"), BasicType.TYPE_INT);
+                entry.store(this, methodVisitor);
+            }
+            methodVisitor.visitLabel(head);
+            loadVariable(forStmt.getIteratorExp());
+            loadVariable(new VariableExp(".end"));
+            methodVisitor.visitJumpInsn(IF_ICMPGE, afterFor);
+            writeStatements(forStmt.getBlockStmt().getStmtList());
+            loadVariable(forStmt.getIteratorExp());
+            if(forStmt.getStepExp() != null) {
+                loadVariable(new VariableExp(".step"));
+                methodVisitor.visitInsn(IADD);
+                entry = getEntryFor(forStmt.getIteratorExp());
+                entry.store(this, methodVisitor);
+            } else {
+                writeIntLiteral(1);
+                methodVisitor.visitInsn(IADD);
+                entry = getEntryFor(forStmt.getIteratorExp());
+                entry.store(this, methodVisitor);
+            }
+            methodVisitor.visitJumpInsn(GOTO, head);
+            methodVisitor.visitLabel(afterFor);
+        }
+
+        // After for loop
+        variables = gammaBefore;
+    }
+
+    private Map<Variable, VariableEntry> newCopy(final Map<Variable, VariableEntry> table) {
+        return new HashMap<>(table);
     }
 
     public void writeIfStatement(final IfStmt ifStmt) throws CodeGeneratorException {
@@ -419,12 +514,17 @@ public class CodeGenerator {
             // Do nothing here until initialized in AssignStmt
         } else if (stmt instanceof AssignStmt) {
             final AssignStmt asAssign = (AssignStmt)stmt;
-            Type type = writeExp(asAssign.getExpression());
+            Type type = typeOf(asAssign.getExpression());
             final VariableEntry entry;
             if(((AssignStmt) stmt).isNew()) {
+                writeExp(asAssign.getExpression());
                 entry = addEntry(asAssign.getVariable(), type);
             } else {
                 entry = getEntryFor(((AssignStmt) stmt).getVariable());
+                if(entry.variable instanceof ArrayWithIndexExp) {
+                    writeExp(((ArrayWithIndexExp) entry.variable).getIndexExp());
+                    writeExp(asAssign.getExpression());
+                }
             }
             entry.store(this, methodVisitor);
         } else if(stmt instanceof CompoundAssignStmt) {
@@ -469,6 +569,8 @@ public class CodeGenerator {
             }
         } else if(stmt instanceof FunctionInstanceStmt) {
             writeFunctionInstance(((FunctionInstanceStmt) stmt).getFunctionInstanceExp());
+        } else if(stmt instanceof ForStmt) {
+            writeForStatement((ForStmt) stmt);
         }
         else {
 //            assert(false);
@@ -538,7 +640,7 @@ public class CodeGenerator {
         return function.getReturnType();
     }
 
-    private BasicType basicTypeOf(Exp temp) throws CodeGeneratorException {
+    private Type typeOf(Exp temp) throws CodeGeneratorException {
         Type type;
         if(temp instanceof IntExp || temp instanceof SelfOperationExp || temp instanceof BinaryIntExp) {
             type = BasicType.TYPE_INT;
@@ -551,14 +653,29 @@ public class CodeGenerator {
             type = typeOfVariable((Variable) temp);
         } else if(temp instanceof FunctionInstanceExp) {
             type = typeOfFunctionInstance((FunctionInstanceExp) temp);
-        } else {
+        } else if(temp instanceof ArrayOfExp) {
+            if(((ArrayOfExp) temp).getExpList().size() > 0) {
+                Exp t = ((ArrayOfExp) temp).getExpList().get(0);
+                BasicType basicType = (BasicType) typeOf(t);
+                boolean isAny = false;
+                for (Exp e : ((ArrayOfExp) temp).getExpList()) {
+                    if(basicType != typeOf(e)) {
+                        isAny = true;
+                        break;
+                    }
+                }
+                if(isAny) {
+                    basicType = BasicType.TYPE_ANY;
+                }
+                type = new TypeArray(basicType);
+            } else {
+                throw new CodeGeneratorException("arrayOf(exp*) should has at least one parameter");
+            }
+        }
+        else {
             throw new CodeGeneratorException("Unrecognized expression type");
         }
-        if(type instanceof BasicType) {
-            return (BasicType) type;
-        } else {
-            throw new CodeGeneratorException(type + " is not BasicType");
-        }
+        return type;
     }
 
     private void writeStringExp(StringExp s) throws CodeGeneratorException {
@@ -651,18 +768,17 @@ public class CodeGenerator {
         } else if(exp instanceof ArrayOfExp) {
             if(((ArrayOfExp) exp).getExpList().size() > 0) {
                 Exp temp = ((ArrayOfExp) exp).getExpList().get(0);
-                BasicType type = basicTypeOf(temp);
-                int size = ((ArrayOfExp) exp).getExpList().size();
+                BasicType type = (BasicType) typeOf(temp);
                 boolean isAny = false;
                 for (Exp e : ((ArrayOfExp) exp).getExpList()) {
-                    if(type != basicTypeOf(e)) {
+                    if(type != typeOf(e)) {
                         isAny = true;
+                        break;
                     }
                 }
                 if(isAny) {
                     type = BasicType.TYPE_ANY;
                 }
-                writeIntLiteral(size);
 
                 writeValueToArray(type, ((ArrayOfExp) exp).getExpList());
                 return new TypeArray(type);
