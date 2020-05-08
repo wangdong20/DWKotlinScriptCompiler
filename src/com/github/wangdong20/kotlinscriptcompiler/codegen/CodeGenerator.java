@@ -129,7 +129,7 @@ public class CodeGenerator {
             return entry;
         } else if(variable instanceof ArrayWithIndexExp) {
             VariableEntry arrayEntry = variables.get(((ArrayWithIndexExp) variable).getVariableExp());
-            return new VariableEntry(variable, new TypeArray((BasicType) arrayEntry.type), arrayEntry.index);
+            return new VariableEntry(variable, arrayEntry.type, arrayEntry.index);
         } else {
             // should be caught by typechecker
             throw new CodeGeneratorException("no such variable declared: " + variable);

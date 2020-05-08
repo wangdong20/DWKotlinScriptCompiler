@@ -281,4 +281,23 @@ public class CodeGeneratorTest {
                 new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new VariableExp("end")), new VariableExp("s"), new BlockStmt(stmtsInFor))
         ), "1", "3", "5", "7", "9");
     }
+
+    @Test
+    // var s = 2
+    // var a = arrayOf(1, 5, 10)
+    // for(i in 1..a[2] step s) {
+    //      println(i)
+    // }
+    public void testForInRangeWithEndArrayIndexStepS(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        List<Exp> exps = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        exps.add(new IntExp(1));
+        exps.add(new IntExp(5));
+        exps.add(new IntExp(10));
+        assertOutput(testInfo.getDisplayName(), makeProgram(new AssignStmt(new IntExp(2), new VariableExp("s"), false, true),
+                new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"), false, true),
+                new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(2))), new VariableExp("s"), new BlockStmt(stmtsInFor))
+        ), "1", "3", "5", "7", "9");
+    }
 }
