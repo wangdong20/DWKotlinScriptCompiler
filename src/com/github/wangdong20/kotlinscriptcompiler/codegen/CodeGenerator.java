@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -413,7 +414,7 @@ public class CodeGenerator {
             entry = addEntry(forStmt.getIteratorExp(), basicType);
             entry.store(this, methodVisitor);
 
-            writeStatements(forStmt.getBlockStmt().getStmtList());
+            writeBlockStmtInLoop(forStmt.getBlockStmt(), head, afterFor);
             entry = getEntryFor(new VariableExp(".index"));
             methodVisitor.visitIincInsn(entry.index, 1);
             methodVisitor.visitJumpInsn(GOTO, head);
@@ -435,7 +436,7 @@ public class CodeGenerator {
             loadVariable(forStmt.getIteratorExp());
             loadVariable(new VariableExp(".end"));
             methodVisitor.visitJumpInsn(IF_ICMPGE, afterFor);
-            writeStatements(forStmt.getBlockStmt().getStmtList());
+            writeBlockStmtInLoop(forStmt.getBlockStmt(), head, afterFor);
             loadVariable(forStmt.getIteratorExp());
             if(forStmt.getStepExp() != null) {
                 loadVariable(new VariableExp(".step"));
@@ -454,6 +455,30 @@ public class CodeGenerator {
 
         // After for loop
         variables = gammaBefore;
+    }
+
+    private void writeBlockStmtInLoop(BlockStmt blockStmt, Label head, Label afterLoop) throws CodeGeneratorException {
+        for(Stmt s : blockStmt.getStmtList()) {
+            if(s instanceof ControlLoopStmt) {
+                if(s == ControlLoopStmt.STMT_BREAK) {
+                    methodVisitor.visitJumpInsn(GOTO, afterLoop);
+                } else {
+                    methodVisitor.visitJumpInsn(GOTO, head);
+                }
+            } else {
+                writeStatement(s);
+            }
+        }
+    }
+
+    private void writeBlockStmt(BlockStmt blockStmt) throws CodeGeneratorException {
+        if(blockStmt.getStmtList() != null) {
+            // Copy gamma before block
+            Map<Variable, VariableEntry> gammaBefore = newCopy(variables);
+            writeStatements(blockStmt.getStmtList());
+            // restore gamma after block
+            variables = gammaBefore;
+        }
     }
 
     private Map<Variable, VariableEntry> newCopy(final Map<Variable, VariableEntry> table) {
@@ -479,10 +504,10 @@ public class CodeGenerator {
         final Label afterFalseLabel = new Label();
         writeExp(ifStmt.getCondition());
         methodVisitor.visitJumpInsn(IFEQ, falseLabel);
-        writeStatements(ifStmt.getTrueBranch().getStmtList());
+        writeBlockStmt(ifStmt.getTrueBranch());
         methodVisitor.visitJumpInsn(GOTO, afterFalseLabel);
         methodVisitor.visitLabel(falseLabel);
-        writeStatements(ifStmt.getFalseBranch().getStmtList());
+        writeBlockStmt(ifStmt.getFalseBranch());
         methodVisitor.visitLabel(afterFalseLabel);
     } // writeIfStatement
 
@@ -493,14 +518,16 @@ public class CodeGenerator {
         //   body
         //   goto head
         // after_while
+        Map<Variable, VariableEntry> gammaBefore = newCopy(variables);
         final Label head = new Label();
         final Label afterWhile = new Label();
         methodVisitor.visitLabel(head);
         writeExp(whileStmt.getCondition());
         methodVisitor.visitJumpInsn(IFEQ, afterWhile);
-        writeStatements(whileStmt.getBlockStmt().getStmtList());
+        writeBlockStmtInLoop(whileStmt.getBlockStmt(), head, afterWhile);
         methodVisitor.visitJumpInsn(GOTO, head);
         methodVisitor.visitLabel(afterWhile);
+        variables = gammaBefore;
     } // whileWhileStatement
 
     public void writeStatements(final List<Stmt> stmts) throws CodeGeneratorException {
@@ -564,13 +591,13 @@ public class CodeGenerator {
         } else if(stmt instanceof ReturnStmt) {
             writeExp(((ReturnStmt) stmt).getReturnExp());
         } else if(stmt instanceof BlockStmt) {
-            if(((BlockStmt) stmt).getStmtList() != null) {
-                writeStatements(((BlockStmt) stmt).getStmtList());
-            }
+            writeBlockStmt((BlockStmt) stmt);
         } else if(stmt instanceof FunctionInstanceStmt) {
             writeFunctionInstance(((FunctionInstanceStmt) stmt).getFunctionInstanceExp());
         } else if(stmt instanceof ForStmt) {
             writeForStatement((ForStmt) stmt);
+        } else if(stmt instanceof SelfOperationStmt) {
+            writeExp(((SelfOperationStmt) stmt).getSelfOperationExp());
         }
         else {
 //            assert(false);
@@ -594,7 +621,6 @@ public class CodeGenerator {
         if(function.getBlockStmt() != null) {
             writeStatements(function.getBlockStmt().getStmtList());
         }
-//        writeExpression(function.get);
         writeReturnFor(function.getReturnType());
         functionEnd();
     } // writeFunction
@@ -671,6 +697,9 @@ public class CodeGenerator {
             } else {
                 throw new CodeGeneratorException("arrayOf(exp*) should has at least one parameter");
             }
+        } else if(temp instanceof ArrayExp) {
+            Type genericType = typeOf(((ArrayExp) temp).getLambdaExp().getReturnExp());
+            type = new TypeArray((BasicType) genericType);
         }
         else {
             throw new CodeGeneratorException("Unrecognized expression type");
@@ -687,6 +716,78 @@ public class CodeGenerator {
             // TODO
             // support string interpolation here
         }
+    }
+
+    // assume array is already created.
+    private void writeValueToInitArrayExp(int opcode, VariableExp iteratorExp, Exp initExp, String sizeVar) throws CodeGeneratorException {
+        final Label head = new Label();
+        final Label afterFor = new Label();
+        VariableEntry entry;
+        writeIntLiteral(0);
+        entry = addEntry(new VariableExp(".index"), BasicType.TYPE_INT);
+        entry.store(this, methodVisitor);
+        methodVisitor.visitLabel(head);
+        loadVariable(new VariableExp(".index"));
+        loadVariable(new VariableExp(sizeVar));
+        methodVisitor.visitJumpInsn(IF_ICMPGE, afterFor);
+        methodVisitor.visitInsn(DUP);
+        loadVariable(new VariableExp(".index"));
+        writeExp(initExp);
+        methodVisitor.visitInsn(opcode);
+        entry = getEntryFor(new VariableExp(".index"));
+        methodVisitor.visitIincInsn(entry.index, 1);
+        if(iteratorExp != null) {
+            entry = getEntryFor(iteratorExp);
+            methodVisitor.visitIincInsn(entry.index, 1);
+        }
+        methodVisitor.visitJumpInsn(GOTO, head);
+        methodVisitor.visitLabel(afterFor);
+    }
+
+    private void writeArrayExp(ArrayExp arrayExp) throws CodeGeneratorException {
+        Map<Variable, VariableEntry> gammaBefore = newCopy(variables);
+        VariableEntry entry;
+        LinkedHashMap<VariableExp, Type> parameters = arrayExp.getLambdaExp().getParameterList();
+        VariableExp[] variableExps = new VariableExp[1];
+        if(parameters != null && parameters.size() == 1) {
+            variableExps = new VariableExp[1];
+            parameters.keySet().toArray(variableExps);
+            entry = addEntry(variableExps[0], BasicType.TYPE_INT);
+            writeIntLiteral(0);
+            entry.store(this, methodVisitor);
+        }
+
+        Exp size = arrayExp.getSize();
+        String sizeVar = ".size";
+        Exp returnExp = arrayExp.getLambdaExp().getReturnExp();
+        writeExp(size);
+        entry = addEntry(new VariableExp(sizeVar), BasicType.TYPE_INT);
+        entry.store(this, methodVisitor);
+        Type type = typeOf(returnExp);
+        loadVariable(new VariableExp(sizeVar));
+
+        switch ((BasicType) type) {
+            case TYPE_INT:
+                methodVisitor.visitIntInsn(NEWARRAY, T_INT);
+                writeValueToInitArrayExp(IASTORE, variableExps[0], returnExp, sizeVar);
+                break;
+            case TYPE_STRING:
+                methodVisitor.visitTypeInsn(ANEWARRAY, "java/lang/String");
+                writeValueToInitArrayExp(AASTORE, variableExps[0], returnExp, sizeVar);
+                break;
+            case TYPE_BOOLEAN:
+                methodVisitor.visitIntInsn(NEWARRAY, T_BOOLEAN);
+                writeValueToInitArrayExp(BASTORE, variableExps[0], returnExp, sizeVar);
+                break;
+            case TYPE_ANY:
+                methodVisitor.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+                writeValueToInitArrayExp(AASTORE, variableExps[0], returnExp, sizeVar);
+                break;
+            case TYPE_UNIT:
+                throw new CodeGeneratorException("Void type only from return in function");
+        }
+
+        variables = gammaBefore;
     }
 
     private void writeValueToArray(BasicType type, List<Exp> exps) throws CodeGeneratorException {
@@ -791,6 +892,10 @@ public class CodeGenerator {
             } else {
                 throw new CodeGeneratorException("arrayOf(exp*) should has at least one parameter");
             }
+        } else if(exp instanceof ArrayExp) {
+            Type returnGenericType = typeOf(((ArrayExp) exp).getLambdaExp().getReturnExp());
+            writeArrayExp((ArrayExp) exp);
+            return new TypeArray((BasicType) returnGenericType);
         }
         else {
             throw new CodeGeneratorException("Unsupported expression so far!");

@@ -3,11 +3,13 @@ import com.github.wangdong20.kotlinscriptcompiler.codegen.CodeGeneratorException
 import com.github.wangdong20.kotlinscriptcompiler.parser.Program;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.*;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -299,5 +301,23 @@ public class CodeGeneratorTest {
                 new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"), false, true),
                 new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(2))), new VariableExp("s"), new BlockStmt(stmtsInFor))
         ), "1", "3", "5", "7", "9");
+    }
+
+    @Test
+    // var a = Array(10, {i -> 2 * i})
+    // for(i in a) {
+    //      println(i)
+    // }
+    public void testArrayExp(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        LinkedHashMap<VariableExp, Type> parameters = new LinkedHashMap<>();
+        parameters.put(new VariableExp("i"), null);
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new ArrayExp(new IntExp(10), new LambdaExp(parameters, new MultiplicativeExp(new IntExp(2), new VariableExp("i"), MultiplicativeOp.OP_MULTIPLY))),
+                        new VariableExp("a"), false, true),
+                new ForStmt(new VariableExp("i"), new VariableExp("a"), new BlockStmt(stmtsInFor))),
+                "0", "2", "4", "6", "8", "10", "12", "14", "16", "18"
+        );
     }
 }

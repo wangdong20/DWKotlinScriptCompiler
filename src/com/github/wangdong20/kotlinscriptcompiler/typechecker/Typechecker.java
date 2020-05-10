@@ -78,6 +78,15 @@ public class Typechecker {
             }
         } else if(e instanceof ArrayExp) {
             LambdaExp lambdaExp = ((ArrayExp) e).getLambdaExp();
+            Exp size = ((ArrayExp) e).getSize();
+            if(size != null) {
+                Type sizeType = typeOf(gamma, size);
+                if(sizeType != BasicType.TYPE_INT) {
+                    throw new IllTypedException("ArrayExp must initial with value of IntType");
+                }
+            } else {
+                throw new IllTypedException("ArrayExp must have size initialed.");
+            }
             if(lambdaExp.getParameterList().size() == 1) {  // ArrayExp only support Array(Int, {i - > exp})
                 VariableExp[] variables = new VariableExp[1];
                 Type[] types = new Type[1];
@@ -188,6 +197,15 @@ public class Typechecker {
             }
         } else if(e instanceof MutableListExp) {
             LambdaExp lambdaExp = ((MutableListExp) e).getLambdaExp();
+            Exp size = ((MutableListExp) e).getSize();
+            if(size != null) {
+                Type sizeType = typeOf(gamma, size);
+                if(sizeType != BasicType.TYPE_INT) {
+                    throw new IllTypedException("MutableListExp must initial with value of IntType");
+                }
+            } else {
+                throw new IllTypedException("MutableListExp must have size initialed.");
+            }
             if(lambdaExp.getParameterList().size() == 1) {  // MutableListExp only support MutableList(Int, {i - > exp})
                 VariableExp[] variables = new VariableExp[1];
                 Type[] types = new Type[1];

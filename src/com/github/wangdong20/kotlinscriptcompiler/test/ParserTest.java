@@ -637,6 +637,19 @@ class ParserTest {
     }
 
     @Test
+    // val a : Array<Int> = Array(k, {i -> i});;
+    public void valStmtWithArrayTypeInitialVar() throws ParseException {
+        LinkedHashMap<VariableExp, Type> parameters = new LinkedHashMap<>();
+        parameters.put(new VariableExp("i"), null);
+        assertParseStmts(new AssignStmt(new ArrayExp(new VariableExp("k"), new LambdaExp(parameters, new VariableExp("i"))), new VariableExp("a"), new TypeArray(BasicType.TYPE_INT), true, true),
+                KeywordToken.TK_VAL, new VariableToken("a"), SymbolToken.TK_COLON, TypeToken.TK_ARRAY, BinopToken.TK_LESS_THAN,
+                TypeToken.TK_TYPE_INT, BinopToken.TK_GREATER_THAN, BinopToken.TK_EQUAL, TypeToken.TK_ARRAY,
+                BracketsToken.TK_LPAREN, new VariableToken("k"), SymbolToken.TK_COMMA, BracketsToken.TK_LCURLY, new VariableToken("i"),
+                SymbolToken.TK_ARROW, new VariableToken("i"), BracketsToken.TK_RCURLY, BracketsToken.TK_RPAREN,
+                SymbolToken.TK_SEMICOLON, SymbolToken.TK_SEMICOLON);
+    }
+
+    @Test
     // var a : (Int, Int)->Int = {a : Int, b: Int -> a + b}
     public void varStmtWithHighOrderFunctionType() throws ParseException {
         LinkedHashMap<VariableExp, Type> parameterList = new LinkedHashMap<>();

@@ -410,6 +410,19 @@ public class TypecheckerTest {
     }
 
     @Test
+    // var size = 10
+    // var a = Array(size, {i -> i})
+    public void arrayExpInitialWithVar() throws IllTypedException {
+        List<Stmt> stmtList = new ArrayList<>();
+        LinkedHashMap<VariableExp, Type> parameters = new LinkedHashMap<>();
+        parameters.put(new VariableExp("i"), null);
+        stmtList.add(new AssignStmt(new IntExp(10), new VariableExp("size"), false, true));
+        stmtList.add(new AssignStmt(new ArrayExp(new VariableExp("size"), new LambdaExp(parameters, new VariableExp("i"))), new VariableExp("a"), false, true));
+        Program program = new Program(stmtList);
+        assertTypecheckProgram(program);
+    }
+
+    @Test
     // var a = 10
     // var b = arrayOf(1, 2, 3)
     // for(i in 1..a step b) {

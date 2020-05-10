@@ -471,22 +471,17 @@ public class Parser {
         } else if(tokenHere == TypeToken.TK_ARRAY || tokenHere == TypeToken.TK_MUTABLE_LIST) {
             checkTokenIs(startPos + 1, BracketsToken.TK_LPAREN);
             int pos = startPos + 2;
-            IntExp intExp;
+            ParseResult<Exp> intResult;
             LambdaExp lambdaExp;
-            final Token t = readToken(pos);
-            if(t instanceof IntToken) {
-                intExp = new IntExp(((IntToken)t).getValue());
-                pos++;
-                checkTokenIs(pos, SymbolToken.TK_COMMA);
-                pos++;
-                ParseResult<Exp> resultParse = parseLambdaExp(pos);
-                lambdaExp = (LambdaExp) resultParse.result;
-                checkTokenIs(resultParse.nextPos, BracketsToken.TK_RPAREN);
-                return new ParseResult<>(tokenHere == TypeToken.TK_ARRAY ? new ArrayExp(intExp, lambdaExp) :
-                        new MutableListExp(intExp, lambdaExp), resultParse.nextPos + 1);
-            } else {
-                throw new ParseException("Integer of size expected in Array initialize operation.");
-            }
+            intResult = parseExp(pos);
+            pos = intResult.nextPos;
+            checkTokenIs(pos, SymbolToken.TK_COMMA);
+            pos++;
+            ParseResult<Exp> resultParse = parseLambdaExp(pos);
+            lambdaExp = (LambdaExp) resultParse.result;
+            checkTokenIs(resultParse.nextPos, BracketsToken.TK_RPAREN);
+            return new ParseResult<>(tokenHere == TypeToken.TK_ARRAY ? new ArrayExp(intResult.result, lambdaExp) :
+                    new MutableListExp(intResult.result, lambdaExp), resultParse.nextPos + 1);
         } else if(tokenHere == BracketsToken.TK_LCURLY) {
             return parseLambdaExp(startPos);    // Include TK_LCURLY
         }
