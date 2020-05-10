@@ -320,4 +320,23 @@ public class CodeGeneratorTest {
                 "0", "2", "4", "6", "8", "10", "12", "14", "16", "18"
         );
     }
+
+    @Test
+    // var size = 10
+    // var a = Array(size, {i -> 2 * i})
+    // for(i in a) {
+    //      println(i)
+    // }
+    public void testArrayExpWithSizeVar(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        LinkedHashMap<VariableExp, Type> parameters = new LinkedHashMap<>();
+        parameters.put(new VariableExp("i"), null);
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(new AssignStmt(new IntExp(10), new VariableExp("size"), false, true),
+                new AssignStmt(new ArrayExp(new VariableExp("size"), new LambdaExp(parameters, new MultiplicativeExp(new IntExp(2), new VariableExp("i"), MultiplicativeOp.OP_MULTIPLY))),
+                        new VariableExp("a"), false, true),
+                new ForStmt(new VariableExp("i"), new VariableExp("a"), new BlockStmt(stmtsInFor))),
+                "0", "2", "4", "6", "8", "10", "12", "14", "16", "18"
+        );
+    }
 }
