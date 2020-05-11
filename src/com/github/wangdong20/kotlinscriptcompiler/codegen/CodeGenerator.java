@@ -34,14 +34,14 @@ public class CodeGenerator {
     private MethodVisitor methodVisitor;
 
     public CodeGenerator(final String outputClassName,
-                         final String outputFunctionName) throws CodeGeneratorException {
+                         final String outputFunctionName) {
         this.outputClassName = outputClassName;
         this.outputFunctionName = outputFunctionName;
         classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
         variables = null;
         nextIndex = 0;
 
-        functionTable = new HashMap<String, FunctionDeclareStmt>();
+        functionTable = new HashMap<>();
         classWriter.visit(V1_8, // Java 1.8 in my laptop
                 ACC_PUBLIC, // public
                 outputClassName, // class name
@@ -99,7 +99,7 @@ public class CodeGenerator {
         assert(nextIndex == 0);
         assert(methodVisitor == null);
 
-        variables = new HashMap<Variable, VariableEntry>();
+        variables = new HashMap<>();
         if(function.getParameterList() != null) {
             for (Map.Entry<Exp, Type> entry : function.getParameterList().entrySet()) {
                 addEntry((Variable) entry.getKey(), entry.getValue());
@@ -485,7 +485,7 @@ public class CodeGenerator {
         return new HashMap<>(table);
     }
 
-    public void writeIfStatement(final IfStmt ifStmt) throws CodeGeneratorException {
+    private void writeIfStatement(final IfStmt ifStmt) throws CodeGeneratorException {
         // if false, jump to the else branch.  If true, fall through to true branch.
         // true branch needs to jump after the false.  Looks like this:
         //
@@ -511,7 +511,7 @@ public class CodeGenerator {
         methodVisitor.visitLabel(afterFalseLabel);
     } // writeIfStatement
 
-    public void writeWhileStatement(final WhileStmt whileStmt) throws CodeGeneratorException {
+    private void writeWhileStatement(final WhileStmt whileStmt) throws CodeGeneratorException {
         // head:
         //   condition_expression
         //   if !condition, jump to after_while
@@ -530,13 +530,13 @@ public class CodeGenerator {
         variables = gammaBefore;
     } // whileWhileStatement
 
-    public void writeStatements(final List<Stmt> stmts) throws CodeGeneratorException {
+    private void writeStatements(final List<Stmt> stmts) throws CodeGeneratorException {
         for (final Stmt statement : stmts) {
             writeStatement(statement);
         }
     } // writeStatements
 
-    public void writeStatement(final Stmt stmt) throws CodeGeneratorException {
+    private void writeStatement(final Stmt stmt) throws CodeGeneratorException {
         if (stmt instanceof VariableDeclareStmt) {
             // Do nothing here until initialized in AssignStmt
         } else if (stmt instanceof AssignStmt) {
@@ -580,9 +580,9 @@ public class CodeGenerator {
         }
         else if (stmt instanceof PrintStmt || stmt instanceof PrintlnStmt) {
             if(stmt instanceof PrintStmt) {
-                writePrint((Variable) ((PrintStmt)stmt).getValue(), false);
+                writePrint( ((PrintStmt)stmt).getValue(), false);
             } else {
-                writePrint((Variable) ((PrintlnStmt)stmt).getValue(), true);
+                writePrint(((PrintlnStmt)stmt).getValue(), true);
             }
         } else if (stmt instanceof IfStmt) {
             writeIfStatement((IfStmt)stmt);
@@ -640,7 +640,7 @@ public class CodeGenerator {
     private Type writeFunctionInstance(final FunctionInstanceExp call) throws CodeGeneratorException {
         final FunctionDeclareStmt function = functionTable.get(call.getFuncName().getName());
         if (function == null) {
-            throw new CodeGeneratorException("Call to nonexistent function: " + function.getFuncName().getName());
+            throw new CodeGeneratorException("Call to nonexistent function.");
         }
 
         for (final Exp param : call.getParameterList()) {
@@ -661,15 +661,30 @@ public class CodeGenerator {
     private Type typeOfFunctionInstance(FunctionInstanceExp exp) throws CodeGeneratorException {
         final FunctionDeclareStmt function = functionTable.get(exp.getFuncName().getName());
         if (function == null) {
-            throw new CodeGeneratorException("Call to nonexistent function: " + function.getFuncName().getName());
+            throw new CodeGeneratorException("Call to nonexistent function.");
         }
         return function.getReturnType();
     }
 
     private Type typeOf(Exp temp) throws CodeGeneratorException {
         Type type;
-        if(temp instanceof IntExp || temp instanceof SelfOperationExp || temp instanceof BinaryIntExp) {
+        if(temp instanceof IntExp || temp instanceof SelfOperationExp) {
             type = BasicType.TYPE_INT;
+        } else if(temp instanceof BinaryIntExp) {
+            if(temp instanceof AdditiveExp) {
+                Type left = typeOf(((BinaryIntExp) temp).getLeft());
+                if(((AdditiveExp) temp).getOp() == AdditiveOp.EXP_PLUS) {
+                    if(left == BasicType.TYPE_STRING) {
+                        type = BasicType.TYPE_STRING;
+                    } else {
+                        type = BasicType.TYPE_INT;
+                    }
+                } else {
+                    type = BasicType.TYPE_INT;
+                }
+            } else {
+                type = BasicType.TYPE_INT;
+            }
         } else if(temp instanceof StringExp) {
             type = BasicType.TYPE_STRING;
         } else if(temp instanceof BooleanExp || temp instanceof ComparableExp ||
@@ -713,8 +728,34 @@ public class CodeGenerator {
         } else if(s.getInterpolationExp() == null || s.getInterpolationExp().size() == 0) {
             methodVisitor.visitLdcInsn(s.getStrWithoutInterpolation());
         } else {
-            // TODO
-            // support string interpolation here
+            Integer[] indexs = new Integer[s.getInterpolationExp().size()];
+            Exp[] exps = new Exp[s.getInterpolationExp().size()];
+            s.getInterpolationExp().keySet().toArray(indexs);
+            s.getInterpolationExp().values().toArray(exps);
+            Type type;
+            methodVisitor.visitTypeInsn(NEW, "java/lang/StringBuilder");
+            methodVisitor.visitInsn(DUP);
+            methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false);
+            for (int i = 0; i < indexs.length; i++) {
+                methodVisitor.visitLdcInsn(s.getStrWithoutInterpolation());
+                if (i == 0) {
+                    writeIntLiteral(0);
+                } else {
+                    writeIntLiteral(indexs[i - 1]);
+                }
+                writeIntLiteral(indexs[i]);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "substring", "(II)Ljava/lang/String;", false);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+                writeExp(exps[i]);
+                type = typeOf(exps[i]);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(" + Descriptor.toDescriptorString(type) + ")Ljava/lang/StringBuilder;", false);
+            }
+            methodVisitor.visitLdcInsn(s.getStrWithoutInterpolation());
+            writeIntLiteral(indexs[indexs.length - 1]);
+            writeIntLiteral(s.getStrWithoutInterpolation().length());
+            methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "substring", "(II)Ljava/lang/String;", false);
+            methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+            methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;", false);
         }
     }
 
@@ -859,8 +900,10 @@ public class CodeGenerator {
             writeSelfOperationExp((SelfOperationExp) exp);
             return BasicType.TYPE_INT;
         } else if(exp instanceof BinaryIntExp) {
-            writeAdditiveExpOrMultplicativeExp((BinaryIntExp) exp);
-            return BasicType.TYPE_INT;
+            if(writeAdditiveExpOrMultplicativeExp((BinaryIntExp) exp)) {
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;", false);
+            }
+            return typeOf(exp);
         } else if(exp instanceof ComparableExp) {
             writeComparableExp((ComparableExp) exp);
             return BasicType.TYPE_BOOLEAN;
@@ -902,26 +945,53 @@ public class CodeGenerator {
         }
     }
 
-    private void writeAdditiveExpOrMultplicativeExp(BinaryIntExp exp) throws CodeGeneratorException {
+    // return whether is String append operation or not.
+    private boolean writeAdditiveExpOrMultplicativeExp(BinaryIntExp exp) throws CodeGeneratorException {
         Exp left = exp.getLeft();
         Exp right = exp.getRight();
+        boolean isStringAppend = false;
         if(left instanceof IntExp) {
             writeIntLiteral(((IntExp) left).getValue());
         } else if(left instanceof VariableExp) {
             final VariableEntry entry = getEntryFor((VariableExp) left);
             if(entry.type == BasicType.TYPE_INT) {
                 entry.load(this, methodVisitor);
-            } else {
+            } else if(entry.type == BasicType.TYPE_STRING) {
+                isStringAppend = true;
+                methodVisitor.visitTypeInsn(NEW, "java/lang/StringBuilder");
+                methodVisitor.visitInsn(DUP);
+                methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false);
+                entry.load(this, methodVisitor);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+            }
+            else {
                 assert (false);
                 throw new CodeGeneratorException("Variable in AdditiveExp should be TYPE_INT.");
             }
+        } else if(left instanceof StringExp) {
+            isStringAppend = true;
+            methodVisitor.visitTypeInsn(NEW, "java/lang/StringBuilder");
+            methodVisitor.visitInsn(DUP);
+            methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false);
+            writeStringExp((StringExp) left);
+            methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
         } else if(left instanceof BinaryIntExp) {
-            writeAdditiveExpOrMultplicativeExp((BinaryIntExp)left);
+            isStringAppend = writeAdditiveExpOrMultplicativeExp((BinaryIntExp)left);
         } else if(left instanceof SelfOperationExp) {
             writeSelfOperationExp((SelfOperationExp) left);
         } else if(left instanceof ArrayWithIndexExp) {
             final VariableEntry entry = getEntryFor((ArrayWithIndexExp) left);
-            entry.load(this, methodVisitor);
+            BasicType basicType = ((TypeArray) entry.type).getBasicType();
+            if(basicType == BasicType.TYPE_STRING) {
+                isStringAppend = true;
+                methodVisitor.visitTypeInsn(NEW, "java/lang/StringBuilder");
+                methodVisitor.visitInsn(DUP);
+                methodVisitor.visitMethodInsn(INVOKESPECIAL, "java/lang/StringBuilder", "<init>", "()V", false);
+                entry.load(this, methodVisitor);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+            } else {
+                entry.load(this, methodVisitor);
+            }
         } else {
             assert (false);
             throw new CodeGeneratorException("IllTypedException should be handled in typechecker.");
@@ -929,23 +999,90 @@ public class CodeGenerator {
 
         // Do it again to load right Exp on stack
         if(right instanceof IntExp) {
-            writeIntLiteral(((IntExp) right).getValue());
+            if(isStringAppend) {
+                writeIntLiteral(((IntExp) right).getValue());
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;", false);
+            } else {
+                writeIntLiteral(((IntExp) right).getValue());
+            }
         } else if(right instanceof VariableExp) {
             final VariableEntry entry = getEntryFor((VariableExp) right);
             if(entry.type == BasicType.TYPE_INT) {
-                entry.load(this, methodVisitor);
-            } else {
+                if(isStringAppend) {
+                    entry.load(this, methodVisitor);
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;", false);
+                } else {
+                    entry.load(this, methodVisitor);
+                }
+            } else if(entry.type == BasicType.TYPE_STRING) {
+                if(!isStringAppend) {
+                    throw new CodeGeneratorException("String Concatenation left value must be a string");
+                } else {
+                    entry.load(this, methodVisitor);
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+                }
+            } else if(entry.type == BasicType.TYPE_BOOLEAN) {
+                if(isStringAppend) {
+                    entry.load(this, methodVisitor);
+                    methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Z)Ljava/lang/StringBuilder;", false);
+                } else {
+                    throw new CodeGeneratorException("Variable in AdditiveExp should be TYPE_INT or TYPE_STRING.");
+                }
+            }
+            else {
                 assert (false);
-                throw new CodeGeneratorException("Variable in AdditiveExp should be TYPE_INT.");
+                throw new CodeGeneratorException("Variable in AdditiveExp should be TYPE_INT or TYPE_STRING.");
             }
         } else if(right instanceof BinaryIntExp) {
             writeAdditiveExpOrMultplicativeExp((BinaryIntExp)right);
         } else if(right instanceof SelfOperationExp) {
-            writeSelfOperationExp((SelfOperationExp) right);
-        } else if(right instanceof ArrayWithIndexExp) {
+            if(isStringAppend) {
+                writeSelfOperationExp((SelfOperationExp) right);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;", false);
+            } else {
+                writeSelfOperationExp((SelfOperationExp) right);
+            }
+        } else if(right instanceof BooleanExp) {
+            if(isStringAppend) {
+                writeIntLiteral(((BooleanExp) right).getValue() ? 1 : 0);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Z)Ljava/lang/StringBuilder;", false);
+            } else {
+                throw new CodeGeneratorException("Variable in AdditiveExp should be TYPE_INT or TYPE_STRING.");
+            }
+        }
+        else if(right instanceof ArrayWithIndexExp) {
             final VariableEntry entry = getEntryFor((ArrayWithIndexExp) right);
-            entry.load(this, methodVisitor);
-        } else {
+            if(isStringAppend) {
+                BasicType basicType = ((TypeArray) entry.type).getBasicType();
+                entry.load(this, methodVisitor);
+                switch (basicType) {
+                    case TYPE_INT:
+                        methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;", false);
+                        break;
+                    case TYPE_STRING:
+                        methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+                        break;
+                    case TYPE_BOOLEAN:
+                        methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Z)Ljava/lang/StringBuilder;", false);
+                        break;
+                    case TYPE_ANY:
+                        methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/Object;)Ljava/lang/StringBuilder;", false);
+                        break;
+                    case TYPE_UNIT:
+                        throw new CodeGeneratorException("Void type should only return from function declaration");
+                }
+            } else {
+                entry.load(this, methodVisitor);
+            }
+        } else if(right instanceof StringExp) {
+            if(isStringAppend) {
+                writeStringExp((StringExp) right);
+                methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;", false);
+            } else {
+                throw new CodeGeneratorException("String can be only in string + string operation.");
+            }
+        }
+        else {
             assert (false);
             throw new CodeGeneratorException("IllTypedException should be handled in typechecker.");
         }
@@ -953,11 +1090,19 @@ public class CodeGenerator {
         if(exp instanceof AdditiveExp) {
             AdditiveOp op = ((AdditiveExp) exp).getOp();
             if(op == AdditiveOp.EXP_PLUS) {
-                methodVisitor.visitInsn(IADD);
+                if(!isStringAppend) {
+                    methodVisitor.visitInsn(IADD);
+                }
             } else {
+                if(isStringAppend) {
+                    throw new CodeGeneratorException("String concatenation is only allow in +");
+                }
                 methodVisitor.visitInsn(ISUB);
             }
         } else if(exp instanceof MultiplicativeExp) {
+            if(isStringAppend) {
+                throw new CodeGeneratorException("String concatenation is only allow in +");
+            }
             MultiplicativeOp op = ((MultiplicativeExp) exp).getOp();
             if(op == MultiplicativeOp.OP_MULTIPLY) {
                 methodVisitor.visitInsn(IMUL);
@@ -967,29 +1112,30 @@ public class CodeGenerator {
                 methodVisitor.visitInsn(IREM);
             }
         }
+        return isStringAppend;
     }
 
-    public void writePrint(final Variable variable, boolean isNewLine) throws CodeGeneratorException {
-        final VariableEntry entry = getEntryFor(variable);
+    private void writePrint(final Exp exp, boolean isNewLine) throws CodeGeneratorException {
+        Type type = typeOf(exp);
         final String descriptor;
-        if (entry.type == BasicType.TYPE_INT) {
+        if (type == BasicType.TYPE_INT) {
             descriptor = "(I)V";
-        } else if (entry.type == BasicType.TYPE_BOOLEAN) {
+        } else if (type == BasicType.TYPE_BOOLEAN) {
             descriptor = "(Z)V";
-        } else if(entry.type == BasicType.TYPE_STRING) {
+        } else if(type == BasicType.TYPE_STRING) {
             descriptor = "(Ljava/lang/String;)V";
-        } else if(entry.type instanceof TypeArray || entry.type instanceof TypeMutableList || entry.type == BasicType.TYPE_ANY) {
+        } else if(type instanceof TypeArray || type instanceof TypeMutableList || type == BasicType.TYPE_ANY) {
             descriptor = "(Ljava/lang/Object;)V";
         } else {
             assert(false);
-            throw new CodeGeneratorException("Unrecognized type; " + entry.type);
+            throw new CodeGeneratorException("Unrecognized type; " + type);
         }
 
         methodVisitor.visitFieldInsn(GETSTATIC,
                 "java/lang/System",
                 "out",
                 "Ljava/io/PrintStream;");
-        entry.load(this, methodVisitor);
+        writeExp(exp);
         methodVisitor.visitMethodInsn(INVOKEVIRTUAL,
                 "java/io/PrintStream",
                 isNewLine ? "println" : "print",

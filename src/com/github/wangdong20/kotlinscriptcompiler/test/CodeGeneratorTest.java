@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class CodeGeneratorTest {
     // ---BEGIN STATICS---
@@ -64,6 +65,15 @@ public class CodeGeneratorTest {
                 runTest(program, testName));
         new File(currentClassName + ".class").delete();
     } // runTest
+
+    public void assertOutputExpectedException (String testName, final Program program,
+                                               final String... expectedOutput) {
+        Throwable exception = assertThrows(CodeGeneratorException.class,
+                ()-> {
+                    assertOutput(testName, program, expectedOutput);
+                });
+        System.out.println(exception.getMessage());
+    }
 
     public static List<Stmt> stmts(final Stmt... statements) {
         final List<Stmt> list = new ArrayList<Stmt>();
@@ -339,4 +349,92 @@ public class CodeGeneratorTest {
                 "0", "2", "4", "6", "8", "10", "12", "14", "16", "18"
         );
     }
+
+    @Test
+    // var i = 10
+    // var b = true
+    // var s = "S" + i + b
+    // print(s)
+    public void testStringConcatenation(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new IntExp(10), new VariableExp("i"), false, true),
+                new AssignStmt(new BooleanExp(true), new VariableExp("b"), false, true),
+                new AssignStmt(new AdditiveExp(new AdditiveExp(new StringExp("S", null),
+                        new VariableExp("i"), AdditiveOp.EXP_PLUS), new VariableExp("b"), AdditiveOp.EXP_PLUS),
+                        new VariableExp("s"), false, true),
+                new PrintStmt(new VariableExp("s"))
+        ), "S10true");
+    }
+
+    @Test
+    // var i = 10
+    // var b = true
+    // var s = i + "S" + b
+    // print(s)
+    public void testStringConcatenationInitWithInt(TestInfo testInfo) throws IOException {
+        assertOutputExpectedException(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new IntExp(10), new VariableExp("i"), false, true),
+                new AssignStmt(new BooleanExp(true), new VariableExp("b"), false, true),
+                new AssignStmt(new AdditiveExp(new AdditiveExp(new VariableExp("i"), new StringExp("S", null),
+                        AdditiveOp.EXP_PLUS), new VariableExp("b"), AdditiveOp.EXP_PLUS),
+                        new VariableExp("s"), false, true),
+                new PrintStmt(new VariableExp("s"))
+        ), "S10true");
+    }
+
+    @Test
+    // var i = "10"
+    // var b = true
+    // var s = "S" + i + b
+    // print(s)
+    public void testStringStringConcatenation(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new StringExp("10", null), new VariableExp("i"), false, true),
+                new AssignStmt(new BooleanExp(true), new VariableExp("b"), false, true),
+                new AssignStmt(new AdditiveExp(new AdditiveExp(new StringExp("S", null),
+                        new VariableExp("i"), AdditiveOp.EXP_PLUS), new VariableExp("b"), AdditiveOp.EXP_PLUS),
+                        new VariableExp("s"), false, true),
+                new PrintStmt(new VariableExp("s"))
+        ), "S10true");
+    }
+
+    @Test
+    // var i = "10"
+    // var b = true
+    // var s = "S"
+    // print(s + i + b)
+    public void testStringStringPrintExp(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new StringExp("10", null), new VariableExp("i"), false, true),
+                new AssignStmt(new BooleanExp(true), new VariableExp("b"), false, true),
+                new AssignStmt(new StringExp("S", null),
+                        new VariableExp("s"), false, true),
+                new PrintStmt(new AdditiveExp(new AdditiveExp(new VariableExp("s"),
+                        new VariableExp("i"), AdditiveOp.EXP_PLUS), new VariableExp("b"), AdditiveOp.EXP_PLUS))
+        ), "S10true");
+    }
+
+    @Test
+    // var a = 200
+    // var b = 10
+    // var c = 3
+    // var d = "a is $a, b is $b, c is $c, a + b * c is ${a + b * c}"
+    // print(d)
+    public void testStringInterpolation(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        LinkedHashMap<Integer, Exp> interpolation = new LinkedHashMap<>();
+        interpolation.put(5, new VariableExp("a"));
+        interpolation.put(12, new VariableExp("b"));
+        interpolation.put(19, new VariableExp("c"));
+        interpolation.put(34, new AdditiveExp(new VariableExp("a"), new MultiplicativeExp(
+                new VariableExp("b"), new VariableExp("c"), MultiplicativeOp.OP_MULTIPLY
+        ), AdditiveOp.EXP_PLUS));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new IntExp(200), new VariableExp("a"), false, true),
+                new AssignStmt(new IntExp(10), new VariableExp("b"), false, true),
+                new AssignStmt(new IntExp(3), new VariableExp("c"), false, true),
+                new AssignStmt(new StringExp("a is , b is , c is , a + b * c is ", interpolation), new VariableExp("d"), false, true),
+                new PrintStmt(new VariableExp("d"))
+        ), "a is 200, b is 10, c is 3, a + b * c is 230");
+    }
+
 }
