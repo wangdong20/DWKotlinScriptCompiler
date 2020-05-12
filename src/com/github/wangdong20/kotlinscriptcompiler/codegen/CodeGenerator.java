@@ -374,7 +374,7 @@ public class CodeGenerator {
         VariableEntry entry;
         if(forStmt.getArrayExp() != null) {
             loadVariable(forStmt.getArrayExp());
-            String arrayLength = forStmt.getArrayExp().getName() + ".length";
+            String arrayLength = forStmt.hashCode() + forStmt.getArrayExp().getName() + ".length";
             Type type = typeOf(forStmt.getArrayExp());
             BasicType basicType;
             if(type instanceof TypeArray) {
@@ -387,15 +387,16 @@ public class CodeGenerator {
             entry = addEntry(new VariableExp(arrayLength), BasicType.TYPE_INT);
             methodVisitor.visitInsn(ARRAYLENGTH);
             entry.store(this, methodVisitor);
+            String index = forStmt.hashCode() + forStmt.getArrayExp().getName() + ".index";
             writeIntLiteral(0);
-            entry = addEntry(new VariableExp(".index"), BasicType.TYPE_INT);
+            entry = addEntry(new VariableExp(index), BasicType.TYPE_INT);
             entry.store(this, methodVisitor);
             methodVisitor.visitLabel(head);
-            loadVariable(new VariableExp(".index"));
+            loadVariable(new VariableExp(index));
             loadVariable(new VariableExp(arrayLength));
             methodVisitor.visitJumpInsn(IF_ICMPGE, afterFor);
             loadVariable(forStmt.getArrayExp());
-            loadVariable(new VariableExp(".index"));
+            loadVariable(new VariableExp(index));
             int opcode = 0;
             switch (basicType) {
                 case TYPE_INT:
@@ -415,7 +416,7 @@ public class CodeGenerator {
             entry.store(this, methodVisitor);
 
             writeBlockStmtInLoop(forStmt.getBlockStmt(), head, afterFor);
-            entry = getEntryFor(new VariableExp(".index"));
+            entry = getEntryFor(new VariableExp(index));
             methodVisitor.visitIincInsn(entry.index, 1);
             methodVisitor.visitJumpInsn(GOTO, head);
             methodVisitor.visitLabel(afterFor);
@@ -424,22 +425,26 @@ public class CodeGenerator {
             writeExp(rangeExp.getStart());
             entry = addEntry(forStmt.getIteratorExp(), BasicType.TYPE_INT);
             entry.store(this, methodVisitor);
+            String end = forStmt.hashCode() + rangeExp.getEnd().toString();
             writeExp(rangeExp.getEnd());
-            entry = addEntry(new VariableExp(".end"), BasicType.TYPE_INT);
+            entry = addEntry(new VariableExp(end), BasicType.TYPE_INT);
             entry.store(this, methodVisitor);
+
+            String step = null;
             if(forStmt.getStepExp() != null) {
+                step = forStmt.hashCode() + forStmt.getStepExp().toString();
                 writeExp(forStmt.getStepExp());
-                entry = addEntry(new VariableExp(".step"), BasicType.TYPE_INT);
+                entry = addEntry(new VariableExp(step), BasicType.TYPE_INT);
                 entry.store(this, methodVisitor);
             }
             methodVisitor.visitLabel(head);
             loadVariable(forStmt.getIteratorExp());
-            loadVariable(new VariableExp(".end"));
+            loadVariable(new VariableExp(end));
             methodVisitor.visitJumpInsn(IF_ICMPGE, afterFor);
             writeBlockStmtInLoop(forStmt.getBlockStmt(), head, afterFor);
             loadVariable(forStmt.getIteratorExp());
             if(forStmt.getStepExp() != null) {
-                loadVariable(new VariableExp(".step"));
+                loadVariable(new VariableExp(step));
                 methodVisitor.visitInsn(IADD);
                 entry = getEntryFor(forStmt.getIteratorExp());
                 entry.store(this, methodVisitor);
@@ -472,7 +477,7 @@ public class CodeGenerator {
     }
 
     private void writeBlockStmt(BlockStmt blockStmt) throws CodeGeneratorException {
-        if(blockStmt.getStmtList() != null) {
+        if(blockStmt != null && blockStmt.getStmtList() != null) {
             // Copy gamma before block
             Map<Variable, VariableEntry> gammaBefore = newCopy(variables);
             writeStatements(blockStmt.getStmtList());
@@ -545,10 +550,15 @@ public class CodeGenerator {
             final VariableEntry entry;
             if(((AssignStmt) stmt).isNew()) {
                 writeExp(asAssign.getExpression());
-                entry = addEntry(asAssign.getVariable(), type);
+                if(asAssign.getExpression() instanceof ArrayWithIndexExp) {
+                    entry = addEntry(asAssign.getVariable(), ((TypeArray) type).getBasicType());
+                } else {
+                    entry = addEntry(asAssign.getVariable(), type);
+                }
             } else {
                 entry = getEntryFor(((AssignStmt) stmt).getVariable());
                 if(entry.variable instanceof ArrayWithIndexExp) {
+                    methodVisitor.visitVarInsn(ALOAD, entry.index);
                     writeExp(((ArrayWithIndexExp) entry.variable).getIndexExp());
                     writeExp(asAssign.getExpression());
                 }
@@ -558,6 +568,10 @@ public class CodeGenerator {
             // support Int += first, then think about string concanation
             final CompoundAssignStmt asAssign = (CompoundAssignStmt)stmt;
             final VariableEntry entry = getEntryFor(asAssign.getVariable());
+            if(asAssign.getVariable() instanceof ArrayWithIndexExp) {
+                methodVisitor.visitVarInsn(ALOAD, entry.index);
+                writeExp(((ArrayWithIndexExp) entry.variable).getIndexExp());
+            }
             entry.load(this, methodVisitor);
             writeExp(asAssign.getExpression());
             int opcode = 0;
@@ -576,6 +590,7 @@ public class CodeGenerator {
                     break;
             }
             methodVisitor.visitInsn(opcode);
+
             entry.store(this, methodVisitor);
         }
         else if (stmt instanceof PrintStmt || stmt instanceof PrintlnStmt) {
@@ -760,22 +775,22 @@ public class CodeGenerator {
     }
 
     // assume array is already created.
-    private void writeValueToInitArrayExp(int opcode, VariableExp iteratorExp, Exp initExp, String sizeVar) throws CodeGeneratorException {
+    private void writeValueToInitArrayExp(int opcode, VariableExp iteratorExp, Exp initExp, String arrayPrefix, String sizeVar) throws CodeGeneratorException {
         final Label head = new Label();
         final Label afterFor = new Label();
         VariableEntry entry;
         writeIntLiteral(0);
-        entry = addEntry(new VariableExp(".index"), BasicType.TYPE_INT);
+        entry = addEntry(new VariableExp(arrayPrefix + ".index"), BasicType.TYPE_INT);
         entry.store(this, methodVisitor);
         methodVisitor.visitLabel(head);
-        loadVariable(new VariableExp(".index"));
+        loadVariable(new VariableExp(arrayPrefix + ".index"));
         loadVariable(new VariableExp(sizeVar));
         methodVisitor.visitJumpInsn(IF_ICMPGE, afterFor);
         methodVisitor.visitInsn(DUP);
-        loadVariable(new VariableExp(".index"));
+        loadVariable(new VariableExp(arrayPrefix + ".index"));
         writeExp(initExp);
         methodVisitor.visitInsn(opcode);
-        entry = getEntryFor(new VariableExp(".index"));
+        entry = getEntryFor(new VariableExp(arrayPrefix + ".index"));
         methodVisitor.visitIincInsn(entry.index, 1);
         if(iteratorExp != null) {
             entry = getEntryFor(iteratorExp);
@@ -799,7 +814,8 @@ public class CodeGenerator {
         }
 
         Exp size = arrayExp.getSize();
-        String sizeVar = ".size";
+        String arrayPrefix = arrayExp.hashCode() + "";
+        String sizeVar = arrayExp.hashCode() + ".size";
         Exp returnExp = arrayExp.getLambdaExp().getReturnExp();
         writeExp(size);
         entry = addEntry(new VariableExp(sizeVar), BasicType.TYPE_INT);
@@ -810,19 +826,19 @@ public class CodeGenerator {
         switch ((BasicType) type) {
             case TYPE_INT:
                 methodVisitor.visitIntInsn(NEWARRAY, T_INT);
-                writeValueToInitArrayExp(IASTORE, variableExps[0], returnExp, sizeVar);
+                writeValueToInitArrayExp(IASTORE, variableExps[0], returnExp, arrayPrefix, sizeVar);
                 break;
             case TYPE_STRING:
                 methodVisitor.visitTypeInsn(ANEWARRAY, "java/lang/String");
-                writeValueToInitArrayExp(AASTORE, variableExps[0], returnExp, sizeVar);
+                writeValueToInitArrayExp(AASTORE, variableExps[0], returnExp, arrayPrefix, sizeVar);
                 break;
             case TYPE_BOOLEAN:
                 methodVisitor.visitIntInsn(NEWARRAY, T_BOOLEAN);
-                writeValueToInitArrayExp(BASTORE, variableExps[0], returnExp, sizeVar);
+                writeValueToInitArrayExp(BASTORE, variableExps[0], returnExp, arrayPrefix, sizeVar);
                 break;
             case TYPE_ANY:
                 methodVisitor.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-                writeValueToInitArrayExp(AASTORE, variableExps[0], returnExp, sizeVar);
+                writeValueToInitArrayExp(AASTORE, variableExps[0], returnExp, arrayPrefix, sizeVar);
                 break;
             case TYPE_UNIT:
                 throw new CodeGeneratorException("Void type only from return in function");

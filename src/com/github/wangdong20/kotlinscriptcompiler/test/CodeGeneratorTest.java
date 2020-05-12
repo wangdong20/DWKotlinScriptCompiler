@@ -3,7 +3,9 @@ import com.github.wangdong20.kotlinscriptcompiler.codegen.CodeGeneratorException
 import com.github.wangdong20.kotlinscriptcompiler.parser.Program;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.*;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.BasicType;
 import com.github.wangdong20.kotlinscriptcompiler.parser.type.Type;
+import com.github.wangdong20.kotlinscriptcompiler.parser.type.TypeArray;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 
@@ -435,6 +437,73 @@ public class CodeGeneratorTest {
                 new AssignStmt(new StringExp("a is , b is , c is , a + b * c is ", interpolation), new VariableExp("d"), false, true),
                 new PrintStmt(new VariableExp("d"))
         ), "a is 200, b is 10, c is 3, a + b * c is 230");
+    }
+
+    @Test
+    // fun bubbleSort(arr : Array<Int>, length: Int): Unit {
+    //  for (i in 0..length - 1)
+    //     for (j in 0..length-i-1)
+    //         if (arr[j] > arr[j+1])
+    //         {
+    //             // swap arr[j+1] and arr[i]
+    //             var temp = arr[j];
+    //             arr[j] = arr[j+1];
+    //             arr[j+1] = temp;
+    //         }
+    // }
+    // var a = arrayOf(3, 2, 5, 6, 8, 9, 2, 4)
+    // bubbleSort(a, 8)
+    // for(i in a) {
+    //      println("i")
+    // }
+    public void testFunctionWithBubbleSort(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Stmt> stmtsInForForIf = new ArrayList<>();
+        stmtsInForForIf.add(new AssignStmt(new ArrayWithIndexExp(new VariableExp("arr"), new VariableExp("j")),
+                new VariableExp("temp"), false, true));
+        stmtsInForForIf.add(new AssignStmt(new ArrayWithIndexExp(new VariableExp("arr"), new AdditiveExp(new VariableExp("j"), new IntExp(1), AdditiveOp.EXP_PLUS)),
+                new ArrayWithIndexExp(new VariableExp("arr"), new VariableExp("j")), false, false));
+        stmtsInForForIf.add(new AssignStmt(new VariableExp("temp"), new ArrayWithIndexExp(new VariableExp("arr"), new AdditiveExp(new VariableExp("j"), new IntExp(1), AdditiveOp.EXP_PLUS)),
+                false, false));
+        List<Stmt> stmtsInForFor = new ArrayList<>();
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        List<Stmt> stmtsInFun = new ArrayList<>();
+        stmtsInForFor.add(new IfStmt(new ComparableExp(new ArrayWithIndexExp(new VariableExp("arr"), new VariableExp("j")),
+                new ArrayWithIndexExp(new VariableExp("arr"), new AdditiveExp(new VariableExp("j"), new IntExp(1), AdditiveOp.EXP_PLUS)), ComparableOp.OP_GREATER_THAN),
+                new BlockStmt(stmtsInForForIf)));
+        ForStmt forStmtInFor = new ForStmt(new VariableExp("j"), new RangeExp(new IntExp(0),
+                new AdditiveExp(new AdditiveExp(new VariableExp("length"), new VariableExp("i"), AdditiveOp.EXP_MINUS),
+                        new IntExp(1), AdditiveOp.EXP_MINUS)), new BlockStmt(stmtsInForFor));
+        stmtsInFor.add(forStmtInFor);
+        ForStmt forStmt = new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(0),
+                new AdditiveExp(new VariableExp("length"), new IntExp(1), AdditiveOp.EXP_MINUS)), new BlockStmt(stmtsInFor));
+        LinkedHashMap<Exp, Type> parameters = new LinkedHashMap<>();
+        parameters.put(new VariableExp("arr"), new TypeArray(BasicType.TYPE_INT));
+        parameters.put(new VariableExp("length"), BasicType.TYPE_INT);
+        stmtsInFun.add(forStmt);
+        FunctionDeclareStmt functionDeclareStmt = new FunctionDeclareStmt(new VariableExp("bubbleSort"),
+                BasicType.TYPE_UNIT, parameters, new BlockStmt(stmtsInFun));
+
+        List<Stmt> forPrintArray = new ArrayList<>();
+        forPrintArray.add(new PrintlnStmt(new VariableExp("i")));
+        ForStmt printArray = new ForStmt(new VariableExp("i"), new VariableExp("a"), new BlockStmt(forPrintArray));
+        List<Exp> arrayPara = new ArrayList<>();
+        arrayPara.add(new IntExp(3));
+        arrayPara.add(new IntExp(2));
+        arrayPara.add(new IntExp(5));
+        arrayPara.add(new IntExp(6));
+        arrayPara.add(new IntExp(8));
+        arrayPara.add(new IntExp(9));
+        arrayPara.add(new IntExp(2));
+        arrayPara.add(new IntExp(4));
+        List<Exp> funPara = new ArrayList<>();
+        funPara.add(new VariableExp("a"));
+        funPara.add(new IntExp(8));
+
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                functionDeclareStmt, new AssignStmt(new ArrayOfExp(arrayPara), new VariableExp("a"), false, true),
+                new FunctionInstanceStmt(new FunctionInstanceExp(new VariableExp("bubbleSort"), funPara)),
+                printArray
+        ), "2", "2", "3", "4", "5", "6", "8", "9");
     }
 
 }
