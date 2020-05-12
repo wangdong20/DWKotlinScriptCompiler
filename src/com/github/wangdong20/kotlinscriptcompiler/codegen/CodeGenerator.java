@@ -337,7 +337,7 @@ public class CodeGenerator {
         }
     }
 
-    private void writeSelfOperationExp(SelfOperationExp exp) throws CodeGeneratorException {
+    private void writeSelfOperationExp(SelfOperationExp exp, boolean needLoad) throws CodeGeneratorException {
         int index = getEntryFor(exp.getVariableExp()).index;
         if(exp.getPreOrder()) {
             // ++i case
@@ -357,12 +357,14 @@ public class CodeGenerator {
         }
 
         // load the variable after self operation
-        final VariableEntry entry = getEntryFor(exp.getVariableExp());
-        if(entry.type == BasicType.TYPE_INT) {
-            entry.load(this, methodVisitor);
-        } else {
-            assert (false);
-            throw new CodeGeneratorException("Variable in AdditiveExp should be TYPE_INT.");
+        if(needLoad) {
+            final VariableEntry entry = getEntryFor(exp.getVariableExp());
+            if (entry.type == BasicType.TYPE_INT) {
+                entry.load(this, methodVisitor);
+            } else {
+                assert (false);
+                throw new CodeGeneratorException("Variable in AdditiveExp should be TYPE_INT.");
+            }
         }
     }
 
@@ -626,7 +628,7 @@ public class CodeGenerator {
         } else if(stmt instanceof ForStmt) {
             writeForStatement((ForStmt) stmt);
         } else if(stmt instanceof SelfOperationStmt) {
-            writeExp(((SelfOperationStmt) stmt).getSelfOperationExp());
+            writeSelfOperationExp(((SelfOperationStmt) stmt).getSelfOperationExp(), false);
         }
         else {
 //            assert(false);
@@ -634,14 +636,16 @@ public class CodeGenerator {
         }
     } // writeStatement
 
-    private void writeReturnFor(final Type type) {
+    private void writeReturnFor(final Type type) throws CodeGeneratorException {
         if(type == BasicType.TYPE_INT ||
                 type == BasicType.TYPE_BOOLEAN) {
             methodVisitor.visitInsn(IRETURN);
         } else if(type == BasicType.TYPE_UNIT) {
             methodVisitor.visitInsn(RETURN);
-        } else {
+        } else if(type instanceof TypeArray || type instanceof TypeMutableList || type == BasicType.TYPE_STRING) {
             methodVisitor.visitInsn(ARETURN);
+        } else {
+            throw new CodeGeneratorException("Unrecognized return type: " + type);
         }
     } // writeReturnFor
 
@@ -927,7 +931,7 @@ public class CodeGenerator {
         } else if(exp instanceof ArrayWithIndexExp) {
             return loadVariable((ArrayWithIndexExp)exp).type;
         } else if(exp instanceof SelfOperationExp) {
-            writeSelfOperationExp((SelfOperationExp) exp);
+            writeSelfOperationExp((SelfOperationExp) exp, true);
             return BasicType.TYPE_INT;
         } else if(exp instanceof BinaryIntExp) {
             if(writeAdditiveExpOrMultplicativeExp((BinaryIntExp) exp)) {
@@ -1008,7 +1012,7 @@ public class CodeGenerator {
         } else if(left instanceof BinaryIntExp) {
             isStringAppend = writeAdditiveExpOrMultplicativeExp((BinaryIntExp)left);
         } else if(left instanceof SelfOperationExp) {
-            writeSelfOperationExp((SelfOperationExp) left);
+            writeSelfOperationExp((SelfOperationExp) left, true);
         } else if(left instanceof ArrayWithIndexExp) {
             final VariableEntry entry = getEntryFor((ArrayWithIndexExp) left);
             BasicType basicType = ((TypeArray) entry.type).getBasicType();
@@ -1067,10 +1071,10 @@ public class CodeGenerator {
             writeAdditiveExpOrMultplicativeExp((BinaryIntExp)right);
         } else if(right instanceof SelfOperationExp) {
             if(isStringAppend) {
-                writeSelfOperationExp((SelfOperationExp) right);
+                writeSelfOperationExp((SelfOperationExp) right, true);
                 methodVisitor.visitMethodInsn(INVOKEVIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;", false);
             } else {
-                writeSelfOperationExp((SelfOperationExp) right);
+                writeSelfOperationExp((SelfOperationExp) right, true);
             }
         } else if(right instanceof BooleanExp) {
             if(isStringAppend) {

@@ -59,7 +59,10 @@ public class Typechecker {
             final Type rightType = typeOf(gamma, ((ComparableExp) e).getRight());
             if (leftType == BasicType.TYPE_INT && rightType == BasicType.TYPE_INT) {
                 return BasicType.TYPE_BOOLEAN;
-            } else {
+            } else if(((ComparableExp) e).getOp() == ComparableOp.OP_EQUAL_EQUAL && leftType == BasicType.TYPE_BOOLEAN && rightType == BasicType.TYPE_BOOLEAN) {
+                return BasicType.TYPE_BOOLEAN;
+            }
+            else {
                 throw new IllTypedException("Only Int can compare with Int!");
             }
         } else if(e instanceof BiLogicalExp) {

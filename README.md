@@ -1,4 +1,4 @@
-# MyKotlinScriptCompiler
+# DWKotlinScriptCompiler
 This is Kotlin like language compiler that I try to write in Comp430 class.
 
 ### Language name
@@ -8,7 +8,7 @@ DWKotlinScript
 Java. I am familiar with Java and Java is compatible with Kotlin which is good to write my own version Kotlin like language by Java.
 
 ### Target Language
-JVM bytecode(If it is too hard, I will use Java as target language).
+JVM bytecode.
 
 ### Language Description
 Kotlin is a cross-platform, statically typed, general-purpose programming language with type inference. Kotlin is designed to interoperate fully with Java, and the JVM version of its standard library depends on the Java Class Library, but type inference allows its syntax to be more concise. In 2019 Google made Kotlin as the first language in Android development, I can see the benefit of using Kotlin language from Google’s announcement.
@@ -27,9 +27,9 @@ Kotlin is a power object oriented language. But I will make some limitation on m
 ```
 Basic type::= Int | String | Boolean | Unit | Any
 
-type :: = Int | Boolean| String | Array<basic type> | MutableList<basic type> | ‘(‘type*’)’ -> type | T
+type :: = Int | Boolean| String | Array<basic type> | ‘(‘type*’)’ -> type | T
 
-e :: = ‘(‘ e ’)’ | e1 binop e2 | unop e |  fn’(‘e’)’ | var | arrayOf(var*) | Array(e1(Int), {e2((Int) -> basic type)}) | mutableListOf<var>’(‘var*’)’ | MutableList(e1(Int), {e2((Int) -> basic type)}) | var = e | var += e | var -= e | var *= e | var /= e |‘{‘ (var : type)* -> e(return basic type) ‘}’ | '$'var | '$''{'e'}'
+e :: = ‘(‘ e ’)’ | e1 binop e2 | unop e |  fn’(‘e’)’ | var | arrayOf(var*) | Array(e1(Int), {e2((Int) -> basic type)}) | var = e | var += e | var -= e | var *= e | var /= e |‘{‘ (var : type)* -> e(return basic type) ‘}’ | '$'var | '$''{'e'}'
 
 binop :: = ‘-’ | ‘+’ | ‘/’ | ‘*’ | ‘%’ | ‘||’ | ‘&&’ | ‘<’ | ‘>’ | ‘<=’ | ‘>=’ | ‘==’ | ‘!=’ | ‘+=’ | ‘-=’ | '*=' | '/=' | '='
 
@@ -44,17 +44,27 @@ P :: = s*
 Statements.
 
 ### Computation Abstraction Non-Trivial Feature
-Higher-order functions, which is the lambda expression in Kotlin, I will support lambda expression in my KotlinScript language.
-
-### Non-Trivial Feature #2
 Type inference. var, val can define variable without assigning any supported type for it in Kotlin. I will let it happen in KotlinScript language as well.
 
-### Non-Trivial Feature #3
+### Non-Trivial Feature #2
 Semicolon inference. Kotlin support any sentence without semicolon. It means the compiler will figure out where the semicolon is.
 
-### Non-Trivial Feature #4
+### Non-Trivial Feature #3
 String interpolation. When print a string, I can put an expression in a string, the string will figure it out what the expression is and print it out. 
 For instance, print("$a + $b is ${a + b}"). The string inside print sentence will figure out what a, b and {a + b} are.
 
+### Other Non-Trivial Feature
+Comment support in this compiler. You can write comment as you want in your code.
+The comment format is the same as java comment.
+
 ### Work Planned for Custom Component
 I plan to use low-level language JVM bytecode as target language so far.
+
+## How to run it?
+It is easy to run. You just put the source code file(s) which end with .ks in the project folder.
+Then run the main method in Dwks file. Type dwks src.ks to compile source code file, then type java src to run it.
+```
+dwks *.ks
+java *
+```
+The * means the name of source code file.

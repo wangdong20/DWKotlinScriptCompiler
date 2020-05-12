@@ -97,7 +97,11 @@ public class Dwks {
 //            System.out.print("~ DwKotlinScriptCompiler$ ");
             String[] a = command.split("\\s+");
             if(a.length == 2 && a[0].equals("dwks")) {
-                compileSourceCode(a[1]);
+                if(!a[1].endsWith(".ks")) {
+                    System.out.println("Unsupport file: " + a[1] + ", please enter file end with .ks");
+                } else {
+                    compileSourceCode(a[1]);
+                }
             }
 
             if(a.length == 2 && a[0].equals("java")) {
