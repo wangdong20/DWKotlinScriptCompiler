@@ -565,31 +565,45 @@ public class CodeGenerator {
             }
             entry.store(this, methodVisitor);
         } else if(stmt instanceof CompoundAssignStmt) {
-            // support Int += first, then think about string concanation
+            // support Int += first, then think about string +
             final CompoundAssignStmt asAssign = (CompoundAssignStmt)stmt;
             final VariableEntry entry = getEntryFor(asAssign.getVariable());
+            boolean isStringAppend = false;
             if(asAssign.getVariable() instanceof ArrayWithIndexExp) {
                 methodVisitor.visitVarInsn(ALOAD, entry.index);
                 writeExp(((ArrayWithIndexExp) entry.variable).getIndexExp());
             }
-            entry.load(this, methodVisitor);
-            writeExp(asAssign.getExpression());
-            int opcode = 0;
+            Type type = typeOf((Exp)asAssign.getVariable());
+            if(type == BasicType.TYPE_STRING) {
+                isStringAppend = true;
+            } else if(type instanceof TypeArray && asAssign.getVariable() instanceof ArrayWithIndexExp && ((TypeArray) type).getBasicType() == BasicType.TYPE_STRING) {
+                isStringAppend = true;
+            } else {
+                entry.load(this, methodVisitor);
+            }
+
             switch (((CompoundAssignStmt) stmt).getOp()) {
                 case EXP_PLUS_EQUAL:
-                    opcode = IADD;
+                    if(isStringAppend) {
+                        writeExp(new AdditiveExp((Exp)asAssign.getVariable(), asAssign.getExpression(), AdditiveOp.EXP_PLUS));
+                    } else {
+                        writeExp(asAssign.getExpression());
+                        methodVisitor.visitInsn(IADD);
+                    }
                     break;
                 case EXP_MINUS_EQUAL:
-                    opcode = ISUB;
+                    writeExp(asAssign.getExpression());
+                    methodVisitor.visitInsn(ISUB);
                     break;
                 case EXP_MULTIPLY_EQUAL:
-                    opcode = IMUL;
+                    writeExp(asAssign.getExpression());
+                    methodVisitor.visitInsn(IMUL);
                     break;
                 case EXP_DIVIDE_EQUAL:
-                    opcode = IDIV;
+                    writeExp(asAssign.getExpression());
+                    methodVisitor.visitInsn(IDIV);
                     break;
             }
-            methodVisitor.visitInsn(opcode);
 
             entry.store(this, methodVisitor);
         }
@@ -1141,7 +1155,20 @@ public class CodeGenerator {
         } else if(type == BasicType.TYPE_STRING) {
             descriptor = "(Ljava/lang/String;)V";
         } else if(type instanceof TypeArray || type instanceof TypeMutableList || type == BasicType.TYPE_ANY) {
-            descriptor = "(Ljava/lang/Object;)V";
+            if(exp instanceof ArrayWithIndexExp) {
+                BasicType basicType = ((TypeArray)type).getBasicType();
+                if (basicType == BasicType.TYPE_INT) {
+                    descriptor = "(I)V";
+                } else if (basicType == BasicType.TYPE_BOOLEAN) {
+                    descriptor = "(Z)V";
+                } else if(basicType == BasicType.TYPE_STRING) {
+                    descriptor = "(Ljava/lang/String;)V";
+                } else {
+                    throw new CodeGeneratorException("Unrecognized type; " + type);
+                }
+            } else {
+                descriptor = "(Ljava/lang/Object;)V";
+            }
         } else {
             assert(false);
             throw new CodeGeneratorException("Unrecognized type; " + type);

@@ -506,4 +506,100 @@ public class CodeGeneratorTest {
         ), "2", "2", "3", "4", "5", "6", "8", "9");
     }
 
+    @Test
+    // var a = arrayOf(1, 2, 3)
+    // a[1] = 5
+    // print(a[1])
+    public void testArrayIndexAssign(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new IntExp(1));
+        exps.add(new IntExp(2));
+        exps.add(new IntExp(3));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"), false, true),
+                new AssignStmt(new IntExp(5), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)), false, false),
+                new PrintStmt(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)))
+        ), "5");
+    }
+
+    @Test
+    // var a = arrayOf(1, 2, 3)
+    // a[1] = a[2]
+    // print(a[1])
+    public void testArrayIndexAssignArrayIndex(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new IntExp(1));
+        exps.add(new IntExp(2));
+        exps.add(new IntExp(3));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"), false, true),
+                new AssignStmt(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(2)), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)), false, false),
+                new PrintStmt(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)))
+        ), "3");
+    }
+
+    @Test
+    // var a = arrayOf("1", "2", "3")
+    // a[1] += 5
+    // print(a[1])
+    public void testArrayIndexCompoundAssign(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new StringExp("1", null));
+        exps.add(new StringExp("2", null));
+        exps.add(new StringExp("3", null));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"), false, true),
+                new CompoundAssignStmt(new IntExp(5), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)), CompoundAssignOp.EXP_PLUS_EQUAL),
+                new PrintStmt(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)))
+        ), "25");
+    }
+
+    @Test
+    // var a = arrayOf("1", "2", "3")
+    // a[1] += a[2]
+    // print(a[1])
+    public void testArrayIndexCompoundAssignArrayIndex(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new StringExp("1", null));
+        exps.add(new StringExp("2", null));
+        exps.add(new StringExp("3", null));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"), false, true),
+                new CompoundAssignStmt(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(2)), new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)), CompoundAssignOp.EXP_PLUS_EQUAL),
+                new PrintStmt(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(1)))
+        ), "23");
+    }
+
+    @Test
+    // var a = arrayOf("1", "2", "3")
+    // var b = "S"
+    // b += a[2]
+    // print(a[1])
+    public void testVarCompoundAssignArrayIndex(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Exp> exps = new ArrayList<>();
+        exps.add(new StringExp("1", null));
+        exps.add(new StringExp("2", null));
+        exps.add(new StringExp("3", null));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new ArrayOfExp(exps), new VariableExp("a"), false, true),
+                new AssignStmt(new StringExp("S", null), new VariableExp("b"), false, true),
+                new CompoundAssignStmt(new ArrayWithIndexExp(new VariableExp("a"), new IntExp(2)), new VariableExp("b"), CompoundAssignOp.EXP_PLUS_EQUAL),
+                new PrintStmt(new VariableExp("b"))
+        ), "S3");
+    }
+
+    @Test
+    // var a = 3
+    // var b = 5
+    // a -= b
+    // print(a)
+    public void testVarMinusEVar(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new IntExp(3), new VariableExp("a"), false, true),
+                new AssignStmt(new IntExp(5), new VariableExp("b"), false, true),
+                new CompoundAssignStmt(new VariableExp("b"), new VariableExp("a"), CompoundAssignOp.EXP_MINUS_EQUAL),
+                new PrintStmt(new VariableExp("a"))
+        ), "-2");
+    }
+
 }
