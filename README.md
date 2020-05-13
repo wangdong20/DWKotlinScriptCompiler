@@ -68,3 +68,15 @@ dwks *.ks
 java *
 ```
 The * means the name of source code file.
+
+There are 3 .ks files in project folder for test compiler. You can test those source code like this.
+```
+dwks TestBubbleSort.ks
+java TestBubbleSort
+
+dwks FindPrimeNumbers.ks
+java FindPrimeNumbers
+
+dwks PrintStar.ks
+java PrintStar
+```
