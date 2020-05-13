@@ -31,4 +31,4 @@ hs_err_pid*
 TestForASMOutlineCode.java
 
 # Test .ks file
-*.ks
+# *.ks
