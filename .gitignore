@@ -26,7 +26,7 @@ hs_err_pid*
 .DS_Store
 .idea
 out/**
-!out/artifacts/DwKotlinScriptCompiler_jar/
+!out/artifacts/DwKotlinScriptCompiler_jar/*.jar
 src/META-INF/
 
 # Test ASM outline code java file
