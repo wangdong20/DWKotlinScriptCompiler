@@ -18,11 +18,12 @@
     // Print prime numbers
     if(n < 3) {
         println(2)
+        count++
     } else {
-         print("2   ")
+         print("2     ")
          count++
          for(i in 3..n + 1 step 2) {
-            if(primes[i] == true) {
+            if(primes[i]) {
                  count++;
                  if(count % NUMPERLINE == 0) {
                           println("$i     ")

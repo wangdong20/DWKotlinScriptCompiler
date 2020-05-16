@@ -12,6 +12,7 @@
 
 # Package Files #
 *.jar
+!KotlinScriptCompiler.jar
 *.war
 *.nar
 *.ear
@@ -26,6 +27,8 @@ hs_err_pid*
 .DS_Store
 .idea
 .out/
+out/
+src/META-INF/
 
 # Test ASM outline code java file
 TestForASMOutlineCode.java
