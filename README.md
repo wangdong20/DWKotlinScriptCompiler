@@ -1,7 +1,7 @@
 # DWKotlinScriptCompiler
 This is Kotlin like language compiler that I try to write in Comp430 class.
 
-## README.md
+### README.md
 * en [English](README.md)
 * zh_CN [简体中文](README_zh.md)
 
