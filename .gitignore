@@ -11,7 +11,7 @@
 .mtj.tmp/
 
 # Package Files #
-*.jar
+#*.jar
 *.war
 *.nar
 *.ear
@@ -25,8 +25,9 @@ hs_err_pid*
 # file: ~/.gitignore_global
 .DS_Store
 .idea
-out/
-!out/artifacts/
+
+/out/*
+!/out/artifacts
 src/META-INF/
 
 # Test ASM outline code java file
