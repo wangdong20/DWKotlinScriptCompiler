@@ -100,6 +100,36 @@ public class CodeGeneratorTest {
     }
 
     @Test
+    // var x = 1
+    // x = 2
+    // print(x)
+    public void testReAssign(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(),
+                makeProgram(new AssignStmt(new IntExp(1), new VariableExp("x"), false, true),
+                        new AssignStmt(new IntExp(2), new VariableExp("x"), false, false),
+                        new PrintStmt(new VariableExp("x"))),
+                "2");
+    }
+
+    @Test
+    // var b = true
+    // print(!b)
+    public void testNotExp(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(),
+                makeProgram(new AssignStmt(new BooleanExp(true), new VariableExp("b"), false, true),
+                        new PrintStmt(new NotExp(new VariableExp("b")))), "false");
+    }
+
+    @Test
+    // var b = false
+    // print(!b)
+    public void testFalseNotExp(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        assertOutput(testInfo.getDisplayName(),
+                makeProgram(new AssignStmt(new BooleanExp(false), new VariableExp("b"), false, true),
+                        new PrintStmt(new NotExp(new VariableExp("b")))), "true");
+    }
+
+    @Test
     // var x = 1 + 2 * 3 / 6 - 2 * 3
     // print(x)
     public void testComplicateNumAssign(TestInfo testInfo) throws CodeGeneratorException, IOException {

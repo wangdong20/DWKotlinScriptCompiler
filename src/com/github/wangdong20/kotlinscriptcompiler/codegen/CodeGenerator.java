@@ -563,6 +563,8 @@ public class CodeGenerator {
                     methodVisitor.visitVarInsn(ALOAD, entry.index);
                     writeExp(((ArrayWithIndexExp) entry.variable).getIndexExp());
                     writeExp(asAssign.getExpression());
+                } else {
+                    writeExp(asAssign.getExpression());
                 }
             }
             entry.store(this, methodVisitor);
