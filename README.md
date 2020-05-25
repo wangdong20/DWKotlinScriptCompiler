@@ -1,5 +1,5 @@
 # DWKotlinScriptCompiler
-这是我在编译原理课程里尝试写的类Kotlin的编程语言编译器
+这是我在编译原理课程里尝试写的语法类似Kotlin的编程语言编译器
 
 ### README.md
 * en [English](README_en.md)
@@ -84,3 +84,5 @@ java FindPrimeNumbers
 dwks PrintStar.ks
 java PrintStar
 ```
+## 运行示例
+![](DwKotlinScriptCompilerRunningEffect.gif)

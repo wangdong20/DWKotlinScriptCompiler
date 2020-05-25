@@ -84,3 +84,5 @@ java FindPrimeNumbers
 dwks PrintStar.ks
 java PrintStar
 ```
+## Running case
+![](DwKotlinScriptCompilerRunningEffect.gif)

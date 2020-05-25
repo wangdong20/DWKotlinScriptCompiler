@@ -39,4 +39,4 @@
     println("$count prime(s) less than or equal to $n")       // String interpolation here
  }
 
- findAndPrintPrimes(10000)
+ findAndPrintPrimes(1000)
