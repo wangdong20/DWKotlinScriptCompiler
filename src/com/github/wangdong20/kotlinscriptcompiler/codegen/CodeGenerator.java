@@ -371,6 +371,7 @@ public class CodeGenerator {
     private void writeForStatement(final ForStmt forStmt) throws CodeGeneratorException {
         final Label head = new Label();
         final Label afterFor = new Label();
+        final Label beforeInc = new Label();
 
         Map<Variable, VariableEntry> gammaBefore = newCopy(variables);
         VariableEntry entry;
@@ -417,7 +418,8 @@ public class CodeGenerator {
             entry = addEntry(forStmt.getIteratorExp(), basicType);
             entry.store(this, methodVisitor);
 
-            writeBlockStmtInLoop(forStmt.getBlockStmt(), head, afterFor);
+            writeBlockStmtInLoop(forStmt.getBlockStmt(), head, beforeInc, afterFor);
+            methodVisitor.visitLabel(beforeInc);
             entry = getEntryFor(new VariableExp(index));
             methodVisitor.visitIincInsn(entry.index, 1);
             methodVisitor.visitJumpInsn(GOTO, head);
@@ -443,7 +445,8 @@ public class CodeGenerator {
             loadVariable(forStmt.getIteratorExp());
             loadVariable(new VariableExp(end));
             methodVisitor.visitJumpInsn(IF_ICMPGE, afterFor);
-            writeBlockStmtInLoop(forStmt.getBlockStmt(), head, afterFor);
+            writeBlockStmtInLoop(forStmt.getBlockStmt(), head, beforeInc, afterFor);
+            methodVisitor.visitLabel(beforeInc);
             loadVariable(forStmt.getIteratorExp());
             if(forStmt.getStepExp() != null) {
                 loadVariable(new VariableExp(step));
@@ -464,16 +467,20 @@ public class CodeGenerator {
         variables = gammaBefore;
     }
 
-    private void writeBlockStmtInLoop(BlockStmt blockStmt, Label head, Label afterLoop) throws CodeGeneratorException {
-        for(Stmt s : blockStmt.getStmtList()) {
-            if(s instanceof ControlLoopStmt) {
-                if(s == ControlLoopStmt.STMT_BREAK) {
-                    methodVisitor.visitJumpInsn(GOTO, afterLoop);
+    private void writeBlockStmtInLoop(BlockStmt blockStmt, Label head, Label beforeInc, Label afterLoop) throws CodeGeneratorException {
+        if(blockStmt != null) {
+            for (Stmt s : blockStmt.getStmtList()) {
+                if (s instanceof ControlLoopStmt) {
+                    if (s == ControlLoopStmt.STMT_BREAK) {
+                        methodVisitor.visitJumpInsn(GOTO, afterLoop);
+                    } else {
+                        methodVisitor.visitJumpInsn(GOTO, beforeInc);
+                    }
+                } else if (s instanceof IfStmt) {
+                    writeIfStatementInLoop((IfStmt) s, head, beforeInc, afterLoop);
                 } else {
-                    methodVisitor.visitJumpInsn(GOTO, head);
+                    writeStatement(s);
                 }
-            } else {
-                writeStatement(s);
             }
         }
     }
@@ -491,6 +498,32 @@ public class CodeGenerator {
     private Map<Variable, VariableEntry> newCopy(final Map<Variable, VariableEntry> table) {
         return new HashMap<>(table);
     }
+
+    private void writeIfStatementInLoop(final IfStmt ifStmt, Label head, Label beforeInc, Label afterLoop) throws CodeGeneratorException {
+        // if false, jump to the else branch.  If true, fall through to true branch.
+        // true branch needs to jump after the false.  Looks like this:
+        //
+        //   condition_expression
+        //   if !condition, jump to false
+        //   true stuff
+        //   goto after_false
+        // false:
+        //   false stuff
+        // after_false:
+
+        // condition is a boolean, which is represented with an integer which is either
+        // 0 or 1.  IFEQ jumps if the value on top of the operand stack is 0, so this naturally
+        // ends up giving us the if !condition (as odd as it looks)
+        final Label falseLabel = new Label();
+        final Label afterFalseLabel = new Label();
+        writeExp(ifStmt.getCondition());
+        methodVisitor.visitJumpInsn(IFEQ, falseLabel);
+        writeBlockStmtInLoop(ifStmt.getTrueBranch(), head, beforeInc, afterLoop);
+        methodVisitor.visitJumpInsn(GOTO, afterFalseLabel);
+        methodVisitor.visitLabel(falseLabel);
+        writeBlockStmtInLoop(ifStmt.getFalseBranch(), head, beforeInc, afterLoop);
+        methodVisitor.visitLabel(afterFalseLabel);
+    } // writeIfStatementInLoop
 
     private void writeIfStatement(final IfStmt ifStmt) throws CodeGeneratorException {
         // if false, jump to the else branch.  If true, fall through to true branch.
@@ -531,7 +564,7 @@ public class CodeGenerator {
         methodVisitor.visitLabel(head);
         writeExp(whileStmt.getCondition());
         methodVisitor.visitJumpInsn(IFEQ, afterWhile);
-        writeBlockStmtInLoop(whileStmt.getBlockStmt(), head, afterWhile);
+        writeBlockStmtInLoop(whileStmt.getBlockStmt(), head, null, afterWhile);
         methodVisitor.visitJumpInsn(GOTO, head);
         methodVisitor.visitLabel(afterWhile);
         variables = gammaBefore;

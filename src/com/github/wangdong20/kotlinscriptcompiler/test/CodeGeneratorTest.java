@@ -287,6 +287,46 @@ public class CodeGeneratorTest {
     }
 
     @Test
+    // for(i in 1..10) {
+    //      if(i == 4) {
+    //          break
+    //      }
+    //      println(i)
+    // }
+    public void testForBreak(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        List<Stmt> stmtsInIf = new ArrayList<>();
+        stmtsInIf.add(ControlLoopStmt.STMT_BREAK);
+        stmtsInFor.add(new IfStmt(new ComparableExp(new VariableExp("i"), new IntExp(4), ComparableOp.OP_EQUAL_EQUAL),
+                new BlockStmt(stmtsInIf)));
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new IntExp(10)),
+                        new BlockStmt(stmtsInFor))
+        ), "1", "2", "3");
+    }
+
+    @Test
+    // for(i in 1..10) {
+    //      if(i % 2 == 0) {
+    //          continue
+    //      }
+    //      println(i)
+    // }
+    public void testForContinue(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        List<Stmt> stmtsInIf = new ArrayList<>();
+        stmtsInIf.add(ControlLoopStmt.STMT_CONTINUE);
+        stmtsInFor.add(new IfStmt(new ComparableExp(new MultiplicativeExp(new VariableExp("i"), new IntExp(2), MultiplicativeOp.OP_MOD), new IntExp(0), ComparableOp.OP_EQUAL_EQUAL),
+                new BlockStmt(stmtsInIf)));
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new ForStmt(new VariableExp("i"), new RangeExp(new IntExp(1), new IntExp(10)),
+                        new BlockStmt(stmtsInFor))
+        ), "1", "3", "5", "7", "9");
+    }
+
+    @Test
     // for(i in 1..10 step 2) {
     //      println(i)
     // }
@@ -360,6 +400,24 @@ public class CodeGeneratorTest {
                         new VariableExp("a"), false, true),
                 new ForStmt(new VariableExp("i"), new VariableExp("a"), new BlockStmt(stmtsInFor))),
                 "0", "2", "4", "6", "8", "10", "12", "14", "16", "18"
+        );
+    }
+
+    @Test
+    // var a = Array(10, {i -> i % 2 == 0})
+    // for(i in a) {
+    //      println(i)
+    // }
+    public void testBoolArrayExp(TestInfo testInfo) throws CodeGeneratorException, IOException {
+        LinkedHashMap<VariableExp, Type> parameters = new LinkedHashMap<>();
+        parameters.put(new VariableExp("i"), null);
+        List<Stmt> stmtsInFor = new ArrayList<>();
+        stmtsInFor.add(new PrintlnStmt(new VariableExp("i")));
+        assertOutput(testInfo.getDisplayName(), makeProgram(
+                new AssignStmt(new ArrayExp(new IntExp(10), new LambdaExp(parameters, new ComparableExp(new MultiplicativeExp(new VariableExp("i"), new IntExp(2), MultiplicativeOp.OP_MOD), new IntExp(0), ComparableOp.OP_EQUAL_EQUAL))),
+                        new VariableExp("a"), false, true),
+                new ForStmt(new VariableExp("i"), new VariableExp("a"), new BlockStmt(stmtsInFor))),
+                "true", "false", "true", "false", "true", "false", "true", "false", "true", "false"
         );
     }
 
