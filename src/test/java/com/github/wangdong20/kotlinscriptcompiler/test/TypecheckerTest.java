@@ -1,3 +1,5 @@
+package com.github.wangdong20.kotlinscriptcompiler.test;
+
 import com.github.wangdong20.kotlinscriptcompiler.parser.Program;
 import com.github.wangdong20.kotlinscriptcompiler.parser.expressions.*;
 import com.github.wangdong20.kotlinscriptcompiler.parser.statements.*;

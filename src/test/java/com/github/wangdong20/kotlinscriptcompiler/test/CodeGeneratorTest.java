@@ -1,3 +1,5 @@
+package com.github.wangdong20.kotlinscriptcompiler.test;
+
 import com.github.wangdong20.kotlinscriptcompiler.codegen.CodeGenerator;
 import com.github.wangdong20.kotlinscriptcompiler.codegen.CodeGeneratorException;
 import com.github.wangdong20.kotlinscriptcompiler.parser.Program;

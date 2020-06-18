@@ -1,3 +1,5 @@
+package com.github.wangdong20.kotlinscriptcompiler.test;
+
 import com.github.wangdong20.kotlinscriptcompiler.token.*;
 
 import java.util.ArrayList;

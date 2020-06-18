@@ -66,8 +66,7 @@ P :: = s*
 简而言之就是，假如var a = 1 + 2 * 3 / 6，我的编译器不会把表达式1 + 2 * 3 / 6的值计算出来，再在JVM字节码里把计算的值赋给a，而是一步一步的讲1，2，3，6压入JVM的栈中进行运算。
 
 ## 怎样运行?
-首先clone该仓库代码，在Project Structure里面引入Maven libraries: org.junit.jupiter:junit-jupiter:5.6.0和org.ow2.asm:asm:8.0.1,
-然后build项目，因为该编译器会读取并编译以.ks为后缀的代码文件，所以你只需要把写好的以.ks为后缀的代码文件放到项目根目录下，然后运行Dwks.java里的main函数，在命令行里输入dwks *.ks来编译你自己写的代码文件，然后输入java *来运行编译好的字节码。
+首先clone该仓库代码，然后build项目，因为该编译器会读取并编译以.ks为后缀的代码文件，所以你只需要把写好的以.ks为后缀的代码文件放到项目根目录下，然后运行Dwks.java里的main函数，在命令行里输入dwks *.ks来编译你自己写的代码文件，然后输入java *来运行编译好的字节码。
 ```
 dwks *.ks
 java *
