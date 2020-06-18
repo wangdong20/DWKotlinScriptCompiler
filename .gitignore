@@ -26,6 +26,7 @@ hs_err_pid*
 # file: ~/.gitignore_global
 .DS_Store
 .idea
+*.iml
 
 /out/*
 !/out/artifacts
