@@ -65,7 +65,8 @@ The comment format is the same as java comment.
 I plan to use low-level language JVM bytecode as target language so far.
 
 ## How to run it?
-It is easy to run. You just put the source code file(s) which end with .ks in the project folder.
+Firstly, clone this repository. Import Maven libraries: org.junit.jupiter:junit-jupiter:5.6.0 and org.ow2.asm:asm:8.0.1 in project structure.
+Then build this project, you just need put the source code file(s) which end with .ks in the project folder.
 Then run the main method in Dwks file. Type dwks src.ks to compile source code file, then type java src to run it.
 ```
 dwks *.ks
