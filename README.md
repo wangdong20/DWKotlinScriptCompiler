@@ -1,4 +1,6 @@
 # DWKotlinScriptCompiler
+![Java CI with Maven](https://github.com/wangdong20/DWKotlinScriptCompiler/workflows/Java%20CI%20with%20Maven/badge.svg)
+
 这是我在编译原理课程里尝试写的语法类似Kotlin的编程语言编译器
 
 ### README.md

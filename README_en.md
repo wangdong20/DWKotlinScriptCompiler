@@ -1,4 +1,6 @@
 # DWKotlinScriptCompiler
+![Java CI with Maven](https://github.com/wangdong20/DWKotlinScriptCompiler/workflows/Java%20CI%20with%20Maven/badge.svg)
+
 This is Kotlin like language compiler that I try to write in Comp430 class.
 
 ### README.md
