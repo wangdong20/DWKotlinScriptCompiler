@@ -470,12 +470,16 @@ public class Typechecker {
             return gamma;
         } else if(s instanceof PrintStmt || s instanceof PrintlnStmt) {
             if(s instanceof PrintStmt) {
-                if(!(typeOf(gamma, ((PrintStmt) s).getValue()) instanceof BasicType)) {
-                    throw new IllTypedException("Only basic type expression allowed in print(ln) statement");
+                if(((PrintStmt) s).getValue() != null) {
+                    if (!(typeOf(gamma, ((PrintStmt) s).getValue()) instanceof BasicType)) {
+                        throw new IllTypedException("Only basic type expression allowed in print(ln) statement");
+                    }
                 }
             } else {
-                if(!(typeOf(gamma, ((PrintlnStmt) s).getValue()) instanceof BasicType)) {
-                    throw new IllTypedException("Only basic type expression allowed in print(ln) statement");
+                if(((PrintlnStmt) s).getValue() != null) {
+                    if (!(typeOf(gamma, ((PrintlnStmt) s).getValue()) instanceof BasicType)) {
+                        throw new IllTypedException("Only basic type expression allowed in print(ln) statement");
+                    }
                 }
             }
             return gamma;

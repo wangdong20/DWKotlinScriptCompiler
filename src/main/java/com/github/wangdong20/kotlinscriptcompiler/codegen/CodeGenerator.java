@@ -783,6 +783,8 @@ public class CodeGenerator {
         } else if(temp instanceof ArrayExp) {
             Type genericType = typeOf(((ArrayExp) temp).getLambdaExp().getReturnExp());
             type = new TypeArray((BasicType) genericType);
+        } else if(temp == null) {
+            type = null;
         }
         else {
             throw new CodeGeneratorException("Unrecognized expression type");
@@ -952,7 +954,10 @@ public class CodeGenerator {
     }
 
     public Type writeExp(Exp exp) throws CodeGeneratorException {
-        if(exp instanceof IntExp) {
+        if(exp == null) {
+            // Do nothing
+            return null;
+        } else if(exp instanceof IntExp) {
             writeIntLiteral(((IntExp) exp).getValue());
             return BasicType.TYPE_INT;
         } else if(exp instanceof BooleanExp) {
@@ -1208,7 +1213,10 @@ public class CodeGenerator {
             } else {
                 descriptor = "(Ljava/lang/Object;)V";
             }
-        } else {
+        } else if(type == null) {
+            descriptor = "()V";
+        }
+        else {
             assert(false);
             throw new CodeGeneratorException("Unrecognized type; " + type);
         }

@@ -34,8 +34,8 @@
          }
      }
 
-    println("")
-    println("")
+    println()
+    println()
     println("$count prime(s) less than or equal to $n")       // String interpolation here
  }
 

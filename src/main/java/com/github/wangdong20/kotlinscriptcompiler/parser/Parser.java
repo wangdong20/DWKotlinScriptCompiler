@@ -306,13 +306,13 @@ public class Parser {
             } else {
                 throw new ParseException("VariableToken expected after self increase or decrease operator!");
             }
-        }
-        else {
-            checkTokenIs(startPos, BracketsToken.TK_LPAREN);
+        } else if(tokenHere == BracketsToken.TK_LPAREN){
             final ParseResult<Exp> inner = parseExp(startPos + 1);
             checkTokenIs(inner.nextPos, BracketsToken.TK_RPAREN);
             return new ParseResult<>(inner.result,
                     inner.nextPos + 1);
+        } else {
+            return new ParseResult<>(null, startPos);
         }
     }
 
