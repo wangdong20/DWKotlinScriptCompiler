@@ -1,37 +1,35 @@
 # DWKotlinScriptCompiler
 ![Java CI with Maven](https://github.com/wangdong20/DWKotlinScriptCompiler/workflows/Java%20CI%20with%20Maven/badge.svg)
 
-这是我在编译原理课程里尝试写的语法类似Kotlin的编程语言编译器
+This is Kotlin like language compiler that I try to write in Comp430 class.
 
 ### README.md
-* en [English](README_en.md)
-* zh_CN [简体中文](README.md)
+* en [English](README.md)
+* zh_CN [简体中文](README_zh.md)
 
-### 语言名称
+### Language name
 DWKotlinScript
 
-### 所使用的编程语言和为什么用这个语言
-Java。我对java非常熟悉，而且java和kotlin在JVM字节码上完全兼容，所以用Java来写类Kotlin语言的编译器是很合适的.
+### Compiler Implementation Language and Reasoning
+Java. I am familiar with Java and Java is compatible with Kotlin which is good to write my own version Kotlin like language by Java.
 
-### 目标语言
-JVM 字节码.
+### Target Language
+JVM bytecode.
 
-### 语言介绍
-Kotlin是一个跨平台，静态类型，支持类型推论的编程语言。Kotlin设计成完全兼容Java，Java在JVM里的Java类库，但是Kotlin所支持的类型推论使其语法比java来的更简洁。2019年，Google宣布Kotlin作为Android开发第一语言，从这里我也看到使用Kotlin的好处。DwKotlinScript就是借鉴了Kotlin语言里语法简洁的优点来实现自己类似Kotlin语言的编译器。
+### Language Description
+Kotlin is a cross-platform, statically typed, general-purpose programming language with type inference. Kotlin is designed to interoperate fully with Java, and the JVM version of its standard library depends on the Java Class Library, but type inference allows its syntax to be more concise. In 2019 Google made Kotlin as the first language in Android development, I can see the benefit of using Kotlin language from Google’s announcement.
 
-### DwKotlinScript相对于Kotlin语言的限制
-Kotlin是一个强大的面对对象的编程语言，因为时间和精力的限制以及本人对编译器知识理解的限制，我要对我的类Kotlin编程语言做一些限制。DwKotlinScript语言将不支持面对对象，也就是说不支持类和对象。目前支持的数字类型只有Int类型，String类型会支持，因为String在编程语言里面很重要，数组也会支持，由于没有类，所以相对数组的泛型只支持Int，String，Boolean，Object。本来在语法层面支持高阶函数，Lambda表达式，但是由于不支持类与对象，不知道怎么在JVM字节码层面实现高阶函数，毕竟在我所在的Java1.8版还没有支持高阶函数，当然也会支持类型推论，函数定义不能在另一个块里面。
+### Planned Restrictions
+Kotlin is a power object oriented language. But I will make some limitation on my own Kotlin like language due to the lack of time and energy and the limitation of my own knowledge on Kotlin compiler. There will be no object in KotlinScript, in other word, no class in KotlinScript. Only support basic number type such as Int currently. I will also support String type, because String type is important in Kotlin. Array is also supported but only with basic generic type. It will support high order function, type inference. No garbage collection. Function declaration will not allow declare in block.
 
-### 语法
-* var 代表变量
-* fn 代表函数名
-* e 代表表达式
-* binop 代表二元运算符
-* unop 代表一元运算符
-* s 代表语句
-* op 代表运算符
-* T 代表类型变量
-* P 代表程序
+### Syntax
+* var is variable
+* fn is function name
+* e is expression
+* s is statement
+* op is operator
+* T is type variable
+* P is Program
 ```
 Basic type::= Int | String | Boolean | Unit | Any
 
@@ -48,34 +46,36 @@ s :: = ‘if’ ‘(’ e ‘)’ ‘{‘ s* ‘}’ ‘else’ ‘{‘ s* ‘}�
 P :: = s*
 ```
 
-### 程序入口: 
-程序所有语句。
+### Program Entry point: 
+Statements.
 
-### 支持特性
-类型推论. var, val可以定义变量而不用赋予类型信息给变量，这个和Kotlin里的类型推论是一样的。
+### Computation Abstraction Non-Trivial Feature
+Type inference. var, val can define variable without assigning any supported type for it in Kotlin. I will let it happen in KotlinScript language as well.
 
-### 支持特性 #2
-分号推论。 Kotlin支持所有语句不用;结尾。DwKotlinScript也会支持编译器能理解对非;结尾而是回车键结尾的语句断句。
+### Non-Trivial Feature #2
+Semicolon inference. Kotlin support any sentence without semicolon. It means the compiler will figure out where the semicolon is.
 
-### 支持特性 #3
-字符串插值。当用Print语句打印字符串时，这个字符串将会识别在字符串里的表达式并把表达式的值打印出来。例如，print("$a + $b is ${a + b}")，这里打印的字符串将会识别a，b以及a + b的值并打印出来。所以如果你也想要字符串里插入表达式，只要在表达式前添加$就行了。
+### Non-Trivial Feature #3
+String interpolation. When print a string, I can put an expression in a string, the string will figure it out what the expression is and print it out. 
+For instance, print("$a + $b is ${a + b}"). The string inside print sentence will figure out what a, b and {a + b} are.
 
-### 其他特性
-该编译器支持注释，你可以在代码里面写任何注释不会影响运行。注释的格式和Java注释格式一样。
+### Other Non-Trivial Feature
+Comment support in this compiler. You can write comment as you want in your code.
+The comment format is the same as java comment.
 
-表达式的运算是基于JVM字节码进行运算的，有的编译器可能借助自己写编译器的编译器来计算表达式然后把计算后的值直接放到JVM字节码里，我写的编译器不会这样做，它会更接近底层JVM字节码不会借助我写这个编译器的编译器来计算表达式。
+### Work Planned for Custom Component
+I plan to use low-level language JVM bytecode as target language so far.
 
-简而言之就是，假如var a = 1 + 2 * 3 / 6，我的编译器不会把表达式1 + 2 * 3 / 6的值计算出来，再在JVM字节码里把计算的值赋给a，而是一步一步的讲1，2，3，6压入JVM的栈中进行运算。
-
-## 怎样运行?
-首先clone该仓库代码，然后build项目，因为该编译器会读取并编译以.ks为后缀的代码文件，所以你只需要把写好的以.ks为后缀的代码文件放到项目根目录下，然后运行Dwks.java里的main函数，在命令行里输入dwks *.ks来编译你自己写的代码文件，然后输入java *来运行编译好的字节码。
+## How to run it?
+Firstly, clone this repository. Then build this project, you just need put the source code file(s) which end with .ks in the project folder.
+Then run the main method in Dwks file. Type dwks src.ks to compile source code file, then type java src to run it.
 ```
 dwks *.ks
 java *
 ```
-这里的*代表你写的代码文件名。
+The * means the name of source code file.
 
-作为演示，我写了3个以.ks为后缀的代码文件在项目根目录里，你们可以输入如下命令测试这些代码文件。
+There are 3 .ks files in project folder for test compiler. You can test those source code like this.
 ```
 dwks TestBubbleSort.ks
 java TestBubbleSort
@@ -86,5 +86,5 @@ java FindPrimeNumbers
 dwks PrintStar.ks
 java PrintStar
 ```
-## 运行示例
+## Running case
 ![](DwKotlinScriptCompilerRunningEffect.gif)
